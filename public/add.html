@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>글 작성 | Wacky Blog</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__inner">
+      <a class="brand" href="/"><span class="brand__mark">W</span><span>Wacky Blog</span></a>
+      <nav class="nav" aria-label="주요 메뉴">
+        <a href="/" data-path="/">홈</a>
+        <a href="/posts/" data-path="/posts">글 목록</a>
+        <a href="/about/" data-path="/about">소개</a>
+        <a href="/add.html" data-path="/add.html">글 작성</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card form-card">
+      <h1 class="h1">글 작성</h1>
+      <p class="p">여기에 글을 입력하면 D1에 저장되고, 공개 페이지는 <b>/post/slug</b>에서 SSR HTML로 생성됩니다.</p>
+      <div class="sep"></div>
+
+      <div class="grid grid--2">
+        <div>
+          <label class="small" for="title">제목</label>
+          <input class="input" id="title" />
+        </div>
+        <div>
+          <label class="small" for="slugPreview">슬러그 미리보기</label>
+          <input class="input" id="slugPreview" disabled />
+        </div>
+      </div>
+
+      <div class="grid grid--3">
+        <div>
+          <label class="small" for="category">카테고리</label>
+          <input class="input" id="category" placeholder="예: 생활 꿀팁" />
+        </div>
+        <div>
+          <label class="small" for="template_name">플랫폼 템플릿</label>
+          <select class="input" id="template_name">
+            <option value="basic">기본형</option>
+            <option value="tip">꿀팁형</option>
+            <option value="review">리뷰형</option>
+          </select>
+        </div>
+        <div>
+          <label class="small" for="status">상태</label>
+          <select class="input" id="status">
+            <option value="published">발행</option>
+            <option value="draft">초안</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="small" for="summary">요약문</label>
+        <textarea class="input" id="summary" rows="3" placeholder="검색 결과와 카드 영역에 보여줄 요약"></textarea>
+      </div>
+
+      <div class="grid grid--2">
+        <div>
+          <label class="small" for="tags">태그 (콤마 구분)</label>
+          <input class="input" id="tags" placeholder="예: 생활꿀팁, 욕실청소, 재활용" />
+        </div>
+        <div>
+          <label class="small" for="cover_image">대표 이미지 URL</label>
+          <input class="input" id="cover_image" placeholder="https://..." />
+        </div>
+      </div>
+
+      <div>
+        <label class="small" for="content_md">본문 (마크다운)</label>
+        <textarea class="input editor-textarea" id="content_md" rows="18" placeholder="# 제목
+
+도입 문단
+
+## 소제목
+- 항목 1
+- 항목 2"></textarea>
+      </div>
+
+      <div class="notice">
+        <strong>본문 작성 팁</strong>
+        <div class="sep"></div>
+        <div class="small"># / ## / ### 제목, 리스트(-), 번호리스트(1.), 인용문(>) 정도만 지원하는 단순 마크다운 렌더러가 포함되어 있습니다.</div>
+      </div>
+
+      <div class="row" style="flex-wrap:wrap">
+        <button class="btn btn--brand" id="saveBtn" type="button">저장 후 공개 페이지 열기</button>
+        <a class="btn" href="/posts/">글 목록</a>
+        <span class="small" id="saveStatus"></span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer container"><div class="footer__inner"><div>© 2026 Wacky Blog</div></div></footer>
+  <script src="/assets/js/nav.js" defer></script>
+  <script src="/assets/js/add.js" defer></script>
+</body>
+</html>

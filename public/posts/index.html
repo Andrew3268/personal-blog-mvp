@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>글 목록 | Wacky Blog</title>
+  <meta name="description" content="등록된 블로그 글 목록" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__inner">
+      <a class="brand" href="/"><span class="brand__mark">W</span><span>Wacky Blog</span></a>
+      <nav class="nav" aria-label="주요 메뉴">
+        <a href="/" data-path="/">홈</a>
+        <a href="/posts/" data-path="/posts">글 목록</a>
+        <a href="/about/" data-path="/about">소개</a>
+        <a href="/add.html" data-path="/add.html">글 작성</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card" style="display:flex;flex-direction:column;gap:10px">
+      <h1 class="h1">글 목록</h1>
+      <p class="p">목록은 <b>/api/posts</b>에서 불러오며, 실제 공개 페이지는 각 <b>/post/slug</b> 주소에서 SSR로 열립니다.</p>
+      <div class="row" style="flex-wrap:wrap">
+        <a class="btn btn--brand" href="/add.html">새 글 작성</a>
+        <a class="btn" href="/api/posts">JSON 보기</a>
+      </div>
+    </section>
+
+    <section style="margin-top:16px">
+      <div id="postsLoading" class="small">글 목록 불러오는 중…</div>
+      <div id="postsError" class="small" hidden style="color:#b00020"></div>
+      <div id="postsEmpty" class="small" hidden>등록된 글이 없습니다.</div>
+      <div id="postsList" class="grid post-list-grid" style="margin-top:12px"></div>
+    </section>
+  </main>
+
+  <footer class="footer container"><div class="footer__inner"><div>© 2026 Wacky Blog</div></div></footer>
+  <script src="/assets/js/nav.js" defer></script>
+  <script src="/assets/js/posts.js" defer></script>
+</body>
+</html>

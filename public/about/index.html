@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>소개 | Wacky Blog</title>
+  <meta name="description" content="개인 블로그 SSR MVP 소개 페이지" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__inner">
+      <a class="brand" href="/"><span class="brand__mark">W</span><span>Wacky Blog</span></a>
+      <nav class="nav" aria-label="주요 메뉴">
+        <a href="/" data-path="/">홈</a>
+        <a href="/posts/" data-path="/posts">글 목록</a>
+        <a href="/about/" data-path="/about">소개</a>
+        <a href="/add.html" data-path="/add.html">글 작성</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card" style="display:flex;flex-direction:column;gap:12px">
+      <h1 class="h1">이 MVP가 하는 일</h1>
+      <p class="p">이 프로젝트는 개인 블로그 운영자가 직접 글을 저장하고, 그 글이 실제 페이지로 SSR 렌더링되는 최소 구조를 제공합니다.</p>
+      <div class="sep"></div>
+      <ul class="plain-list">
+        <li>글 작성 / 수정 관리자 화면</li>
+        <li>D1 저장</li>
+        <li>개별 글 SSR</li>
+        <li>Cloudflare 엣지 캐시</li>
+        <li>사이트맵 자동 생성</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="footer container"><div class="footer__inner"><div>© 2026 Wacky Blog</div></div></footer>
+  <script src="/assets/js/nav.js" defer></script>
+</body>
+</html>

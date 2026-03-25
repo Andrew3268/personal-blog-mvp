@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>글 수정 | Wacky Blog</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__inner">
+      <a class="brand" href="/"><span class="brand__mark">W</span><span>Wacky Blog</span></a>
+      <nav class="nav" aria-label="주요 메뉴">
+        <a href="/" data-path="/">홈</a>
+        <a href="/posts/" data-path="/posts">글 목록</a>
+        <a href="/about/" data-path="/about">소개</a>
+        <a href="/add.html" data-path="/add.html">글 작성</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card form-card">
+      <h1 class="h1">글 수정</h1>
+      <p class="p">URL 예시: <b>/edit.html?slug=expired-shampoo-bottle-reuse</b></p>
+      <div class="sep"></div>
+
+      <div class="grid grid--3">
+        <div>
+          <label class="small" for="slug">슬러그</label>
+          <input class="input" id="slug" disabled />
+        </div>
+        <div>
+          <label class="small" for="published_at">발행일</label>
+          <input class="input" id="published_at" disabled />
+        </div>
+        <div>
+          <label class="small" for="updated_at">수정일</label>
+          <input class="input" id="updated_at" disabled />
+        </div>
+      </div>
+
+      <div class="grid grid--2">
+        <div>
+          <label class="small" for="title">제목</label>
+          <input class="input" id="title" />
+        </div>
+        <div>
+          <label class="small" for="category">카테고리</label>
+          <input class="input" id="category" />
+        </div>
+      </div>
+
+      <div class="grid grid--3">
+        <div>
+          <label class="small" for="template_name">플랫폼 템플릿</label>
+          <select class="input" id="template_name">
+            <option value="basic">기본형</option>
+            <option value="tip">꿀팁형</option>
+            <option value="review">리뷰형</option>
+          </select>
+        </div>
+        <div>
+          <label class="small" for="status">상태</label>
+          <select class="input" id="status">
+            <option value="published">발행</option>
+            <option value="draft">초안</option>
+          </select>
+        </div>
+        <div>
+          <label class="small" for="cacheHint">캐시 확인</label>
+          <input class="input" id="cacheHint" disabled value="공개 글 응답 헤더에서 x-blog-cache 확인" />
+        </div>
+      </div>
+
+      <div>
+        <label class="small" for="summary">요약문</label>
+        <textarea class="input" id="summary" rows="3"></textarea>
+      </div>
+
+      <div class="grid grid--2">
+        <div>
+          <label class="small" for="tags">태그 (콤마 구분)</label>
+          <input class="input" id="tags" />
+        </div>
+        <div>
+          <label class="small" for="cover_image">대표 이미지 URL</label>
+          <input class="input" id="cover_image" />
+        </div>
+      </div>
+
+      <div>
+        <label class="small" for="content_md">본문 (마크다운)</label>
+        <textarea class="input editor-textarea" id="content_md" rows="18"></textarea>
+      </div>
+
+      <div class="row" style="flex-wrap:wrap">
+        <button class="btn btn--brand" id="saveBtn" type="button">수정 저장</button>
+        <a class="btn" id="viewBtn" href="#">공개 글 보기</a>
+        <a class="btn" href="/posts/">글 목록</a>
+        <span class="small" id="statusMsg"></span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer container"><div class="footer__inner"><div>© 2026 Wacky Blog</div></div></footer>
+  <script src="/assets/js/nav.js" defer></script>
+  <script src="/assets/js/edit.js" defer></script>
+</body>
+</html>

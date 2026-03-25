@@ -1,0 +1,14 @@
+{
+  "name": "personal-blog-ssr-mvp",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev ./public --compatibility-date=2026-03-25",
+    "deploy": "wrangler pages deploy ./public --project-name=personal-blog-mvp",
+    "d1:exec": "wrangler d1 execute personal-blog-db --file=./db/schema.sql",
+    "d1:seed": "wrangler d1 execute personal-blog-db --file=./db/seed.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^4.77.0"
+  }
+}

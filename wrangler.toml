@@ -1,0 +1,7 @@
+name = "personal-blog-mvp"
+compatibility_date = "2026-03-25"
+
+[[d1_databases]]
+binding = "BLOG_DB"
+database_name = "personal-blog-db"
+database_id = "e57c2488-da7e-4fa2-962f-be0c952a61e2"
