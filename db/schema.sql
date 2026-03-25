@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS posts (
   slug TEXT PRIMARY KEY,
   title TEXT NOT NULL,
   category TEXT DEFAULT '',
+  meta_description TEXT DEFAULT '',
   summary TEXT DEFAULT '',
   cover_image TEXT DEFAULT '',
   template_name TEXT DEFAULT 'basic',

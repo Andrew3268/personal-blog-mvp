@@ -1,5 +1,5 @@
 import { escapeHtml, jsonld, okHtml, edgeCache } from "../_utils.js";
-import { renderMarkdown, getTemplateBadge } from "../../lib/posts/renderer.js";
+import { renderMarkdown } from "../../lib/posts/renderer.js";
 
 export async function onRequestGet({ params, env, request }) {
   const slug = decodeURIComponent(String(params.slug || ""));
@@ -32,9 +32,9 @@ export async function onRequestGet({ params, env, request }) {
           slug,
           title,
           category,
+          meta_description,
           summary,
           cover_image,
-          template_name,
           tags_json,
           content_md,
           status,
@@ -69,11 +69,15 @@ export async function onRequestGet({ params, env, request }) {
       const siteName = "Wacky Blog";
       const siteDescription = "실용적인 생활 정보와 정리된 가이드를 제공하는 블로그";
       const authorName = "Steve Lee";
-      const templateBadge = getTemplateBadge(row.template_name);
       const bodyHtml = renderMarkdown(row.content_md || "");
 
       const titleText = String(row.title || "").trim();
-      const descriptionText = buildDescription(row.summary, row.content_md, titleText);
+      const descriptionText = buildDescription(
+        row.meta_description,
+        row.summary,
+        row.content_md,
+        titleText
+      );
       const pageTitle = `${titleText} | ${siteName}`;
       const ogImage = row.cover_image || `${origin}/assets/images/og-default.svg`;
 
@@ -234,12 +238,11 @@ export async function onRequestGet({ params, env, request }) {
   <main id="main-content" class="container">
     ${breadcrumbHtml}
 
-    <article class="post-shell post-shell--${escapeHtml(row.template_name || "basic")}" itemscope itemtype="https://schema.org/BlogPosting">
+    <article class="post-shell" itemscope itemtype="https://schema.org/BlogPosting">
       <header class="card post-hero">
         <div class="row" style="justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
           <div class="row" style="gap:8px;flex-wrap:wrap">
             ${row.category ? `<a class="badge" href="${categoryLink}">${escapeHtml(String(row.category))}</a>` : ""}
-            <span class="badge">${escapeHtml(templateBadge)}</span>
             <span class="badge">SSR + Cache</span>
           </div>
           <div class="small">
@@ -290,7 +293,6 @@ export async function onRequestGet({ params, env, request }) {
           </nav>
 
           ${tags.length ? `
-          <>
             <div class="sep"></div>
             <h2 class="h2">태그</h2>
             <div class="row" style="gap:8px;flex-wrap:wrap">
@@ -299,8 +301,7 @@ export async function onRequestGet({ params, env, request }) {
                 return `<a class="tag-chip" href="/posts/?tag=${encodeURIComponent(tagText)}" rel="tag">#${escapeHtml(tagText)}</a>`;
               }).join("")}
             </div>
-          </>
-          `.replace("<>", "").replace("</>", "") : ""}
+          ` : ""}
 
           <div class="sep"></div>
           <p class="small">이 페이지는 서버에서 HTML로 렌더링되어 검색엔진이 본문과 메타 정보를 더 안정적으로 읽을 수 있도록 구성했습니다.</p>
@@ -327,7 +328,10 @@ export async function onRequestGet({ params, env, request }) {
   });
 }
 
-function buildDescription(summary, markdown, title) {
+function buildDescription(metaDescription, summary, markdown, title) {
+  const cleanMetaDescription = String(metaDescription || "").trim();
+  if (cleanMetaDescription) return truncateText(cleanMetaDescription, 155);
+
   const cleanSummary = String(summary || "").trim();
   if (cleanSummary) return truncateText(cleanSummary, 155);
 
