@@ -31,6 +31,7 @@
         <div>
           <label class="small" for="title">제목</label>
           <input class="input" id="title" />
+          <div class="small" id="titleCount">0자</div>
         </div>
         <div>
           <label class="small" for="slugPreview">슬러그 미리보기</label>
@@ -38,17 +39,23 @@
         </div>
       </div>
 
-      <div class="grid grid--3">
+      <div class="grid grid--2">
         <div>
           <label class="small" for="category">카테고리</label>
-          <input class="input" id="category" placeholder="예: 생활 꿀팁" />
-        </div>
-        <div>
-          <label class="small" for="template_name">플랫폼 템플릿</label>
-          <select class="input" id="template_name">
-            <option value="basic">기본형</option>
-            <option value="tip">꿀팁형</option>
-            <option value="review">리뷰형</option>
+          <select class="input" id="category">
+            <option value="">카테고리 선택</option>
+            <option value="생활 꿀팁">생활 꿀팁</option>
+            <option value="살림 노하우">살림 노하우</option>
+            <option value="청소">청소</option>
+            <option value="주방">주방</option>
+            <option value="욕실">욕실</option>
+            <option value="세탁">세탁</option>
+            <option value="정리수납">정리수납</option>
+            <option value="리뷰">리뷰</option>
+            <option value="쇼핑">쇼핑</option>
+            <option value="반려동물">반려동물</option>
+            <option value="건강">건강</option>
+            <option value="디지털">디지털</option>
           </select>
         </div>
         <div>
@@ -61,8 +68,25 @@
       </div>
 
       <div>
+        <label class="small" for="meta_description">메타 디스크립션</label>
+        <textarea
+          class="input"
+          id="meta_description"
+          rows="3"
+          placeholder="검색 결과 description에 들어갈 문구"
+        ></textarea>
+        <div class="small" id="metaDescriptionCount">0자</div>
+      </div>
+
+      <div>
         <label class="small" for="summary">요약문</label>
-        <textarea class="input" id="summary" rows="3" placeholder="검색 결과와 카드 영역에 보여줄 요약"></textarea>
+        <textarea
+          class="input"
+          id="summary"
+          rows="3"
+          placeholder="목록 카드나 내부 요약 영역에 보여줄 문구"
+        ></textarea>
+        <div class="small" id="summaryCount">0자</div>
       </div>
 
       <div class="grid grid--2">
@@ -85,6 +109,7 @@
 ## 소제목
 - 항목 1
 - 항목 2"></textarea>
+        <div class="small" id="contentCount">0자</div>
       </div>
 
       <div class="notice">
@@ -101,7 +126,12 @@
     </section>
   </main>
 
-  <footer class="footer container"><div class="footer__inner"><div>© 2026 Wacky Blog</div></div></footer>
+  <footer class="footer container">
+    <div class="footer__inner">
+      <div>© 2026 Wacky Blog</div>
+    </div>
+  </footer>
+
   <script src="/assets/js/nav.js" defer></script>
   <script src="/assets/js/add.js" defer></script>
 </body>
