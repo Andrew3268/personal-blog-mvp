@@ -6,11 +6,16 @@ export async function onRequestGet({ params, env, request }) {
   if (!slug) return okHtml("Not Found", { status: 404 });
 
   const meta = await env.BLOG_DB.prepare(`
-    SELECT updated_at FROM posts WHERE slug = ? AND status = 'published'
+    SELECT updated_at
+    FROM posts
+    WHERE slug = ? AND status = 'published'
   `).bind(slug).first();
 
   if (!meta) {
-    return okHtml(renderNotFound(slug), { status: 404, headers: { "cache-control": "no-store" } });
+    return okHtml(renderNotFound(slug), {
+      status: 404,
+      headers: { "cache-control": "no-store" }
+    });
   }
 
   const updatedAt = String(meta.updated_at || "");
@@ -23,136 +28,425 @@ export async function onRequestGet({ params, env, request }) {
     ttlSeconds: 600,
     buildResponse: async () => {
       const row = await env.BLOG_DB.prepare(`
-        SELECT slug, title, category, summary, cover_image, template_name, tags_json, content_md, status, published_at, updated_at
+        SELECT
+          slug,
+          title,
+          category,
+          summary,
+          cover_image,
+          template_name,
+          tags_json,
+          content_md,
+          status,
+          published_at,
+          updated_at
         FROM posts
         WHERE slug = ? AND status = 'published'
       `).bind(slug).first();
 
       if (!row) {
-        return okHtml(renderNotFound(slug), { status: 404, headers: { "cache-control": "no-store" } });
+        return okHtml(renderNotFound(slug), {
+          status: 404,
+          headers: { "cache-control": "no-store" }
+        });
       }
 
       let tags = [];
-      try { tags = JSON.parse(row.tags_json || '[]'); } catch { tags = []; }
+      try {
+        tags = JSON.parse(row.tags_json || "[]");
+        if (!Array.isArray(tags)) tags = [];
+      } catch {
+        tags = [];
+      }
+
+      const origin = url.origin;
 
       const canonical = new URL(request.url);
       canonical.pathname = `/post/${encodeURIComponent(slug)}`;
       canonical.search = "";
       canonical.hash = "";
 
-      const bodyHtml = renderMarkdown(row.content_md || "");
-      const title = `${row.title} | Wacky Blog`;
-      const desc = row.summary || `${row.title}에 대한 글입니다.`;
-      const ogImage = row.cover_image || `${new URL(request.url).origin}/assets/images/og-default.svg`;
+      const siteName = "Wacky Blog";
+      const siteDescription = "실용적인 생활 정보와 정리된 가이드를 제공하는 블로그";
+      const authorName = "Steve Lee";
       const templateBadge = getTemplateBadge(row.template_name);
+      const bodyHtml = renderMarkdown(row.content_md || "");
+
+      const titleText = String(row.title || "").trim();
+      const descriptionText = buildDescription(row.summary, row.content_md, titleText);
+      const pageTitle = `${titleText} | ${siteName}`;
+      const ogImage = row.cover_image || `${origin}/assets/images/og-default.svg`;
+
       const publishedDate = formatDate(row.published_at);
       const updatedDate = formatDate(row.updated_at);
+      const publishedIso = toIso(row.published_at);
+      const updatedIso = toIso(row.updated_at);
+
+      const breadcrumbItems = [
+        { name: "홈", url: `${origin}/` },
+        { name: "글 목록", url: `${origin}/posts/` }
+      ];
+
+      if (row.category) {
+        breadcrumbItems.push({
+          name: String(row.category),
+          url: `${origin}/posts/?category=${encodeURIComponent(String(row.category))}`
+        });
+      }
+
+      breadcrumbItems.push({
+        name: titleText,
+        url: canonical.toString()
+      });
+
+      const breadcrumbHtml = renderBreadcrumbs(breadcrumbItems);
+
+      const breadcrumbJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: breadcrumbItems.map((item, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: item.name,
+          item: item.url
+        }))
+      };
+
+      const blogPostingJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        mainEntityOfPage: {
+          "@type": "WebPage",
+          "@id": canonical.toString()
+        },
+        headline: titleText,
+        description: descriptionText,
+        image: [ogImage],
+        author: {
+          "@type": "Person",
+          name: authorName
+        },
+        publisher: {
+          "@type": "Organization",
+          name: siteName,
+          logo: {
+            "@type": "ImageObject",
+            url: `${origin}/assets/images/logo.png`
+          }
+        },
+        datePublished: publishedIso || row.published_at || "",
+        dateModified: updatedIso || row.updated_at || "",
+        url: canonical.toString(),
+        inLanguage: "ko-KR",
+        articleSection: row.category || "블로그",
+        keywords: tags.join(", ")
+      };
+
+      const webPageJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        name: pageTitle,
+        url: canonical.toString(),
+        description: descriptionText,
+        inLanguage: "ko-KR",
+        isPartOf: {
+          "@type": "WebSite",
+          name: siteName,
+          url: `${origin}/`
+        }
+      };
+
+      const coverImagePreload = row.cover_image
+        ? `<link rel="preload" as="image" href="${escapeHtml(row.cover_image)}" fetchpriority="high" />`
+        : "";
+
+      const categoryLink = row.category
+        ? `/posts/?category=${encodeURIComponent(String(row.category))}`
+        : "/posts/";
+
+      const tagsHtml = tags.length
+        ? `<div class="row" style="gap:8px;flex-wrap:wrap">
+            ${tags.map(tag => {
+              const tagText = String(tag).trim();
+              const tagHref = `/posts/?tag=${encodeURIComponent(tagText)}`;
+              return `<a class="tag-chip" href="${tagHref}" rel="tag">#${escapeHtml(tagText)}</a>`;
+            }).join("")}
+          </div>`
+        : "";
+
+      const coverImageHtml = row.cover_image
+        ? `
+        <figure class="post-cover-wrap">
+          <img
+            class="post-cover"
+            src="${escapeHtml(row.cover_image)}"
+            alt="${escapeHtml(titleText)} 대표 이미지"
+            loading="eager"
+            fetchpriority="high"
+            decoding="async"
+            width="1200"
+            height="630"
+          />
+        </figure>
+        `
+        : "";
 
       const html = `<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${escapeHtml(title)}</title>
-  <meta name="description" content="${escapeHtml(desc)}" />
-  <link rel="canonical" href="${escapeHtml(canonical.toString())}" />
-  <meta name="robots" content="index,follow" />
+  <title>${escapeHtml(pageTitle)}</title>
+  <meta name="description" content="${escapeHtml(descriptionText)}" />
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
   <meta name="theme-color" content="#5B7CFF" />
+  <meta name="author" content="${escapeHtml(authorName)}" />
+  <meta name="keywords" content="${escapeHtml(buildKeywords(row.category, tags))}" />
+  <link rel="canonical" href="${escapeHtml(canonical.toString())}" />
+  ${coverImagePreload}
 
   <meta property="og:type" content="article" />
-  <meta property="og:site_name" content="Wacky Blog" />
+  <meta property="og:site_name" content="${escapeHtml(siteName)}" />
   <meta property="og:locale" content="ko_KR" />
   <meta property="og:url" content="${escapeHtml(canonical.toString())}" />
-  <meta property="og:title" content="${escapeHtml(title)}" />
-  <meta property="og:description" content="${escapeHtml(desc)}" />
+  <meta property="og:title" content="${escapeHtml(pageTitle)}" />
+  <meta property="og:description" content="${escapeHtml(descriptionText)}" />
   <meta property="og:image" content="${escapeHtml(ogImage)}" />
+  <meta property="og:image:alt" content="${escapeHtml(titleText)} 대표 이미지" />
 
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="${escapeHtml(title)}" />
-  <meta name="twitter:description" content="${escapeHtml(desc)}" />
+  <meta name="twitter:title" content="${escapeHtml(pageTitle)}" />
+  <meta name="twitter:description" content="${escapeHtml(descriptionText)}" />
   <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
 
   <link rel="stylesheet" href="/assets/css/app.css" />
   <link rel="stylesheet" href="/assets/css/components.css" />
 
-  ${jsonld({
-    '@context': 'https://schema.org',
-    '@type': 'BlogPosting',
-    headline: row.title,
-    description: desc,
-    mainEntityOfPage: canonical.toString(),
-    datePublished: row.published_at,
-    dateModified: row.updated_at,
-    image: [ogImage],
-    author: { '@type': 'Person', name: 'Steve Lee' },
-    publisher: { '@type': 'Organization', name: 'Wacky Blog' }
-  })}
+  ${jsonld(blogPostingJsonLd)}
+  ${jsonld(breadcrumbJsonLd)}
+  ${jsonld(webPageJsonLd)}
 </head>
 <body>
+  <a href="#main-content" class="skip-link">본문 바로가기</a>
+
   ${topbar()}
-  <main class="container">
-    <article class="post-shell post-shell--${escapeHtml(row.template_name || 'basic')}">
+
+  <main id="main-content" class="container">
+    ${breadcrumbHtml}
+
+    <article class="post-shell post-shell--${escapeHtml(row.template_name || "basic")}" itemscope itemtype="https://schema.org/BlogPosting">
       <header class="card post-hero">
         <div class="row" style="justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
           <div class="row" style="gap:8px;flex-wrap:wrap">
-            ${row.category ? `<span class="badge">${escapeHtml(row.category)}</span>` : ''}
+            ${row.category ? `<a class="badge" href="${categoryLink}">${escapeHtml(String(row.category))}</a>` : ""}
             <span class="badge">${escapeHtml(templateBadge)}</span>
             <span class="badge">SSR + Cache</span>
           </div>
-          <div class="small">발행 ${escapeHtml(publishedDate)} · 수정 ${escapeHtml(updatedDate)}</div>
+          <div class="small">
+            <time datetime="${escapeHtml(publishedIso || "")}">발행 ${escapeHtml(publishedDate)}</time>
+            <span aria-hidden="true"> · </span>
+            <time datetime="${escapeHtml(updatedIso || "")}">수정 ${escapeHtml(updatedDate)}</time>
+          </div>
         </div>
-        <h1 class="h1 post-title">${escapeHtml(row.title)}</h1>
-        ${row.summary ? `<p class="p post-summary">${escapeHtml(row.summary)}</p>` : ''}
-        ${tags.length ? `<div class="row" style="gap:8px;flex-wrap:wrap">${tags.map(tag => `<span class="tag-chip">#${escapeHtml(tag)}</span>`).join('')}</div>` : ''}
-        ${row.cover_image ? `<img class="post-cover" src="${escapeHtml(row.cover_image)}" alt="${escapeHtml(row.title)} 대표 이미지" loading="eager" />` : ''}
+
+        <h1 class="h1 post-title" itemprop="headline">${escapeHtml(titleText)}</h1>
+
+        ${row.summary ? `<p class="p post-summary" itemprop="description">${escapeHtml(String(row.summary))}</p>` : ""}
+
+        ${tagsHtml}
+
+        ${coverImageHtml}
+
+        <meta itemprop="author" content="${escapeHtml(authorName)}" />
+        <meta itemprop="datePublished" content="${escapeHtml(publishedIso || "")}" />
+        <meta itemprop="dateModified" content="${escapeHtml(updatedIso || "")}" />
+        <meta itemprop="mainEntityOfPage" content="${escapeHtml(canonical.toString())}" />
+        <meta itemprop="image" content="${escapeHtml(ogImage)}" />
       </header>
 
       <div class="post-grid">
-        <article class="card post-body">
+        <section class="card post-body" aria-label="본문">
           ${bodyHtml}
-        </article>
+        </section>
 
-        <aside class="card post-side">
-          <h2 class="h2">운영 메모</h2>
+        <aside class="card post-side" aria-label="글 정보 및 이동">
+          <h2 class="h2">이 글 정보</h2>
           <div class="sep"></div>
-          <p class="small">이 글은 D1에서 데이터를 읽어 SSR HTML로 렌더링됩니다.</p>
-          <p class="small">응답 헤더에서 <b>x-blog-cache</b> 값을 보면 HIT / MISS를 확인할 수 있습니다.</p>
+
+          <ul class="list-reset small" style="display:grid;gap:10px">
+            <li><b>카테고리:</b> ${row.category ? `<a href="${categoryLink}">${escapeHtml(String(row.category))}</a>` : "미분류"}</li>
+            <li><b>발행일:</b> ${escapeHtml(publishedDate)}</li>
+            <li><b>수정일:</b> ${escapeHtml(updatedDate)}</li>
+            <li><b>주소:</b> <a href="${escapeHtml(canonical.toString())}">고정 링크</a></li>
+          </ul>
+
           <div class="sep"></div>
-          <div class="row" style="flex-wrap:wrap">
-            <a class="btn btn--brand" href="/edit.html?slug=${encodeURIComponent(slug)}">이 글 수정</a>
-            <a class="btn" href="/posts/">글 목록</a>
-          </div>
+
+          <nav aria-label="글 이동">
+            <div class="row" style="flex-wrap:wrap">
+              <a class="btn btn--brand" href="/posts/">글 목록</a>
+              ${row.category ? `<a class="btn" href="${categoryLink}">${escapeHtml(String(row.category))} 글 보기</a>` : ""}
+            </div>
+          </nav>
+
+          ${tags.length ? `
+          <>
+            <div class="sep"></div>
+            <h2 class="h2">태그</h2>
+            <div class="row" style="gap:8px;flex-wrap:wrap">
+              ${tags.map(tag => {
+                const tagText = String(tag).trim();
+                return `<a class="tag-chip" href="/posts/?tag=${encodeURIComponent(tagText)}" rel="tag">#${escapeHtml(tagText)}</a>`;
+              }).join("")}
+            </div>
+          </>
+          `.replace("<>", "").replace("</>", "") : ""}
+
+          <div class="sep"></div>
+          <p class="small">이 페이지는 서버에서 HTML로 렌더링되어 검색엔진이 본문과 메타 정보를 더 안정적으로 읽을 수 있도록 구성했습니다.</p>
         </aside>
       </div>
     </article>
 
-    ${footer()}
+    ${footer(siteName, siteDescription)}
   </main>
+
   <script src="/assets/js/nav.js" defer></script>
 </body>
 </html>`;
 
-      const res = okHtml(html, { headers: { "cache-control": "public, max-age=600" } });
+      const res = okHtml(html, {
+        headers: {
+          "cache-control": "public, max-age=600"
+        }
+      });
+
       res.headers.set("x-blog-cache-version", updatedAt);
       return res;
     }
   });
 }
 
-function formatDate(v) {
-  const d = new Date(v);
+function buildDescription(summary, markdown, title) {
+  const cleanSummary = String(summary || "").trim();
+  if (cleanSummary) return truncateText(cleanSummary, 155);
+
+  const plain = stripMarkdown(markdown || "");
+  if (plain) return truncateText(plain, 155);
+
+  return truncateText(`${title}에 대한 글입니다.`, 155);
+}
+
+function buildKeywords(category, tags) {
+  const parts = [];
+  if (category) parts.push(String(category).trim());
+
+  for (const tag of tags || []) {
+    const t = String(tag).trim();
+    if (t) parts.push(t);
+  }
+
+  return parts.filter(Boolean).join(", ");
+}
+
+function stripMarkdown(md) {
+  return String(md || "")
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`[^`]*`/g, " ")
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, " ")
+    .replace(/\[[^\]]*\]\([^)]+\)/g, " ")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/[*_~>-]/g, " ")
+    .replace(/\n+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function truncateText(text, maxLength = 155) {
+  const value = String(text || "").trim();
+  if (value.length <= maxLength) return value;
+  return value.slice(0, maxLength - 1).trim() + "…";
+}
+
+function toIso(value) {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toISOString();
+}
+
+function formatDate(value) {
+  const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "-";
   return d.toISOString().slice(0, 10);
 }
 
+function renderBreadcrumbs(items) {
+  const list = items
+    .map((item, index) => {
+      const isLast = index === items.length - 1;
+      if (isLast) {
+        return `<li aria-current="page"><span>${escapeHtml(item.name)}</span></li>`;
+      }
+      return `<li><a href="${escapeHtml(item.url)}">${escapeHtml(item.name)}</a></li>`;
+    })
+    .join("");
+
+  return `
+  <nav class="breadcrumb small" aria-label="브레드크럼" style="margin:16px 0 20px">
+    <ol class="list-reset" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+      ${list}
+    </ol>
+  </nav>`;
+}
+
 function renderNotFound(slug) {
-  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>글을 찾을 수 없습니다</title><link rel="stylesheet" href="/assets/css/app.css"><link rel="stylesheet" href="/assets/css/components.css"></head><body><main class="container"><section class="card"><h1 class="h1">글을 찾을 수 없습니다</h1><p class="p">요청한 slug: ${escapeHtml(slug)}</p><div class="row" style="margin-top:14px"><a class="btn btn--brand" href="/posts/">글 목록</a><a class="btn" href="/">홈</a></div></section></main></body></html>`;
+  return `<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>글을 찾을 수 없습니다</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <h1 class="h1">글을 찾을 수 없습니다</h1>
+      <p class="p">요청한 slug: ${escapeHtml(slug)}</p>
+      <div class="row" style="margin-top:14px">
+        <a class="btn btn--brand" href="/posts/">글 목록</a>
+        <a class="btn" href="/">홈</a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>`;
 }
 
 function topbar() {
-  return `<header class="topbar"><div class="topbar__inner"><a class="brand" href="/"><span class="brand__mark">W</span><span>Wacky Blog</span></a><nav class="nav" aria-label="주요 메뉴"><a href="/" data-path="/">홈</a><a href="/posts/" data-path="/posts">글 목록</a><a href="/about/" data-path="/about">소개</a><a href="/add.html" data-path="/add.html">글 작성</a></nav></div></header>`;
+  return `<header class="topbar">
+    <div class="topbar__inner">
+      <a class="brand" href="/">
+        <span class="brand__mark">W</span>
+        <span>Wacky Blog</span>
+      </a>
+      <nav class="nav" aria-label="주요 메뉴">
+        <a href="/" data-path="/">홈</a>
+        <a href="/posts/" data-path="/posts">글 목록</a>
+        <a href="/about/" data-path="/about">소개</a>
+        <a href="/add.html" data-path="/add.html">글 작성</a>
+      </nav>
+    </div>
+  </header>`;
 }
 
-function footer() {
-  return `<footer class="footer container"><div class="footer__inner"><div>© 2026 Wacky Blog</div><div>Git + Cloudflare Pages + SSR + Cache 구조의 개인 블로그 MVP</div></div></footer>`;
+function footer(siteName, siteDescription) {
+  return `<footer class="footer container">
+    <div class="footer__inner">
+      <div>© 2026 ${escapeHtml(siteName)}</div>
+      <div>${escapeHtml(siteDescription)}</div>
+    </div>
+  </footer>`;
 }
