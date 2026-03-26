@@ -1,27 +1,50 @@
 import { okJson } from "../_utils.js";
 
-export async function onRequestGet({ env }) {
-  const rows = await env.BLOG_DB
-    .prepare(`
-      SELECT
-        slug,
-        title,
-        category,
-        meta_description,
-        summary,
-        cover_image,
-        tags_json,
-        status,
-        published_at,
-        updated_at
-      FROM posts
-      WHERE status = 'published'
-      ORDER BY published_at DESC
-      LIMIT 200
-    `)
-    .all();
+export async function onRequestGet({ env, request }) {
+  const url = new URL(request.url);
+  const category = String(url.searchParams.get("category") || "").trim();
+  const tag = String(url.searchParams.get("tag") || "").trim();
 
-  return okJson({ items: rows.results || [] });
+  const where = ["status = 'published'"];
+  const binds = [];
+
+  if (category) {
+    where.push("TRIM(COALESCE(category, '')) = ?");
+    binds.push(category);
+  }
+
+  if (tag) {
+    where.push("EXISTS (SELECT 1 FROM json_each(COALESCE(tags_json, '[]')) WHERE TRIM(json_each.value) = ?)");
+    binds.push(tag);
+  }
+
+  const sql = `
+    SELECT
+      slug,
+      title,
+      category,
+      meta_description,
+      summary,
+      cover_image,
+      tags_json,
+      status,
+      published_at,
+      updated_at
+    FROM posts
+    WHERE ${where.join(" AND ")}
+    ORDER BY published_at DESC
+    LIMIT 200
+  `;
+
+  const rows = await env.BLOG_DB.prepare(sql).bind(...binds).all();
+
+  return okJson({
+    items: rows.results || [],
+    filters: {
+      category,
+      tag
+    }
+  });
 }
 
 export async function onRequestPost({ env, request }) {
