@@ -231,8 +231,6 @@ export async function onRequestGet({ params, env, request }) {
   ${jsonld(webPageJsonLd)}
 </head>
 <body>
-  <a href="#main-content" class="skip-link">본문 바로가기</a>
-
   ${topbar()}
 
   <main id="main-content" class="container">
