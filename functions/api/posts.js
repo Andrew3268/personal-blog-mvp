@@ -2,11 +2,20 @@ import { okJson } from "../_utils.js";
 
 export async function onRequestGet({ env, request }) {
   const url = new URL(request.url);
+  const status = String(url.searchParams.get("status") || "published").trim().toLowerCase();
   const category = String(url.searchParams.get("category") || "").trim();
   const tag = String(url.searchParams.get("tag") || "").trim();
 
-  const where = ["status = 'published'"];
+  const allowedStatuses = new Set(["published", "draft", "all"]);
+  const safeStatus = allowedStatuses.has(status) ? status : "published";
+
+  const where = [];
   const binds = [];
+
+  if (safeStatus !== "all") {
+    where.push("status = ?");
+    binds.push(safeStatus);
+  }
 
   if (category) {
     where.push("TRIM(COALESCE(category, '')) = ?");
@@ -31,8 +40,8 @@ export async function onRequestGet({ env, request }) {
       published_at,
       updated_at
     FROM posts
-    WHERE ${where.join(" AND ")}
-    ORDER BY published_at DESC
+    ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
+    ORDER BY updated_at DESC, published_at DESC
     LIMIT 200
   `;
 
@@ -41,6 +50,7 @@ export async function onRequestGet({ env, request }) {
   return okJson({
     items: rows.results || [],
     filters: {
+      status: safeStatus,
       category,
       tag
     }

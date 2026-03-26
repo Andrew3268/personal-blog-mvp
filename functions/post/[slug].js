@@ -231,6 +231,8 @@ export async function onRequestGet({ params, env, request }) {
   ${jsonld(webPageJsonLd)}
 </head>
 <body>
+  <a href="#main-content" class="skip-link">본문 바로가기</a>
+
   ${topbar()}
 
   <main id="main-content" class="container">
@@ -437,6 +439,7 @@ function topbar() {
       <nav class="nav" aria-label="주요 메뉴">
         <a href="/" data-path="/">홈</a>
         <a href="/posts/" data-path="/posts">글 목록</a>
+        <a href="/posts/?status=draft">초안글 보기</a>
         <a href="/about/" data-path="/about">소개</a>
         <a href="/add.html" data-path="/add.html">글 작성</a>
       </nav>

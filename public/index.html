@@ -3,18 +3,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>글 목록 | Wacky Blog</title>
-  <meta name="description" content="등록된 블로그 글 목록" />
+  <title>Wacky Blog | 개인 블로그 SSR MVP</title>
+  <meta name="description" content="글을 작성하면 Cloudflare Pages + D1 + SSR 구조로 배포되는 개인 블로그 MVP입니다." />
+  <link rel="canonical" href="/" />
+  <meta name="theme-color" content="#5B7CFF" />
   <link rel="stylesheet" href="/assets/css/app.css" />
   <link rel="stylesheet" href="/assets/css/components.css" />
 </head>
 <body>
   <header class="topbar">
     <div class="topbar__inner">
-      <a class="brand" href="/"><span class="brand__mark">W</span><span>Wacky Blog</span></a>
+      <a class="brand" href="/">
+        <span class="brand__mark">W</span>
+        <span>Wacky Blog</span>
+      </a>
       <nav class="nav" aria-label="주요 메뉴">
         <a href="/" data-path="/">홈</a>
         <a href="/posts/" data-path="/posts">글 목록</a>
+        <a href="/posts/?status=draft">초안글 보기</a>
         <a href="/about/" data-path="/about">소개</a>
         <a href="/add.html" data-path="/add.html">글 작성</a>
       </nav>
@@ -22,25 +28,51 @@
   </header>
 
   <main class="container">
-    <section class="card" style="display:flex;flex-direction:column;gap:10px">
-      <h1 id="postsPageTitle" class="h1">글 목록</h1>
-      <p id="postsPageDescription" class="p">목록은 <b>/api/posts</b>에서 불러오며, 실제 공개 페이지는 각 <b>/post/slug</b> 주소에서 SSR로 열립니다.</p>
-      <div class="row" style="flex-wrap:wrap">
-        <a class="btn btn--brand" href="/add.html">새 글 작성</a>
-        <a class="btn" href="/api/posts">JSON 보기</a>
+    <section class="hero card">
+      <div class="hero-copy">
+        <span class="badge">Git + Cloudflare</span>
+        <span class="badge">SSR + Cache</span>
+        <h1 class="hero-title">글을 작성하면<br />실제 블로그 글 페이지가 생성되는 구조</h1>
+        <p class="p hero-desc">이 MVP는 관리자 화면에서 글을 저장하면 D1에 데이터가 들어가고, 공개 페이지는 <b>/post/slug</b>에서 SSR HTML로 생성됩니다. 홈과 글목록은 정적이라 가볍고, 개별 글은 캐시까지 적용되어 빠르게 열립니다.</p>
+        <div class="row" style="margin-top:12px;flex-wrap:wrap">
+          <a class="btn btn--brand" href="/add.html">글 작성 시작</a>
+          <a class="btn" href="/posts/">샘플 글 보기</a>
+        </div>
+      </div>
+      <div class="hero-panel">
+        <div class="mini-flow">
+          <div>1. 글 작성</div>
+          <div>2. D1 저장</div>
+          <div>3. /post/slug SSR</div>
+          <div>4. Cloudflare 캐시</div>
+          <div>5. Git push 시 자동 배포</div>
+        </div>
       </div>
     </section>
 
-    <section style="margin-top:16px">
-      <div id="postsLoading" class="small">글 목록 불러오는 중…</div>
-      <div id="postsError" class="small" hidden style="color:#b00020"></div>
-      <div id="postsEmpty" class="small" hidden>등록된 글이 없습니다.</div>
-      <div id="postsList" class="grid post-list-grid" style="margin-top:12px"></div>
+    <section class="grid grid--3" style="margin-top:16px">
+      <article class="card feature-card">
+        <h2 class="h2">정적 + SSR 혼합 테스트</h2>
+        <p class="p">홈과 목록은 정적으로 빠르게 열리고, 개별 글만 SSR로 렌더링해 SEO와 속도를 함께 잡습니다.</p>
+      </article>
+      <article class="card feature-card">
+        <h2 class="h2">템플릿형 작성</h2>
+        <p class="p">제목, 요약, 카테고리, 태그, 본문 마크다운만 넣으면 실제 글 페이지 HTML이 생성됩니다.</p>
+      </article>
+      <article class="card feature-card">
+        <h2 class="h2">캐시 헤더 확인 가능</h2>
+        <p class="p">상세 페이지 응답 헤더의 <b>x-blog-cache</b>로 HIT / MISS를 바로 확인할 수 있습니다.</p>
+      </article>
     </section>
   </main>
 
-  <footer class="footer container"><div class="footer__inner"><div>© 2026 Wacky Blog</div></div></footer>
+  <footer class="footer container">
+    <div class="footer__inner">
+      <div>© 2026 Wacky Blog</div>
+      <div>개인 블로그용 Cloudflare Pages + D1 + SSR MVP</div>
+    </div>
+  </footer>
+
   <script src="/assets/js/nav.js" defer></script>
-  <script src="/assets/js/posts.js" defer></script>
 </body>
 </html>
