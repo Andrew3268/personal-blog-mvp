@@ -23,41 +23,6 @@
 
   <main class="container">
     <div class="editor-layout">
-      <aside class="card seo-panel" aria-label="SEO 체커">
-        <div class="seo-panel__top">
-          <div>
-            <div class="small seo-eyebrow">실시간 SEO 체크</div>
-            <h2 class="h2">SEO 체커</h2>
-          </div>
-          <div class="seo-score-wrap">
-            <div class="seo-score" id="seoScore">0</div>
-            <div class="small" id="seoGrade">점검 필요</div>
-          </div>
-        </div>
-
-        <p class="p">랭크매스·요스트처럼 입력 중인 제목, 설명, 키워드, 본문 구조를 기준으로 부족한 점을 바로 확인할 수 있습니다.</p>
-
-        <div class="seo-keyword-box">
-          <label class="small" for="focusKeyword">메인 키워드</label>
-          <input class="input" id="focusKeyword" placeholder="예: 욕실 청소" />
-          <div class="small">메인 키워드는 저장되지 않고 SEO 점검용으로만 사용됩니다.</div>
-        </div>
-
-        <div class="seo-checklist" id="seoChecklist"></div>
-
-        <div class="notice seo-tip-box">
-          <strong>빠른 통과 기준</strong>
-          <div class="sep"></div>
-          <ul class="plain-list">
-            <li>제목 20~60자</li>
-            <li>메타 디스크립션 70~160자</li>
-            <li>본문 500자 이상</li>
-            <li>H2 소제목 2개 이상</li>
-            <li>메인 키워드가 제목·설명·첫 문단에 포함</li>
-          </ul>
-        </div>
-      </aside>
-
       <section class="card form-card">
         <h1 class="h1">글 작성</h1>
         <p class="p">여기에 글을 입력하면 D1에 저장되고, 공개 페이지는 <b>/post/slug</b>에서 SSR HTML로 생성됩니다.</p>
@@ -138,9 +103,7 @@
 
         <div>
           <label class="small" for="content_md">본문 (마크다운)</label>
-          <textarea class="input editor-textarea" id="content_md" rows="18" placeholder="# 제목
-
-도입 문단
+          <textarea class="input editor-textarea" id="content_md" rows="18" placeholder="도입 문단
 
 ## 소제목
 - 항목 1
@@ -151,7 +114,7 @@
         <div class="notice">
           <strong>본문 작성 팁</strong>
           <div class="sep"></div>
-          <div class="small"># / ## / ### 제목, 리스트(-), 번호리스트(1.), 인용문(>) 정도만 지원하는 단순 마크다운 렌더러가 포함되어 있습니다.</div>
+          <div class="small">공개 페이지에서 입력한 제목이 이미 H1로 사용됩니다. 따라서 본문에는 가능하면 <b># 제목</b> 대신 <b>##</b>, <b>###</b> 소제목 위주로 작성하는 편이 좋습니다.</div>
         </div>
 
         <div class="row" style="flex-wrap:wrap">
@@ -160,6 +123,48 @@
           <span class="small" id="saveStatus"></span>
         </div>
       </section>
+
+      <aside class="card seo-panel" aria-label="SEO 체커">
+        <div class="seo-panel__top">
+          <div>
+            <div class="small seo-eyebrow">실시간 SEO 체크</div>
+            <h2 class="h2">SEO 체커</h2>
+          </div>
+          <div class="seo-score-wrap">
+            <div class="seo-score" id="seoScore">0</div>
+            <div class="small" id="seoGrade">점검 필요</div>
+          </div>
+        </div>
+
+        <p class="p">입력 중인 제목, 설명, 키워드, 본문 구조를 실시간으로 점검해 부족한 부분과 과한 부분을 함께 보여줍니다.</p>
+
+        <div class="seo-keyword-box">
+          <label class="small" for="focusKeyword">메인 키워드</label>
+          <input class="input" id="focusKeyword" placeholder="예: 욕실 청소" />
+        </div>
+
+        <div class="seo-keyword-box">
+          <label class="small" for="longtailKeywords">롱테일 키워드 (콤마 구분)</label>
+          <input class="input" id="longtailKeywords" placeholder="예: 욕실 청소 꿀팁, 욕실 물때 제거 방법" />
+          <div class="small">메인 키워드와 롱테일 키워드는 저장되지 않고 SEO 점검용으로만 사용됩니다.</div>
+        </div>
+
+        <div class="seo-checklist" id="seoChecklist"></div>
+
+        <div class="notice seo-tip-box">
+          <strong>빠른 통과 기준</strong>
+          <div class="sep"></div>
+          <ul class="plain-list">
+            <li>제목 20~60자</li>
+            <li>메타 디스크립션 70~160자</li>
+            <li>본문 500자 이상</li>
+            <li>H2 소제목 2개 이상</li>
+            <li>H3 소제목 1개 이상이면 구조화에 도움</li>
+            <li>메인 키워드와 롱테일 키워드는 자연스럽게 포함</li>
+            <li>같은 키워드 반복은 과하지 않게 유지</li>
+          </ul>
+        </div>
+      </aside>
     </div>
   </main>
 

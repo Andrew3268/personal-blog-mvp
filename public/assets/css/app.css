@@ -69,9 +69,8 @@ img{max-width:100%;display:block}
 .post-shell--review .post-hero{border:1px solid rgba(91,124,255,.22);box-shadow:0 12px 32px rgba(91,124,255,.10)}
 
 
-/*글쓰기 페이지 SEO 체커*/
 .editor-layout{display:grid;gap:16px;align-items:start}
-@media (min-width:1080px){.editor-layout{grid-template-columns:340px minmax(0,1fr)}}
+@media (min-width:1080px){.editor-layout{grid-template-columns:minmax(0,1fr) 340px}}
 .seo-panel{display:flex;flex-direction:column;gap:14px;position:sticky;top:86px}
 .seo-panel__top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .seo-eyebrow{font-weight:900;color:#1d4ed8;text-transform:uppercase;letter-spacing:.04em}

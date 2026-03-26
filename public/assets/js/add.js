@@ -16,6 +16,14 @@ function parseTags(raw) {
     .filter(Boolean);
 }
 
+function parseKeywords(raw) {
+  return String(raw || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .filter((item, index, arr) => arr.indexOf(item) === index);
+}
+
 function countText(value) {
   return String(value || "").length;
 }
@@ -102,6 +110,55 @@ function getFirstParagraph(md) {
   return parts[0] || "";
 }
 
+function containsKeyword(text, keyword) {
+  return normalizeText(text).toLowerCase().includes(normalizeText(keyword).toLowerCase());
+}
+
+function evaluateLongtailKeywords(texts, keywords) {
+  if (!keywords.length) {
+    return {
+      count: 0,
+      total: 0,
+      missing: [],
+      matched: []
+    };
+  }
+
+  const matched = keywords.filter((keyword) => texts.some((text) => containsKeyword(text, keyword)));
+  const missing = keywords.filter((keyword) => !matched.includes(keyword));
+
+  return {
+    count: matched.length,
+    total: keywords.length,
+    missing,
+    matched
+  };
+}
+
+function evaluateStuffing(keyword, contentText) {
+  if (!keyword) {
+    return {
+      status: "warn",
+      detail: "메인 키워드를 입력하면 과다 반복 여부를 계산합니다."
+    };
+  }
+
+  const occurrence = countKeywordOccurrences(contentText, keyword);
+  const sourceLen = normalizeText(contentText).length;
+  const keywordLen = normalizeText(keyword).length || 1;
+  const ratio = sourceLen > 0 ? ((occurrence * keywordLen) / sourceLen) * 100 : 0;
+
+  let status = "good";
+  if (occurrence === 0) status = "bad";
+  else if (ratio > 3.5 || occurrence > 20) status = "bad";
+  else if (ratio > 2.2 || occurrence > 14) status = "warn";
+
+  return {
+    status,
+    detail: `본문 내 ${occurrence}회 · 추정 밀도 ${ratio.toFixed(2)}% · 권장 0.5~2.2% 정도`
+  };
+}
+
 function evaluateSeo() {
   const title = $("title").value.trim();
   const slug = $("slugPreview").value.trim();
@@ -109,27 +166,34 @@ function evaluateSeo() {
   const summary = $("summary").value.trim();
   const contentMd = $("content_md").value || "";
   const focusKeyword = $("focusKeyword")?.value.trim() || "";
+  const longtailKeywords = parseKeywords($("longtailKeywords")?.value || "");
 
   const plainContent = stripMarkdown(contentMd);
   const titleLen = countText(title);
   const metaLen = countText(metaDescription);
   const summaryLen = countText(summary);
   const contentLen = countText(plainContent);
-  const h1List = getHeadings(contentMd, 1);
+  const bodyH1List = getHeadings(contentMd, 1);
   const h2List = getHeadings(contentMd, 2);
+  const h3List = getHeadings(contentMd, 3);
   const links = getLinks(contentMd);
   const images = getImages(contentMd);
   const internalLinks = links.filter((href) => href.startsWith("/")).length;
   const externalLinks = links.filter((href) => /^https?:\/\//.test(href)).length;
   const imagesWithoutAlt = images.filter((img) => !img.alt).length;
   const firstParagraph = getFirstParagraph(contentMd);
-  const keywordInTitle = focusKeyword ? title.includes(focusKeyword) : false;
-  const keywordInMeta = focusKeyword ? metaDescription.includes(focusKeyword) : false;
-  const keywordInSummary = focusKeyword ? summary.includes(focusKeyword) : false;
-  const keywordInSlug = focusKeyword ? slug.includes(slugify(focusKeyword)) : false;
-  const keywordInFirstParagraph = focusKeyword ? firstParagraph.includes(focusKeyword) : false;
-  const keywordInH2 = focusKeyword ? h2List.some((h) => h.includes(focusKeyword)) : false;
+  const keywordInTitle = focusKeyword ? containsKeyword(title, focusKeyword) : false;
+  const keywordInMeta = focusKeyword ? containsKeyword(metaDescription, focusKeyword) : false;
+  const keywordInSummary = focusKeyword ? containsKeyword(summary, focusKeyword) : false;
+  const keywordInSlug = focusKeyword ? containsKeyword(slug, slugify(focusKeyword)) : false;
+  const keywordInFirstParagraph = focusKeyword ? containsKeyword(firstParagraph, focusKeyword) : false;
+  const keywordInH2 = focusKeyword ? h2List.some((h) => containsKeyword(h, focusKeyword)) : false;
   const keywordCount = focusKeyword ? countKeywordOccurrences(plainContent, focusKeyword) : 0;
+  const longtailResult = evaluateLongtailKeywords(
+    [title, metaDescription, summary, firstParagraph, plainContent, ...h2List, ...h3List],
+    longtailKeywords
+  );
+  const stuffingResult = evaluateStuffing(focusKeyword, plainContent);
 
   const checks = [
     {
@@ -158,15 +222,27 @@ function evaluateSeo() {
     },
     {
       key: "h1Count",
-      label: "H1 개수",
-      status: h1List.length === 1 ? "good" : h1List.length === 0 ? "warn" : "bad",
-      detail: `현재 ${h1List.length}개 · 권장 1개`
+      label: "H1 구조",
+      status: title
+        ? bodyH1List.length === 0 ? "good" : "warn"
+        : "bad",
+      detail: title
+        ? bodyH1List.length === 0
+          ? "제목 입력값이 공개 페이지의 H1로 사용됩니다. 본문 내 추가 H1이 없어 좋습니다."
+          : `제목이 H1로 사용되며, 본문에 H1이 ${bodyH1List.length}개 더 있어 보완이 필요합니다.`
+        : "제목이 비어 있어 공개 페이지 H1이 없습니다."
     },
     {
       key: "h2Count",
       label: "H2 소제목 구조",
       status: h2List.length >= 2 ? "good" : h2List.length === 1 ? "warn" : "bad",
       detail: `현재 ${h2List.length}개 · 권장 2개 이상`
+    },
+    {
+      key: "h3Count",
+      label: "H3 소제목 구조",
+      status: h3List.length >= 2 ? "good" : h3List.length === 1 ? "warn" : "warn",
+      detail: `현재 ${h3List.length}개 · 세부 구조 정리에 도움`
     },
     {
       key: "internalLinks",
@@ -191,12 +267,20 @@ function evaluateSeo() {
   ];
 
   if (!focusKeyword) {
-    checks.push({
-      key: "focusKeywordMissing",
-      label: "메인 키워드 설정",
-      status: "bad",
-      detail: "메인 키워드를 입력해야 핵심 SEO 점검이 활성화됩니다."
-    });
+    checks.push(
+      {
+        key: "focusKeywordMissing",
+        label: "메인 키워드 설정",
+        status: "bad",
+        detail: "메인 키워드를 입력해야 핵심 SEO 점검이 활성화됩니다."
+      },
+      {
+        key: "keywordStuffing",
+        label: "키워드 스터핑 체크",
+        status: stuffingResult.status,
+        detail: stuffingResult.detail
+      }
+    );
   } else {
     checks.push(
       {
@@ -240,8 +324,32 @@ function evaluateSeo() {
         label: "메인 키워드 언급 횟수",
         status: keywordCount >= 3 && keywordCount <= 12 ? "good" : keywordCount >= 1 ? "warn" : "bad",
         detail: `본문 내 ${keywordCount}회 언급 · 권장 3~12회`
+      },
+      {
+        key: "keywordStuffing",
+        label: "키워드 스터핑 체크",
+        status: stuffingResult.status,
+        detail: stuffingResult.detail
       }
     );
+  }
+
+  if (!longtailKeywords.length) {
+    checks.push({
+      key: "longtailKeywords",
+      label: "롱테일 키워드 설정",
+      status: "warn",
+      detail: "롱테일 키워드를 콤마로 입력하면 포함 여부를 함께 점검합니다."
+    });
+  } else {
+    checks.push({
+      key: "longtailCoverage",
+      label: "롱테일 키워드 포함 여부",
+      status: longtailResult.count === longtailResult.total ? "good" : longtailResult.count >= 1 ? "warn" : "bad",
+      detail: longtailResult.count === longtailResult.total
+        ? `${longtailResult.total}개 모두 본문 또는 주요 영역에 포함되었습니다.`
+        : `총 ${longtailResult.total}개 중 ${longtailResult.count}개 포함 · 미포함: ${longtailResult.missing.join(", ")}`
+    });
   }
 
   return checks;
@@ -335,7 +443,7 @@ function handleRealtimeChange() {
   renderSeoChecklist();
 }
 
-["title", "meta_description", "summary", "content_md", "focusKeyword"].forEach((id) => {
+["title", "meta_description", "summary", "content_md", "focusKeyword", "longtailKeywords"].forEach((id) => {
   const el = $(id);
   if (el) el.addEventListener("input", handleRealtimeChange);
 });
