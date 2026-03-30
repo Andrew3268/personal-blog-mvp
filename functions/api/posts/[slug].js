@@ -14,6 +14,7 @@ export async function onRequestGet({ env, params }) {
       meta_description,
       summary,
       cover_image,
+      cover_image_alt,
       tags_json,
       content_md,
       status,
@@ -46,6 +47,7 @@ export async function onRequestPut({ env, params, request }) {
   const metaDescription = String(body.meta_description || "").trim();
   const summary = String(body.summary || "").trim();
   const coverImage = String(body.cover_image || "").trim();
+  const coverImageAlt = String(body.cover_image_alt || "").trim();
   const contentMd = String(body.content_md || "").trim();
   const status = String(body.status || "published").trim() || "published";
   const tags = Array.isArray(body.tags) ? body.tags : [];
@@ -77,6 +79,7 @@ export async function onRequestPut({ env, params, request }) {
       meta_description = ?,
       summary = ?,
       cover_image = ?,
+      cover_image_alt = ?,
       tags_json = ?,
       content_md = ?,
       status = ?,
@@ -89,6 +92,7 @@ export async function onRequestPut({ env, params, request }) {
     metaDescription,
     summary,
     coverImage,
+    coverImageAlt,
     JSON.stringify(tags),
     contentMd,
     status,

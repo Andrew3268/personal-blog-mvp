@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS posts (
   meta_description TEXT DEFAULT '',
   summary TEXT DEFAULT '',
   cover_image TEXT DEFAULT '',
+  cover_image_alt TEXT DEFAULT '',
   template_name TEXT DEFAULT 'basic',
   tags_json TEXT DEFAULT '[]',
   content_md TEXT DEFAULT '',

@@ -522,12 +522,24 @@ function renderPreview() {
   const title = $("title").value.trim() || "제목을 입력해 주세요";
   const category = $("category").value.trim();
   const summary = $("summary").value.trim();
+  const metaDescription = $("meta_description").value.trim();
   const coverImage = $("cover_image").value.trim();
+  const coverImageAlt = $("cover_image_alt")?.value.trim() || "";
   const contentMd = $("content_md").value || "";
   const tags = parseTags($("tags").value);
+  const slug = $("slugPreview").value.trim();
+  const snippetUrl = slug ? `https://personal-blog-mvp.pages.dev/post/${slug}` : 'https://personal-blog-mvp.pages.dev/post/slug-example';
 
   previewEl.innerHTML = `
     <article class="preview-article">
+      <section class="preview-snippet" aria-label="SEO 스니펫 미리보기">
+        <div class="small preview-snippet__label">SEO 스니펫 미리보기</div>
+        <div class="preview-snippet__title">${escapeHtml(title)}</div>
+        <div class="preview-snippet__url">${escapeHtml(snippetUrl)}</div>
+        <div class="preview-snippet__desc">${escapeHtml(metaDescription || summary || '메타디스크립션을 입력하면 검색 결과 설명이 여기에 표시됩니다.')}</div>
+      </section>
+
+      <div class="preview-post-card">
       <header class="preview-article__head">
         <div class="row" style="justify-content:space-between;align-items:flex-start;gap:10px">
           ${category ? `<span class="badge">${escapeHtml(category)}</span>` : '<span class="badge">미분류</span>'}
@@ -537,8 +549,9 @@ function renderPreview() {
         ${summary ? `<p class="preview-summary">${escapeHtml(summary)}</p>` : ""}
         ${tags.length ? `<div class="row">${tags.map((tag) => `<span class="tag-chip">#${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
       </header>
-      ${coverImage ? `<img class="preview-cover" src="${escapeHtml(coverImage)}" alt="${escapeHtml(title)} 대표 이미지" loading="lazy">` : ""}
+      ${coverImage ? `<img class="preview-cover" src="${escapeHtml(coverImage)}" alt="${escapeHtml(coverImageAlt || `${title} 대표 이미지`)}" loading="lazy">` : ""}
       <section class="preview-body">${markdownToHtml(contentMd)}</section>
+    </div>
     </article>
   `;
 }
@@ -594,6 +607,7 @@ async function save() {
     meta_description: $("meta_description").value.trim(),
     summary: $("summary").value.trim(),
     cover_image: $("cover_image").value.trim(),
+    cover_image_alt: $("cover_image_alt").value.trim(),
     status: $("status").value,
     tags: parseTags($("tags").value),
     content_md: $("content_md").value
@@ -628,7 +642,7 @@ function handleRealtimeChange() {
   renderPreview();
 }
 
-["title", "meta_description", "summary", "content_md", "focusKeyword", "longtailKeywords", "cover_image", "tags", "category"].forEach((id) => {
+["title", "meta_description", "summary", "content_md", "focusKeyword", "longtailKeywords", "cover_image", "cover_image_alt", "tags", "category"].forEach((id) => {
   const el = $(id);
   if (el) el.addEventListener("input", handleRealtimeChange);
   if (el && el.tagName === "SELECT") el.addEventListener("change", handleRealtimeChange);

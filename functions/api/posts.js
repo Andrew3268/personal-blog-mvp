@@ -35,6 +35,7 @@ export async function onRequestGet({ env, request }) {
       meta_description,
       summary,
       cover_image,
+      cover_image_alt,
       tags_json,
       status,
       published_at,
@@ -69,6 +70,7 @@ export async function onRequestPost({ env, request }) {
   const metaDescription = String(body.meta_description || "").trim();
   const summary = String(body.summary || "").trim();
   const coverImage = String(body.cover_image || "").trim();
+  const coverImageAlt = String(body.cover_image_alt || "").trim();
   const contentMd = String(body.content_md || "").trim();
   const status = String(body.status || "published").trim() || "published";
   const tags = Array.isArray(body.tags) ? body.tags : [];
@@ -90,18 +92,20 @@ export async function onRequestPost({ env, request }) {
       meta_description,
       summary,
       cover_image,
+      cover_image_alt,
       tags_json,
       content_md,
       status,
       published_at,
       updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(slug) DO UPDATE SET
       title = excluded.title,
       category = excluded.category,
       meta_description = excluded.meta_description,
       summary = excluded.summary,
       cover_image = excluded.cover_image,
+      cover_image_alt = excluded.cover_image_alt,
       tags_json = excluded.tags_json,
       content_md = excluded.content_md,
       status = excluded.status,
@@ -114,6 +118,7 @@ export async function onRequestPost({ env, request }) {
     metaDescription,
     summary,
     coverImage,
+    coverImageAlt,
     JSON.stringify(tags),
     contentMd,
     status,

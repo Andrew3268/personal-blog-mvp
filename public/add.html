@@ -36,7 +36,7 @@
 
         <div class="grid grid--2">
           <div>
-            <div class="label-row">
+            <div class="label-row label-row--compact">
               <label class="small" for="title">제목</label>
               <div class="small count-indicator" id="titleCount">0자</div>
             </div>
@@ -83,8 +83,8 @@
         </div>
 
         <div>
-          <div class="label-row">
-            <label class="small" for="meta_description">메타 디스크립션</label>
+          <div class="label-row label-row--compact">
+            <label class="small" for="meta_description">메타디스크립션</label>
             <div class="small count-indicator" id="metaDescriptionCount">0자</div>
           </div>
           <textarea
@@ -96,7 +96,7 @@
         </div>
 
         <div>
-          <div class="label-row">
+          <div class="label-row label-row--compact">
             <label class="small" for="summary">요약문</label>
             <div class="small count-indicator" id="summaryCount">0자</div>
           </div>
@@ -125,6 +125,13 @@
 
         <div>
           <div class="label-row">
+            <label class="small" for="cover_image_alt">대표 이미지 ALT</label>
+          </div>
+          <input class="input" id="cover_image_alt" placeholder="예: 욕실 청소용 스프레이를 뿌리는 장면" />
+        </div>
+
+        <div>
+          <div class="label-row label-row--compact">
             <label class="small" for="content_md">본문 (마크다운)</label>
             <div class="small count-indicator" id="contentCount">0자</div>
           </div>

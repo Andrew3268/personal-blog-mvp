@@ -35,6 +35,7 @@ export async function onRequestGet({ params, env, request }) {
           meta_description,
           summary,
           cover_image,
+          cover_image_alt,
           tags_json,
           content_md,
           status,
@@ -80,6 +81,7 @@ export async function onRequestGet({ params, env, request }) {
       );
       const pageTitle = `${titleText} | ${siteName}`;
       const ogImage = row.cover_image || `${origin}/assets/images/og-default.svg`;
+      const coverImageAltText = String(row.cover_image_alt || `${titleText} 대표 이미지`).trim();
 
       const publishedDate = formatDate(row.published_at);
       const updatedDate = formatDate(row.updated_at);
@@ -184,7 +186,7 @@ export async function onRequestGet({ params, env, request }) {
           <img
             class="post-cover"
             src="${escapeHtml(row.cover_image)}"
-            alt="${escapeHtml(titleText)} 대표 이미지"
+            alt="${escapeHtml(coverImageAltText)}"
             loading="eager"
             fetchpriority="high"
             decoding="async"
@@ -216,7 +218,7 @@ export async function onRequestGet({ params, env, request }) {
   <meta property="og:title" content="${escapeHtml(pageTitle)}" />
   <meta property="og:description" content="${escapeHtml(descriptionText)}" />
   <meta property="og:image" content="${escapeHtml(ogImage)}" />
-  <meta property="og:image:alt" content="${escapeHtml(titleText)} 대표 이미지" />
+  <meta property="og:image:alt" content="${escapeHtml(coverImageAltText)}" />
 
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${escapeHtml(pageTitle)}" />
