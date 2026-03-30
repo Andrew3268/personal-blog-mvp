@@ -25,25 +25,36 @@
   <main class="container">
     <div class="editor-layout">
       <section class="card form-card">
-        <h1 class="h1">글 작성</h1>
-        <p class="p">여기에 글을 입력하면 D1에 저장되고, 공개 페이지는 <b>/post/slug</b>에서 SSR HTML로 생성됩니다.</p>
+        <div class="row editor-head-row" style="justify-content:space-between;align-items:flex-start">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <h1 class="h1">글 작성</h1>
+            <p class="p">여기에 글을 입력하면 D1에 저장되고, 공개 페이지는 <b>/post/slug</b>에서 SSR HTML로 생성됩니다.</p>
+          </div>
+          <button class="btn" id="previewOpenBtn" type="button" aria-controls="previewDrawer" aria-expanded="false">본문 미리보기</button>
+        </div>
         <div class="sep"></div>
 
         <div class="grid grid--2">
           <div>
-            <label class="small" for="title">제목</label>
+            <div class="label-row">
+              <label class="small" for="title">제목</label>
+              <div class="small count-indicator" id="titleCount">0자</div>
+            </div>
             <input class="input" id="title" />
-            <div class="small" id="titleCount">0자</div>
           </div>
           <div>
-            <label class="small" for="slugPreview">슬러그 미리보기</label>
+            <div class="label-row">
+              <label class="small" for="slugPreview">슬러그 미리보기</label>
+            </div>
             <input class="input" id="slugPreview" disabled />
           </div>
         </div>
 
         <div class="grid grid--2">
           <div>
-            <label class="small" for="category">카테고리</label>
+            <div class="label-row">
+              <label class="small" for="category">카테고리</label>
+            </div>
             <select class="input" id="category">
               <option value="">카테고리 선택</option>
               <option value="생활 꿀팁">생활 꿀팁</option>
@@ -61,7 +72,9 @@
             </select>
           </div>
           <div>
-            <label class="small" for="status">상태</label>
+            <div class="label-row">
+              <label class="small" for="status">상태</label>
+            </div>
             <select class="input" id="status">
               <option value="published">발행</option>
               <option value="draft">초안</option>
@@ -70,46 +83,56 @@
         </div>
 
         <div>
-          <label class="small" for="meta_description">메타 디스크립션</label>
+          <div class="label-row">
+            <label class="small" for="meta_description">메타 디스크립션</label>
+            <div class="small count-indicator" id="metaDescriptionCount">0자</div>
+          </div>
           <textarea
             class="input"
             id="meta_description"
             rows="3"
             placeholder="검색 결과 description에 들어갈 문구"
           ></textarea>
-          <div class="small" id="metaDescriptionCount">0자</div>
         </div>
 
         <div>
-          <label class="small" for="summary">요약문</label>
+          <div class="label-row">
+            <label class="small" for="summary">요약문</label>
+            <div class="small count-indicator" id="summaryCount">0자</div>
+          </div>
           <textarea
             class="input"
             id="summary"
             rows="3"
             placeholder="목록 카드나 내부 요약 영역에 보여줄 문구"
           ></textarea>
-          <div class="small" id="summaryCount">0자</div>
         </div>
 
         <div class="grid grid--2">
           <div>
-            <label class="small" for="tags">태그 (콤마 구분)</label>
+            <div class="label-row">
+              <label class="small" for="tags">태그 (콤마 구분)</label>
+            </div>
             <input class="input" id="tags" placeholder="예: 생활꿀팁, 욕실청소, 재활용" />
           </div>
           <div>
-            <label class="small" for="cover_image">대표 이미지 URL</label>
+            <div class="label-row">
+              <label class="small" for="cover_image">대표 이미지 URL</label>
+            </div>
             <input class="input" id="cover_image" placeholder="https://..." />
           </div>
         </div>
 
         <div>
-          <label class="small" for="content_md">본문 (마크다운)</label>
+          <div class="label-row">
+            <label class="small" for="content_md">본문 (마크다운)</label>
+            <div class="small count-indicator" id="contentCount">0자</div>
+          </div>
           <textarea class="input editor-textarea" id="content_md" rows="18" placeholder="도입 문단
 
 ## 소제목
 - 항목 1
 - 항목 2"></textarea>
-          <div class="small" id="contentCount">0자</div>
         </div>
 
         <div class="notice">
@@ -168,6 +191,30 @@
       </aside>
     </div>
   </main>
+
+  <div class="preview-backdrop" id="previewBackdrop" hidden></div>
+  <aside class="preview-drawer" id="previewDrawer" aria-hidden="true">
+    <div class="preview-drawer__header">
+      <div>
+        <div class="small seo-eyebrow">본문 미리보기</div>
+        <h2 class="h2">실시간 미리보기</h2>
+      </div>
+      <div class="preview-actions">
+        <div class="preview-device-switch" role="tablist" aria-label="미리보기 기기 전환">
+          <button class="btn btn--device is-active" type="button" data-preview-width="pc">PC</button>
+          <button class="btn btn--device" type="button" data-preview-width="tablet">태블릿</button>
+          <button class="btn btn--device" type="button" data-preview-width="mobile">모바일</button>
+        </div>
+        <button class="btn" id="previewCloseBtn" type="button">닫기</button>
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div class="preview-stage" id="previewStage" data-device="pc">
+      <div class="preview-frame preview-frame--pc" id="previewFrame">
+        <div class="preview-page" id="previewContent"></div>
+      </div>
+    </div>
+  </aside>
 
   <footer class="footer container">
     <div class="footer__inner">

@@ -28,11 +28,30 @@ function countText(value) {
   return String(value || "").length;
 }
 
+function setCountState(outputEl, value, min, max) {
+  if (!outputEl) return;
+  outputEl.classList.remove("is-good", "is-warn", "is-bad");
+  if (!value) {
+    outputEl.classList.add("is-bad");
+    return;
+  }
+  if (value >= min && value <= max) {
+    outputEl.classList.add("is-good");
+    return;
+  }
+  outputEl.classList.add(value >= Math.max(1, Math.floor(min * 0.7)) ? "is-warn" : "is-bad");
+}
+
 function updateCount(inputId, outputId) {
   const inputEl = $(inputId);
   const outputEl = $(outputId);
   if (!inputEl || !outputEl) return;
-  outputEl.textContent = `${countText(inputEl.value)}자`;
+  const value = countText(inputEl.value);
+  outputEl.textContent = `${value}자`;
+
+  if (outputId === "titleCount") setCountState(outputEl, value, 20, 60);
+  else if (outputId === "metaDescriptionCount") setCountState(outputEl, value, 70, 160);
+  else outputEl.classList.remove("is-good", "is-warn", "is-bad");
 }
 
 function updateAllCounts() {
@@ -49,6 +68,15 @@ function updateSlugPreview() {
 
 function normalizeText(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function stripMarkdown(md) {
@@ -116,23 +144,13 @@ function containsKeyword(text, keyword) {
 
 function evaluateLongtailKeywords(texts, keywords) {
   if (!keywords.length) {
-    return {
-      count: 0,
-      total: 0,
-      missing: [],
-      matched: []
-    };
+    return { count: 0, total: 0, missing: [], matched: [] };
   }
 
   const matched = keywords.filter((keyword) => texts.some((text) => containsKeyword(text, keyword)));
   const missing = keywords.filter((keyword) => !matched.includes(keyword));
 
-  return {
-    count: matched.length,
-    total: keywords.length,
-    missing,
-    matched
-  };
+  return { count: matched.length, total: keywords.length, missing, matched };
 }
 
 function evaluateStuffing(keyword, contentText) {
@@ -223,9 +241,7 @@ function evaluateSeo() {
     {
       key: "h1Count",
       label: "H1 구조",
-      status: title
-        ? bodyH1List.length === 0 ? "good" : "warn"
-        : "bad",
+      status: title ? (bodyH1List.length === 0 ? "good" : "warn") : "bad",
       detail: title
         ? bodyH1List.length === 0
           ? "제목 입력값이 공개 페이지의 H1로 사용됩니다. 본문 내 추가 H1이 없어 좋습니다."
@@ -241,7 +257,7 @@ function evaluateSeo() {
     {
       key: "h3Count",
       label: "H3 소제목 구조",
-      status: h3List.length >= 2 ? "good" : h3List.length === 1 ? "warn" : "warn",
+      status: h3List.length >= 2 ? "good" : "warn",
       detail: `현재 ${h3List.length}개 · 세부 구조 정리에 도움`
     },
     {
@@ -396,6 +412,174 @@ function renderSeoChecklist() {
   }).join("");
 }
 
+function inlineFormat(text) {
+  return escapeHtml(text)
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/`(.+?)`/g, "<code>$1</code>")
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+}
+
+function markdownToHtml(md) {
+  const lines = String(md || "").replace(/\r/g, "").split("\n");
+  let html = "";
+  let inUl = false;
+  let inOl = false;
+  let inBlockquote = false;
+
+  const closeLists = () => {
+    if (inUl) {
+      html += "</ul>";
+      inUl = false;
+    }
+    if (inOl) {
+      html += "</ol>";
+      inOl = false;
+    }
+  };
+
+  const closeQuote = () => {
+    if (inBlockquote) {
+      html += "</blockquote>";
+      inBlockquote = false;
+    }
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+
+    if (!line) {
+      closeLists();
+      closeQuote();
+      continue;
+    }
+
+    const imageMatch = line.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+    if (imageMatch) {
+      closeLists();
+      closeQuote();
+      html += `<figure class="preview-figure"><img src="${escapeHtml(imageMatch[2])}" alt="${escapeHtml(imageMatch[1])}" loading="lazy"></figure>`;
+      continue;
+    }
+
+    const headingMatch = line.match(/^(#{2,6})\s+(.+)$/);
+    if (headingMatch) {
+      closeLists();
+      closeQuote();
+      const level = Math.min(6, headingMatch[1].length);
+      html += `<h${level}>${inlineFormat(headingMatch[2])}</h${level}>`;
+      continue;
+    }
+
+    if (/^>\s?/.test(line)) {
+      closeLists();
+      if (!inBlockquote) {
+        html += "<blockquote>";
+        inBlockquote = true;
+      }
+      html += `<p>${inlineFormat(line.replace(/^>\s?/, ""))}</p>`;
+      continue;
+    }
+
+    const ulMatch = line.match(/^[-*]\s+(.+)$/);
+    if (ulMatch) {
+      closeQuote();
+      if (!inUl) {
+        closeLists();
+        html += "<ul>";
+        inUl = true;
+      }
+      html += `<li>${inlineFormat(ulMatch[1])}</li>`;
+      continue;
+    }
+
+    const olMatch = line.match(/^\d+\.\s+(.+)$/);
+    if (olMatch) {
+      closeQuote();
+      if (!inOl) {
+        closeLists();
+        html += "<ol>";
+        inOl = true;
+      }
+      html += `<li>${inlineFormat(olMatch[1])}</li>`;
+      continue;
+    }
+
+    closeLists();
+    closeQuote();
+    html += `<p>${inlineFormat(line)}</p>`;
+  }
+
+  closeLists();
+  closeQuote();
+  return html || '<p class="preview-empty">본문을 입력하면 여기에 미리보기가 표시됩니다.</p>';
+}
+
+function renderPreview() {
+  const previewEl = $("previewContent");
+  if (!previewEl) return;
+
+  const title = $("title").value.trim() || "제목을 입력해 주세요";
+  const category = $("category").value.trim();
+  const summary = $("summary").value.trim();
+  const coverImage = $("cover_image").value.trim();
+  const contentMd = $("content_md").value || "";
+  const tags = parseTags($("tags").value);
+
+  previewEl.innerHTML = `
+    <article class="preview-article">
+      <header class="preview-article__head">
+        <div class="row" style="justify-content:space-between;align-items:flex-start;gap:10px">
+          ${category ? `<span class="badge">${escapeHtml(category)}</span>` : '<span class="badge">미분류</span>'}
+          <span class="small">${new Date().toISOString().slice(0, 10)}</span>
+        </div>
+        <h1 class="preview-title">${escapeHtml(title)}</h1>
+        ${summary ? `<p class="preview-summary">${escapeHtml(summary)}</p>` : ""}
+        ${tags.length ? `<div class="row">${tags.map((tag) => `<span class="tag-chip">#${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
+      </header>
+      ${coverImage ? `<img class="preview-cover" src="${escapeHtml(coverImage)}" alt="${escapeHtml(title)} 대표 이미지" loading="lazy">` : ""}
+      <section class="preview-body">${markdownToHtml(contentMd)}</section>
+    </article>
+  `;
+}
+
+function openPreview() {
+  const drawer = $("previewDrawer");
+  const backdrop = $("previewBackdrop");
+  const openBtn = $("previewOpenBtn");
+  if (!drawer || !backdrop || !openBtn) return;
+  renderPreview();
+  backdrop.hidden = false;
+  drawer.classList.add("is-open");
+  drawer.setAttribute("aria-hidden", "false");
+  openBtn.setAttribute("aria-expanded", "true");
+  document.body.classList.add("has-preview-open");
+}
+
+function closePreview() {
+  const drawer = $("previewDrawer");
+  const backdrop = $("previewBackdrop");
+  const openBtn = $("previewOpenBtn");
+  if (!drawer || !backdrop || !openBtn) return;
+  drawer.classList.remove("is-open");
+  drawer.setAttribute("aria-hidden", "true");
+  backdrop.hidden = true;
+  openBtn.setAttribute("aria-expanded", "false");
+  document.body.classList.remove("has-preview-open");
+}
+
+function setPreviewDevice(device) {
+  const stage = $("previewStage");
+  const frame = $("previewFrame");
+  if (!stage || !frame) return;
+  stage.dataset.device = device;
+  frame.classList.remove("preview-frame--pc", "preview-frame--tablet", "preview-frame--mobile");
+  frame.classList.add(`preview-frame--${device}`);
+  document.querySelectorAll("[data-preview-width]").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.previewWidth === device);
+  });
+}
+
 async function save() {
   const statusEl = $("saveStatus");
   statusEl.textContent = "저장 중…";
@@ -441,15 +625,29 @@ function handleRealtimeChange() {
   updateSlugPreview();
   updateAllCounts();
   renderSeoChecklist();
+  renderPreview();
 }
 
-["title", "meta_description", "summary", "content_md", "focusKeyword", "longtailKeywords"].forEach((id) => {
+["title", "meta_description", "summary", "content_md", "focusKeyword", "longtailKeywords", "cover_image", "tags", "category"].forEach((id) => {
   const el = $(id);
   if (el) el.addEventListener("input", handleRealtimeChange);
+  if (el && el.tagName === "SELECT") el.addEventListener("change", handleRealtimeChange);
 });
 
 $("saveBtn").addEventListener("click", save);
+$("previewOpenBtn")?.addEventListener("click", openPreview);
+$("previewCloseBtn")?.addEventListener("click", closePreview);
+$("previewBackdrop")?.addEventListener("click", closePreview);
+document.querySelectorAll("[data-preview-width]").forEach((button) => {
+  button.addEventListener("click", () => setPreviewDevice(button.dataset.previewWidth || "pc"));
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closePreview();
+});
 
 updateSlugPreview();
 updateAllCounts();
 renderSeoChecklist();
+renderPreview();
+setPreviewDevice("pc");
