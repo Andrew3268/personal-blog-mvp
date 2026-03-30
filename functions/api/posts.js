@@ -72,6 +72,7 @@ export async function onRequestPost({ env, request }) {
   const coverImage = String(body.cover_image || "").trim();
   const coverImageAlt = String(body.cover_image_alt || "").trim();
   const contentMd = String(body.content_md || "").trim();
+  const faqMd = String(body.faq_md || "").trim();
   const status = String(body.status || "published").trim() || "published";
   const tags = Array.isArray(body.tags) ? body.tags : [];
 
@@ -95,10 +96,11 @@ export async function onRequestPost({ env, request }) {
       cover_image_alt,
       tags_json,
       content_md,
+      faq_md,
       status,
       published_at,
       updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(slug) DO UPDATE SET
       title = excluded.title,
       category = excluded.category,
@@ -108,6 +110,7 @@ export async function onRequestPost({ env, request }) {
       cover_image_alt = excluded.cover_image_alt,
       tags_json = excluded.tags_json,
       content_md = excluded.content_md,
+      faq_md = excluded.faq_md,
       status = excluded.status,
       published_at = excluded.published_at,
       updated_at = excluded.updated_at
@@ -121,6 +124,7 @@ export async function onRequestPost({ env, request }) {
     coverImageAlt,
     JSON.stringify(tags),
     contentMd,
+    faqMd,
     status,
     now,
     now

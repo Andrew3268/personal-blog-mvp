@@ -24,6 +24,42 @@ function parseKeywords(raw) {
     .filter((item, index, arr) => arr.indexOf(item) === index);
 }
 
+
+function parseFaqMarkdown(raw) {
+  const lines = String(raw || "").replace(/\r/g, "").split("\n");
+  const items = [];
+  let current = null;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trimEnd();
+    const trimmed = line.trim();
+    const questionMatch = trimmed.match(/^(?:##\s*)?Q[.:]?\s+(.+)$/i);
+
+    if (questionMatch) {
+      if (current && current.question && current.answerLines.some((entry) => entry.trim())) {
+        items.push({
+          question: current.question.trim(),
+          answerMd: current.answerLines.join("\n").trim()
+        });
+      }
+      current = { question: questionMatch[1].trim(), answerLines: [] };
+      continue;
+    }
+
+    if (!current) continue;
+    current.answerLines.push(line);
+  }
+
+  if (current && current.question && current.answerLines.some((entry) => entry.trim())) {
+    items.push({
+      question: current.question.trim(),
+      answerMd: current.answerLines.join("\n").trim()
+    });
+  }
+
+  return items.slice(0, 8);
+}
+
 function countText(value) {
   return String(value || "").length;
 }
@@ -59,6 +95,7 @@ function updateAllCounts() {
   updateCount("meta_description", "metaDescriptionCount");
   updateCount("summary", "summaryCount");
   updateCount("content_md", "contentCount");
+  updateCount("faq_md", "faqCount");
 }
 
 function updateSlugPreview() {
@@ -183,6 +220,8 @@ function evaluateSeo() {
   const metaDescription = $("meta_description").value.trim();
   const summary = $("summary").value.trim();
   const contentMd = $("content_md").value || "";
+  const faqMd = $("faq_md")?.value || "";
+  const faqItems = parseFaqMarkdown(faqMd);
   const focusKeyword = $("focusKeyword")?.value.trim() || "";
   const longtailKeywords = parseKeywords($("longtailKeywords")?.value || "");
 
@@ -526,6 +565,8 @@ function renderPreview() {
   const coverImage = $("cover_image").value.trim();
   const coverImageAlt = $("cover_image_alt")?.value.trim() || "";
   const contentMd = $("content_md").value || "";
+  const faqMd = $("faq_md")?.value || "";
+  const faqItems = parseFaqMarkdown(faqMd);
   const tags = parseTags($("tags").value);
   const slug = $("slugPreview").value.trim();
   const snippetUrl = slug ? `https://personal-blog-mvp.pages.dev/post/${slug}` : 'https://personal-blog-mvp.pages.dev/post/slug-example';
@@ -551,6 +592,19 @@ function renderPreview() {
       </header>
       ${coverImage ? `<img class="preview-cover" src="${escapeHtml(coverImage)}" alt="${escapeHtml(coverImageAlt || `${title} 대표 이미지`)}" loading="lazy">` : ""}
       <section class="preview-body">${markdownToHtml(contentMd)}</section>
+      ${faqItems.length ? `
+        <section class="preview-faq" aria-label="자주 묻는 질문">
+          <h2>자주 묻는 질문</h2>
+          <div class="preview-faq__list">
+            ${faqItems.map((item) => `
+              <article class="preview-faq__item">
+                <h3>Q. ${escapeHtml(item.question)}</h3>
+                <div class="preview-faq__answer">${markdownToHtml(item.answerMd)}</div>
+              </article>
+            `).join("")}
+          </div>
+        </section>
+      ` : ""}
     </div>
     </article>
   `;
@@ -610,7 +664,8 @@ async function save() {
     cover_image_alt: $("cover_image_alt").value.trim(),
     status: $("status").value,
     tags: parseTags($("tags").value),
-    content_md: $("content_md").value
+    content_md: $("content_md").value,
+    faq_md: $("faq_md") ? $("faq_md").value : ""
   };
 
   if (!title || !payload.content_md.trim()) {
@@ -642,7 +697,7 @@ function handleRealtimeChange() {
   renderPreview();
 }
 
-["title", "meta_description", "summary", "content_md", "focusKeyword", "longtailKeywords", "cover_image", "cover_image_alt", "tags", "category"].forEach((id) => {
+["title", "meta_description", "summary", "content_md", "faq_md", "focusKeyword", "longtailKeywords", "cover_image", "cover_image_alt", "tags", "category"].forEach((id) => {
   const el = $(id);
   if (el) el.addEventListener("input", handleRealtimeChange);
   if (el && el.tagName === "SELECT") el.addEventListener("change", handleRealtimeChange);

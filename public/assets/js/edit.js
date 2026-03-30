@@ -27,6 +27,7 @@ function updateAllCounts() {
   updateCount("meta_description", "metaDescriptionCount");
   updateCount("summary", "summaryCount");
   updateCount("content_md", "contentCount");
+  if ($("faq_md")) updateCount("faq_md", "faqCount");
 }
 
 async function load() {
@@ -59,8 +60,10 @@ async function load() {
   $("meta_description").value = item.meta_description || "";
   $("summary").value = item.summary || "";
   $("cover_image").value = item.cover_image || "";
+  if ($("cover_image_alt")) $("cover_image_alt").value = item.cover_image_alt || "";
   $("status").value = item.status || "published";
   $("content_md").value = item.content_md || "";
+  if ($("faq_md")) $("faq_md").value = item.faq_md || "";
 
   let tags = [];
   try {
@@ -93,9 +96,11 @@ async function save() {
     meta_description: $("meta_description").value.trim(),
     summary: $("summary").value.trim(),
     cover_image: $("cover_image").value.trim(),
+    cover_image_alt: $("cover_image_alt") ? $("cover_image_alt").value.trim() : "",
     status: $("status").value,
     tags: parseTags($("tags").value),
-    content_md: $("content_md").value
+    content_md: $("content_md").value,
+    faq_md: $("faq_md") ? $("faq_md").value : ""
   };
 
   const res = await fetch(`/api/posts/${encodeURIComponent(slug)}`, {
@@ -131,6 +136,12 @@ $("summary").addEventListener("input", () => {
 $("content_md").addEventListener("input", () => {
   updateCount("content_md", "contentCount");
 });
+
+if ($("faq_md")) {
+  $("faq_md").addEventListener("input", () => {
+    updateCount("faq_md", "faqCount");
+  });
+}
 
 $("saveBtn").addEventListener("click", save);
 

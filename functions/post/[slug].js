@@ -38,6 +38,7 @@ export async function onRequestGet({ params, env, request }) {
           cover_image_alt,
           tags_json,
           content_md,
+          faq_md,
           status,
           published_at,
           updated_at
@@ -71,6 +72,8 @@ export async function onRequestGet({ params, env, request }) {
       const siteDescription = "실용적인 생활 정보와 정리된 가이드를 제공하는 블로그";
       const authorName = "Steve Lee";
       const bodyHtml = renderMarkdown(row.content_md || "");
+      const faqItems = parseFaqMarkdown(row.faq_md || "");
+      const faqSectionHtml = renderFaqSection(faqItems);
 
       const titleText = String(row.title || "").trim();
       const descriptionText = buildDescription(
@@ -162,6 +165,22 @@ export async function onRequestGet({ params, env, request }) {
         }
       };
 
+      const faqJsonLd = faqItems.length
+        ? {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            inLanguage: "ko-KR",
+            mainEntity: faqItems.map((item) => ({
+              "@type": "Question",
+              name: item.question,
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: renderMarkdown(item.answerMd || "")
+              }
+            }))
+          }
+        : null;
+
       const coverImagePreload = row.cover_image
         ? `<link rel="preload" as="image" href="${escapeHtml(row.cover_image)}" fetchpriority="high" />`
         : "";
@@ -231,6 +250,7 @@ export async function onRequestGet({ params, env, request }) {
   ${jsonld(blogPostingJsonLd)}
   ${jsonld(breadcrumbJsonLd)}
   ${jsonld(webPageJsonLd)}
+  ${faqJsonLd ? jsonld(faqJsonLd) : ""}
 </head>
 <body>
   <a href="#main-content" class="skip-link">본문 바로가기</a>
@@ -272,6 +292,7 @@ export async function onRequestGet({ params, env, request }) {
       <div class="post-grid">
         <section class="card post-body" aria-label="본문">
           ${bodyHtml}
+          ${faqSectionHtml}
         </section>
 
         <aside class="card post-side" aria-label="글 정보 및 이동">
@@ -328,6 +349,61 @@ export async function onRequestGet({ params, env, request }) {
       return res;
     }
   });
+}
+
+
+function parseFaqMarkdown(raw) {
+  const lines = String(raw || "").replace(/\r/g, "").split("\n");
+  const items = [];
+  let current = null;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trimEnd();
+    const trimmed = line.trim();
+    const questionMatch = trimmed.match(/^(?:##\s*)?Q[.:]?\s+(.+)$/i);
+
+    if (questionMatch) {
+      if (current && current.question && current.answerLines.some((entry) => entry.trim())) {
+        items.push({
+          question: current.question.trim(),
+          answerMd: current.answerLines.join("\n").trim()
+        });
+      }
+      current = { question: questionMatch[1].trim(), answerLines: [] };
+      continue;
+    }
+
+    if (!current) continue;
+    current.answerLines.push(line);
+  }
+
+  if (current && current.question && current.answerLines.some((entry) => entry.trim())) {
+    items.push({
+      question: current.question.trim(),
+      answerMd: current.answerLines.join("\n").trim()
+    });
+  }
+
+  return items.slice(0, 8);
+}
+
+function renderFaqSection(items) {
+  if (!items.length) return "";
+  return `
+    <section class="post-faq" aria-labelledby="post-faq-title" style="margin-top:36px;padding-top:28px;border-top:1px solid var(--border)">
+      <h2 id="post-faq-title" class="h2">자주 묻는 질문</h2>
+      <div style="display:grid;gap:14px;margin-top:14px">
+        ${items.map((item) => `
+          <article class="card" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+            <h3 class="h3" itemprop="name" style="margin:0 0 10px">Q. ${escapeHtml(item.question)}</h3>
+            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+              <div itemprop="text">${renderMarkdown(item.answerMd || "")}</div>
+            </div>
+          </article>
+        `).join("")}
+      </div>
+    </section>
+  `;
 }
 
 function buildDescription(metaDescription, summary, markdown, title) {

@@ -142,10 +142,25 @@
 - 항목 2"></textarea>
         </div>
 
+        <div>
+          <div class="label-row label-row--compact">
+            <label class="small" for="faq_md">Q&A 전용 마크다운</label>
+            <div class="small count-indicator" id="faqCount">0자</div>
+          </div>
+          <textarea class="input editor-textarea" id="faq_md" rows="12" placeholder="## Q. 첫 번째 질문을 적어주세요
+답변은 아래 줄부터 작성합니다.
+
+## Q. 두 번째 질문을 적어주세요
+답변은 여러 줄로 작성해도 됩니다.
+- 리스트도 가능합니다.
+- FAQ를 입력한 경우에만 공개 페이지 하단 FAQ와 head의 FAQPage JSON-LD가 함께 생성됩니다."></textarea>
+          <div class="small">FAQ를 입력한 경우에만 공개 페이지 하단 FAQ 섹션과 header의 FAQPage JSON-LD가 함께 생성됩니다.</div>
+        </div>
+
         <div class="notice">
-          <strong>본문 작성 팁</strong>
+          <strong>본문 / FAQ 작성 팁</strong>
           <div class="sep"></div>
-          <div class="small">공개 페이지에서 입력한 제목이 이미 H1로 사용됩니다. 따라서 본문에는 가능하면 <b># 제목</b> 대신 <b>##</b>, <b>###</b> 소제목 위주로 작성하는 편이 좋습니다.</div>
+          <div class="small">공개 페이지에서 입력한 제목이 이미 H1로 사용됩니다. 따라서 본문에는 가능하면 <b># 제목</b> 대신 <b>##</b>, <b>###</b> 소제목 위주로 작성하는 편이 좋습니다. FAQ는 <b>## Q. 질문</b> 형식으로 입력하면 질문별 답변이 자동 분리됩니다.</div>
         </div>
 
         <div class="row" style="flex-wrap:wrap">

@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS posts (
   template_name TEXT DEFAULT 'basic',
   tags_json TEXT DEFAULT '[]',
   content_md TEXT DEFAULT '',
+  faq_md TEXT DEFAULT '',
   status TEXT DEFAULT 'published',
   published_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
