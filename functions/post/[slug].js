@@ -73,7 +73,19 @@ export async function onRequestGet({ params, env, request }) {
       const authorName = "Steve Lee";
       const bodyHtml = renderMarkdown(row.content_md || "");
       const faqItems = parseFaqMarkdown(row.faq_md || "");
+      const relatedRows = row.category
+        ? (await env.BLOG_DB.prepare(`
+            SELECT slug, title
+            FROM posts
+            WHERE status = 'published'
+              AND TRIM(COALESCE(category, '')) = ?
+              AND slug != ?
+            ORDER BY published_at DESC, updated_at DESC
+            LIMIT 5
+          `).bind(String(row.category).trim(), slug).all()).results || []
+        : [];
       const faqSectionHtml = renderFaqSection(faqItems);
+      const relatedPostsHtml = renderRelatedPostsSection(relatedRows, row.category);
 
       const titleText = String(row.title || "").trim();
       const descriptionText = buildDescription(
@@ -293,6 +305,7 @@ export async function onRequestGet({ params, env, request }) {
         <section class="card post-body" aria-label="본문">
           ${bodyHtml}
           ${faqSectionHtml}
+          ${relatedPostsHtml}
         </section>
 
         <aside class="card post-side" aria-label="글 정보 및 이동">
@@ -402,6 +415,34 @@ function renderFaqSection(items) {
           </article>
         `).join("")}
       </div>
+    </section>
+  `;
+}
+
+
+function renderRelatedPostsSection(items, category) {
+  if (!Array.isArray(items) || !items.length) return "";
+  const categoryText = String(category || "").trim();
+  const headingText = categoryText ? `${categoryText} 관련글 더보기` : "관련글 더보기";
+  return `
+    <section class="post-related" aria-labelledby="post-related-title" style="margin-top:36px;padding-top:28px;border-top:1px solid var(--border)">
+      <div class="row" style="justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap">
+        <div>
+          <h2 id="post-related-title" class="h2" style="margin:0">${escapeHtml(headingText)}</h2>
+          <p class="small" style="margin:8px 0 0">같은 카테고리의 최신 글 5개를 보여드립니다.</p>
+        </div>
+        ${categoryText ? `<a class="btn" href="/posts/?category=${encodeURIComponent(categoryText)}">카테고리 전체 보기</a>` : ""}
+      </div>
+      <ul class="list-reset" style="display:grid;gap:10px;margin-top:16px">
+        ${items.map((item, index) => `
+          <li>
+            <a href="/post/${encodeURIComponent(String(item.slug || ""))}" class="post-related-link" style="display:inline-flex;gap:8px;align-items:flex-start;text-decoration:none;line-height:1.55">
+              <span aria-hidden="true" style="color:var(--brand);font-weight:800;min-width:1.5em">${index + 1}.</span>
+              <span>${escapeHtml(String(item.title || "(제목 없음)"))}</span>
+            </a>
+          </li>
+        `).join("")}
+      </ul>
     </section>
   `;
 }
