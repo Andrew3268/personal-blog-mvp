@@ -23,114 +23,243 @@
   </header>
 
   <main class="container">
-    <section class="card form-card">
-      <h1 class="h1">글 수정</h1>
-      <p class="p">URL 예시: <b>/edit.html?slug=expired-shampoo-bottle-reuse</b></p>
-      <div class="sep"></div>
-
-      <div class="grid grid--3">
-        <div>
-          <label class="small" for="slug">슬러그</label>
-          <input class="input" id="slug" disabled />
+    <div class="editor-layout">
+      <section class="card form-card">
+        <div class="row editor-head-row" style="justify-content:space-between;align-items:flex-start">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <h1 class="h1">글 수정</h1>
+            <p class="p">저장된 글을 불러와 수정할 수 있습니다. URL 예시: <b>/edit.html?slug=example-post</b></p>
+          </div>
+          <button class="btn" id="previewOpenBtn" type="button" aria-controls="previewDrawer" aria-expanded="false">본문 미리보기</button>
         </div>
-        <div>
-          <label class="small" for="published_at">발행일</label>
-          <input class="input" id="published_at" disabled />
+        <div class="sep"></div>
+
+        
+        <div class="grid grid--3">
+          <div>
+            <div class="label-row">
+              <label class="small" for="slug">슬러그</label>
+            </div>
+            <input class="input" id="slug" disabled />
+          </div>
+          <div>
+            <div class="label-row">
+              <label class="small" for="published_at">발행일</label>
+            </div>
+            <input class="input" id="published_at" disabled />
+          </div>
+          <div>
+            <div class="label-row">
+              <label class="small" for="updated_at">수정일</label>
+            </div>
+            <input class="input" id="updated_at" disabled />
+          </div>
         </div>
-        <div>
-          <label class="small" for="updated_at">수정일</label>
-          <input class="input" id="updated_at" disabled />
+
+        <div class="grid grid--2">
+          <div>
+            <div class="label-row label-row--compact">
+              <label class="small" for="title">제목</label>
+              <div class="small count-indicator" id="titleCount">0자</div>
+            </div>
+            <input class="input" id="title" />
+          </div>
+          <div>
+            <div class="label-row">
+              <label class="small" for="slugPreview">슬러그 미리보기</label>
+            </div>
+            <input class="input" id="slugPreview" disabled />
+          </div>
         </div>
-      </div>
 
-      <div class="grid grid--2">
-        <div>
-          <label class="small" for="title">제목</label>
-          <input class="input" id="title" />
-          <div class="small" id="titleCount">0자</div>
+        <div class="grid grid--2">
+          <div>
+            <div class="label-row">
+              <label class="small" for="category">카테고리</label>
+            </div>
+            <select class="input" id="category">
+              <option value="">카테고리 선택</option>
+              <option value="생활 꿀팁">생활 꿀팁</option>
+              <option value="살림 노하우">살림 노하우</option>
+              <option value="청소">청소</option>
+              <option value="주방">주방</option>
+              <option value="욕실">욕실</option>
+              <option value="세탁">세탁</option>
+              <option value="정리수납">정리수납</option>
+              <option value="리뷰">리뷰</option>
+              <option value="쇼핑">쇼핑</option>
+              <option value="반려동물">반려동물</option>
+              <option value="건강">건강</option>
+              <option value="디지털">디지털</option>
+            </select>
+          </div>
+          <div>
+            <div class="label-row">
+              <label class="small" for="status">상태</label>
+            </div>
+            <select class="input" id="status">
+              <option value="published">발행</option>
+              <option value="draft">초안</option>
+            </select>
+          </div>
         </div>
+
         <div>
-          <label class="small" for="category">카테고리</label>
-          <select class="input" id="category">
-            <option value="">카테고리 선택</option>
-            <option value="생활 꿀팁">생활 꿀팁</option>
-            <option value="살림 노하우">살림 노하우</option>
-            <option value="청소">청소</option>
-            <option value="주방">주방</option>
-            <option value="욕실">욕실</option>
-            <option value="세탁">세탁</option>
-            <option value="정리수납">정리수납</option>
-            <option value="리뷰">리뷰</option>
-            <option value="쇼핑">쇼핑</option>
-            <option value="반려동물">반려동물</option>
-            <option value="건강">건강</option>
-            <option value="디지털">디지털</option>
-          </select>
+          <div class="label-row label-row--compact">
+            <label class="small" for="meta_description">메타디스크립션</label>
+            <div class="small count-indicator" id="metaDescriptionCount">0자</div>
+          </div>
+          <textarea
+            class="input"
+            id="meta_description"
+            rows="3"
+            placeholder="검색 결과 description에 들어갈 문구"
+          ></textarea>
         </div>
-      </div>
 
-      <div class="grid grid--2">
         <div>
-          <label class="small" for="status">상태</label>
-          <select class="input" id="status">
-            <option value="published">발행</option>
-            <option value="draft">초안</option>
-          </select>
+          <div class="label-row label-row--compact">
+            <label class="small" for="summary">요약문</label>
+            <div class="small count-indicator" id="summaryCount">0자</div>
+          </div>
+          <textarea
+            class="input"
+            id="summary"
+            rows="3"
+            placeholder="목록 카드나 내부 요약 영역에 보여줄 문구"
+          ></textarea>
         </div>
+
+        <div class="grid grid--2">
+          <div>
+            <div class="label-row">
+              <label class="small" for="tags">태그 (콤마 구분)</label>
+            </div>
+            <input class="input" id="tags" placeholder="예: 생활꿀팁, 욕실청소, 재활용" />
+          </div>
+          <div>
+            <div class="label-row">
+              <label class="small" for="cover_image">대표 이미지 URL</label>
+            </div>
+            <input class="input" id="cover_image" placeholder="https://..." />
+          </div>
+        </div>
+
         <div>
-          <label class="small" for="cacheHint">캐시 확인</label>
-          <input class="input" id="cacheHint" disabled value="공개 글 응답 헤더에서 x-blog-cache 확인" />
+          <div class="label-row">
+            <label class="small" for="cover_image_alt">대표 이미지 ALT</label>
+          </div>
+          <input class="input" id="cover_image_alt" placeholder="예: 욕실 청소용 스프레이를 뿌리는 장면" />
         </div>
-      </div>
 
-      <div>
-        <label class="small" for="meta_description">메타 디스크립션</label>
-        <textarea class="input" id="meta_description" rows="3"></textarea>
-        <div class="small" id="metaDescriptionCount">0자</div>
-      </div>
-
-      <div>
-        <label class="small" for="summary">요약문</label>
-        <textarea class="input" id="summary" rows="3"></textarea>
-        <div class="small" id="summaryCount">0자</div>
-      </div>
-
-      <div class="grid grid--2">
         <div>
-          <label class="small" for="tags">태그 (콤마 구분)</label>
-          <input class="input" id="tags" />
+          <div class="label-row label-row--compact">
+            <label class="small" for="content_md">본문 (마크다운)</label>
+            <div class="small count-indicator" id="contentCount">0자</div>
+          </div>
+          <textarea class="input editor-textarea" id="content_md" rows="18" placeholder="도입 문단
+
+## 소제목
+- 항목 1
+- 항목 2"></textarea>
         </div>
+
         <div>
-          <label class="small" for="cover_image">대표 이미지 URL</label>
-          <input class="input" id="cover_image" />
+          <div class="label-row label-row--compact">
+            <label class="small" for="faq_md">Q&A 전용 마크다운</label>
+            <div class="small count-indicator" id="faqCount">0자</div>
+          </div>
+          <textarea class="input editor-textarea" id="faq_md" rows="12" placeholder="## Q. 첫 번째 질문을 적어주세요
+답변은 아래 줄부터 작성합니다.
+
+## Q. 두 번째 질문을 적어주세요
+답변은 여러 줄로 작성해도 됩니다.
+- 리스트도 가능합니다.
+- FAQ를 입력한 경우에만 공개 페이지 하단 FAQ와 head의 FAQPage JSON-LD가 함께 생성됩니다."></textarea>
+          <div class="small">FAQ를 입력한 경우에만 공개 페이지 하단 FAQ 섹션과 header의 FAQPage JSON-LD가 함께 생성됩니다.</div>
         </div>
-      </div>
 
-      <div>
-        <label class="small" for="cover_image_alt">대표 이미지 ALT</label>
-        <input class="input" id="cover_image_alt" />
-      </div>
+        <div class="notice">
+          <strong>본문 / FAQ 작성 팁</strong>
+          <div class="sep"></div>
+          <div class="small">공개 페이지에서 입력한 제목이 이미 H1로 사용됩니다. 따라서 본문에는 가능하면 <b># 제목</b> 대신 <b>##</b>, <b>###</b> 소제목 위주로 작성하는 편이 좋습니다. FAQ는 <b>## Q. 질문</b> 형식으로 입력하면 질문별 답변이 자동 분리됩니다.</div>
+        </div>
 
-      <div>
-        <label class="small" for="content_md">본문 (마크다운)</label>
-        <textarea class="input editor-textarea" id="content_md" rows="18"></textarea>
-        <div class="small" id="contentCount">0자</div>
-      </div>
+        <div class="row" style="flex-wrap:wrap">
+          <button class="btn btn--brand" id="saveBtn" type="button">수정 저장</button>
+          <a class="btn" id="viewBtn" href="#">공개 글 보기</a>
+          <a class="btn" href="/posts/">글 목록</a>
+          <span class="small" id="saveStatus"></span>
+        </div>
+      </section>
 
-      <div>
-        <label class="small" for="faq_md">Q&A 전용 마크다운</label>
-        <textarea class="input editor-textarea" id="faq_md" rows="12"></textarea>
-        <div class="small" id="faqCount">0자</div>
-      </div>
+      <aside class="card seo-panel" aria-label="SEO 체커">
+        <div class="seo-panel__top">
+          <div>
+            <div class="small seo-eyebrow">실시간 SEO 체크</div>
+            <h2 class="h2">SEO 체커</h2>
+          </div>
+          <div class="seo-score-wrap">
+            <div class="seo-score" id="seoScore">0</div>
+            <div class="small" id="seoGrade">점검 필요</div>
+          </div>
+        </div>
 
-      <div class="row" style="flex-wrap:wrap">
-        <button class="btn btn--brand" id="saveBtn" type="button">수정 저장</button>
-        <a class="btn" id="viewBtn" href="#">공개 글 보기</a>
-        <a class="btn" href="/posts/">글 목록</a>
-        <span class="small" id="statusMsg"></span>
-      </div>
-    </section>
+        <p class="p">입력 중인 제목, 설명, 키워드, 본문 구조를 실시간으로 점검해 부족한 부분과 과한 부분을 함께 보여줍니다.</p>
+
+        <div class="seo-keyword-box">
+          <label class="small" for="focusKeyword">메인 키워드</label>
+          <input class="input" id="focusKeyword" placeholder="예: 욕실 청소" />
+        </div>
+
+        <div class="seo-keyword-box">
+          <label class="small" for="longtailKeywords">롱테일 키워드 (콤마 구분)</label>
+          <input class="input" id="longtailKeywords" placeholder="예: 욕실 청소 꿀팁, 욕실 물때 제거 방법" />
+          <div class="small">메인 키워드와 롱테일 키워드는 저장되지 않고 SEO 점검용으로만 사용됩니다.</div>
+        </div>
+
+        <div class="seo-checklist" id="seoChecklist"></div>
+
+        <div class="notice seo-tip-box">
+          <strong>빠른 통과 기준</strong>
+          <div class="sep"></div>
+          <ul class="plain-list">
+            <li>제목 20~60자</li>
+            <li>메타 디스크립션 70~160자</li>
+            <li>본문 500자 이상</li>
+            <li>H2 소제목 2개 이상</li>
+            <li>H3 소제목 1개 이상이면 구조화에 도움</li>
+            <li>메인 키워드와 롱테일 키워드는 자연스럽게 포함</li>
+            <li>같은 키워드 반복은 과하지 않게 유지</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
   </main>
+
+  <div class="preview-backdrop" id="previewBackdrop" hidden></div>
+  <aside class="preview-drawer" id="previewDrawer" aria-hidden="true">
+    <div class="preview-drawer__header">
+      <div>
+        <div class="small seo-eyebrow">본문 미리보기</div>
+        <h2 class="h2">실시간 미리보기</h2>
+      </div>
+      <div class="preview-actions">
+        <div class="preview-device-switch" role="tablist" aria-label="미리보기 기기 전환">
+          <button class="btn btn--device is-active" type="button" data-preview-width="pc">PC</button>
+          <button class="btn btn--device" type="button" data-preview-width="tablet">태블릿</button>
+          <button class="btn btn--device" type="button" data-preview-width="mobile">모바일</button>
+        </div>
+        <button class="btn" id="previewCloseBtn" type="button">닫기</button>
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div class="preview-stage" id="previewStage" data-device="pc">
+      <div class="preview-frame preview-frame--pc" id="previewFrame">
+        <div class="preview-page" id="previewContent"></div>
+      </div>
+    </div>
+  </aside>
 
   <footer class="footer container">
     <div class="footer__inner">
@@ -139,6 +268,6 @@
   </footer>
 
   <script src="/assets/js/nav.js" defer></script>
-  <script src="/assets/js/edit.js" defer></script>
+  <script src="/assets/js/add.js" defer></script>
 </body>
 </html>

@@ -187,7 +187,7 @@ export async function onRequestGet({ params, env, request }) {
               name: item.question,
               acceptedAnswer: {
                 "@type": "Answer",
-                text: renderMarkdown(item.answerMd || "")
+                text: stripMarkdown(item.answerMd || "")
               }
             }))
           }
@@ -373,7 +373,7 @@ function parseFaqMarkdown(raw) {
   for (const rawLine of lines) {
     const line = rawLine.trimEnd();
     const trimmed = line.trim();
-    const questionMatch = trimmed.match(/^(?:##\s*)?Q[.:]?\s+(.+)$/i);
+    const questionMatch = trimmed.match(/^(?:#{1,6}\s*)?(?:Q|질문)\s*[.:：]?\s*(.+)$/i);
 
     if (questionMatch) {
       if (current && current.question && current.answerLines.some((entry) => entry.trim())) {
