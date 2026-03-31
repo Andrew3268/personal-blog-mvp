@@ -151,3 +151,9 @@ body.has-preview-open{overflow:hidden}
 .preview-faq__item{padding:16px;border:1px solid var(--border);border-radius:18px;background:#fff}
 .preview-faq__item h3{margin:0 0 10px;font-size:18px;line-height:1.45}
 .preview-faq__answer p:last-child,.preview-faq__answer ul:last-child,.preview-faq__answer ol:last-child{margin-bottom:0}
+
+
+.seo-tabs{display:flex;flex-wrap:wrap;gap:8px}
+.seo-tab{appearance:none;border:1px solid rgba(91,124,255,.16);background:#fff;color:#334155;padding:8px 12px;border-radius:999px;font-size:12px;font-weight:900;cursor:pointer;transition:.2s ease}
+.seo-tab.is-active{background:#1d4ed8;color:#fff;border-color:#1d4ed8;box-shadow:0 8px 20px rgba(29,78,216,.18)}
+.seo-tab:hover{transform:translateY(-1px)}

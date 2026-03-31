@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS posts (
   summary TEXT DEFAULT '',
   cover_image TEXT DEFAULT '',
   cover_image_alt TEXT DEFAULT '',
+  focus_keyword TEXT DEFAULT '',
+  longtail_keywords_json TEXT DEFAULT '[]',
   template_name TEXT DEFAULT 'basic',
   tags_json TEXT DEFAULT '[]',
   content_md TEXT DEFAULT '',

@@ -220,6 +220,64 @@ function evaluateStuffing(keyword, contentText) {
   };
 }
 
+function getImageSeoData(contentMd, coverImage, coverImageAlt, focusKeyword) {
+  const bodyImages = getImages(contentMd);
+  const bodyImagesWithoutAlt = bodyImages.filter((img) => !img.alt).length;
+  const bodyAlts = bodyImages.map((img) => img.alt).filter(Boolean);
+  const hasCoverImage = !!String(coverImage || "").trim();
+  const hasCoverAlt = !!String(coverImageAlt || "").trim();
+  const allAlts = [
+    ...(hasCoverAlt ? [String(coverImageAlt).trim()] : []),
+    ...bodyAlts
+  ];
+  const totalImages = bodyImages.length + (hasCoverImage ? 1 : 0);
+  const missingAltCount = bodyImagesWithoutAlt + (hasCoverImage && !hasCoverAlt ? 1 : 0);
+  const keywordIncludedInAlt = focusKeyword
+    ? allAlts.some((alt) => containsKeyword(alt, focusKeyword))
+    : false;
+
+  let status = "warn";
+  let detail = "대표 이미지나 본문 이미지가 없습니다.";
+  if (totalImages > 0) {
+    status = missingAltCount === 0 ? "good" : "bad";
+    detail = `대표 이미지 ${hasCoverImage ? 1 : 0}개${hasCoverImage ? ` · ALT ${hasCoverAlt ? "입력 완료" : "누락"}` : ""} · 본문 이미지 ${bodyImages.length}개 · ALT 누락 ${bodyImagesWithoutAlt}개`;
+  }
+
+  return {
+    totalImages,
+    hasCoverImage,
+    hasCoverAlt,
+    bodyImages,
+    bodyImagesWithoutAlt,
+    keywordIncludedInAlt,
+    status,
+    detail
+  };
+}
+
+function groupSeoChecks(checks) {
+  const order = ["basic", "keywords", "structure", "media"];
+  const grouped = {
+    basic: [],
+    keywords: [],
+    structure: [],
+    media: []
+  };
+
+  checks.forEach((item) => {
+    const key = grouped[item.group] ? item.group : "basic";
+    grouped[key].push(item);
+  });
+
+  return order
+    .map((key) => ({
+      key,
+      label: key === "basic" ? "기본" : key === "keywords" ? "키워드" : key === "structure" ? "구조/링크" : "이미지/FAQ",
+      items: grouped[key]
+    }))
+    .filter((group) => group.items.length);
+}
+
 function evaluateSeo() {
   const title = $("title").value.trim();
   const slug = $("slugPreview").value.trim();
@@ -230,6 +288,8 @@ function evaluateSeo() {
   const faqItems = parseFaqMarkdown(faqMd);
   const focusKeyword = $("focusKeyword")?.value.trim() || "";
   const longtailKeywords = parseKeywords($("longtailKeywords")?.value || "");
+  const coverImage = $("cover_image")?.value.trim() || "";
+  const coverImageAlt = $("cover_image_alt")?.value.trim() || "";
 
   const plainContent = stripMarkdown(contentMd);
   const titleLen = countText(title);
@@ -240,10 +300,9 @@ function evaluateSeo() {
   const h2List = getHeadings(contentMd, 2);
   const h3List = getHeadings(contentMd, 3);
   const links = getLinks(contentMd);
-  const images = getImages(contentMd);
   const internalLinks = links.filter((href) => href.startsWith("/")).length;
   const externalLinks = links.filter((href) => /^https?:\/\//.test(href)).length;
-  const imagesWithoutAlt = images.filter((img) => !img.alt).length;
+  const imageSeo = getImageSeoData(contentMd, coverImage, coverImageAlt, focusKeyword);
   const firstParagraph = getFirstParagraph(contentMd);
   const keywordInTitle = focusKeyword ? containsKeyword(title, focusKeyword) : false;
   const keywordInMeta = focusKeyword ? containsKeyword(metaDescription, focusKeyword) : false;
@@ -261,30 +320,35 @@ function evaluateSeo() {
   const checks = [
     {
       key: "titleLength",
+      group: "basic",
       label: "제목 길이",
       status: titleLen >= 20 && titleLen <= 60 ? "good" : titleLen >= 14 ? "warn" : "bad",
       detail: `현재 ${titleLen}자 · 권장 20~60자`
     },
     {
       key: "metaLength",
+      group: "basic",
       label: "메타 디스크립션 길이",
       status: metaLen >= 70 && metaLen <= 160 ? "good" : metaLen >= 40 ? "warn" : "bad",
       detail: `현재 ${metaLen}자 · 권장 70~160자`
     },
     {
       key: "summaryLength",
+      group: "basic",
       label: "요약문 길이",
       status: summaryLen >= 40 && summaryLen <= 140 ? "good" : summaryLen >= 20 ? "warn" : "bad",
       detail: `현재 ${summaryLen}자 · 권장 40~140자`
     },
     {
       key: "contentLength",
+      group: "basic",
       label: "본문 길이",
       status: contentLen >= 1200 ? "good" : contentLen >= 500 ? "warn" : "bad",
       detail: `현재 ${contentLen}자 · 권장 1,200자 이상`
     },
     {
       key: "h1Count",
+      group: "structure",
       label: "H1 구조",
       status: title ? (bodyH1List.length === 0 ? "good" : "warn") : "bad",
       detail: title
@@ -295,35 +359,47 @@ function evaluateSeo() {
     },
     {
       key: "h2Count",
+      group: "structure",
       label: "H2 소제목 구조",
       status: h2List.length >= 2 ? "good" : h2List.length === 1 ? "warn" : "bad",
       detail: `현재 ${h2List.length}개 · 권장 2개 이상`
     },
     {
       key: "h3Count",
+      group: "structure",
       label: "H3 소제목 구조",
       status: h3List.length >= 2 ? "good" : "warn",
       detail: `현재 ${h3List.length}개 · 세부 구조 정리에 도움`
     },
     {
       key: "internalLinks",
+      group: "structure",
       label: "내부 링크",
       status: internalLinks >= 1 ? "good" : "warn",
       detail: `현재 ${internalLinks}개 · 관련 글 링크 1개 이상 권장`
     },
     {
       key: "externalLinks",
+      group: "structure",
       label: "외부 링크",
       status: externalLinks >= 1 ? "good" : "warn",
       detail: `현재 ${externalLinks}개 · 근거 링크가 있으면 신뢰도에 도움`
     },
     {
+      key: "faqCount",
+      group: "media",
+      label: "FAQ 입력 여부",
+      status: faqItems.length >= 4 ? "good" : faqItems.length >= 1 ? "warn" : "warn",
+      detail: faqItems.length
+        ? `FAQ ${faqItems.length}개 인식됨 · 입력된 FAQ만 공개 페이지와 FAQPage JSON-LD에 반영됩니다.`
+        : "FAQ를 입력하지 않으면 FAQ 섹션과 FAQPage JSON-LD가 생성되지 않습니다."
+    },
+    {
       key: "imageAlt",
+      group: "media",
       label: "이미지 ALT 텍스트",
-      status: images.length === 0 ? "warn" : imagesWithoutAlt === 0 ? "good" : "bad",
-      detail: images.length === 0
-        ? "본문 이미지가 없습니다. 필요하면 ALT 포함 이미지를 추가하세요."
-        : `이미지 ${images.length}개 · ALT 누락 ${imagesWithoutAlt}개`
+      status: imageSeo.status,
+      detail: imageSeo.detail
     }
   ];
 
@@ -331,12 +407,14 @@ function evaluateSeo() {
     checks.push(
       {
         key: "focusKeywordMissing",
+        group: "keywords",
         label: "메인 키워드 설정",
         status: "bad",
         detail: "메인 키워드를 입력해야 핵심 SEO 점검이 활성화됩니다."
       },
       {
         key: "keywordStuffing",
+        group: "keywords",
         label: "키워드 스터핑 체크",
         status: stuffingResult.status,
         detail: stuffingResult.detail
@@ -346,48 +424,56 @@ function evaluateSeo() {
     checks.push(
       {
         key: "keywordTitle",
+        group: "keywords",
         label: "메인 키워드 - 제목 포함",
         status: keywordInTitle ? "good" : "bad",
         detail: keywordInTitle ? "제목에 메인 키워드가 포함되어 있습니다." : "제목에 메인 키워드를 포함하세요."
       },
       {
         key: "keywordMeta",
+        group: "keywords",
         label: "메인 키워드 - 메타 디스크립션 포함",
         status: keywordInMeta ? "good" : "warn",
         detail: keywordInMeta ? "메타 디스크립션에 메인 키워드가 포함되어 있습니다." : "메타 디스크립션에 메인 키워드를 넣어보세요."
       },
       {
         key: "keywordSummary",
+        group: "keywords",
         label: "메인 키워드 - 요약문 포함",
         status: keywordInSummary ? "good" : "warn",
         detail: keywordInSummary ? "요약문에 메인 키워드가 포함되어 있습니다." : "요약문에도 메인 키워드를 자연스럽게 넣어보세요."
       },
       {
         key: "keywordSlug",
+        group: "keywords",
         label: "메인 키워드 - 슬러그 포함",
         status: keywordInSlug ? "good" : "warn",
         detail: keywordInSlug ? "슬러그에도 키워드가 반영되어 있습니다." : "슬러그에 키워드가 드러나면 더 좋습니다."
       },
       {
         key: "keywordIntro",
+        group: "keywords",
         label: "메인 키워드 - 첫 문단 포함",
         status: keywordInFirstParagraph ? "good" : "bad",
         detail: keywordInFirstParagraph ? "첫 문단에 메인 키워드가 포함되어 있습니다." : "첫 문단 초반에 메인 키워드를 포함하세요."
       },
       {
         key: "keywordH2",
+        group: "keywords",
         label: "메인 키워드 - 소제목 포함",
         status: keywordInH2 ? "good" : "warn",
         detail: keywordInH2 ? "H2 소제목에 키워드가 반영되어 있습니다." : "H2 소제목 중 하나에 키워드를 포함하면 좋습니다."
       },
       {
         key: "keywordDensity",
+        group: "keywords",
         label: "메인 키워드 언급 횟수",
         status: keywordCount >= 3 && keywordCount <= 12 ? "good" : keywordCount >= 1 ? "warn" : "bad",
         detail: `본문 내 ${keywordCount}회 언급 · 권장 3~12회`
       },
       {
         key: "keywordStuffing",
+        group: "keywords",
         label: "키워드 스터핑 체크",
         status: stuffingResult.status,
         detail: stuffingResult.detail
@@ -430,20 +516,33 @@ function getScoreSummary(checks) {
   return { score, grade };
 }
 
-function renderSeoChecklist() {
+function renderSeoChecklist(activeGroupKey) {
+  const tabsWrap = $("seoTabs");
   const wrap = $("seoChecklist");
   const scoreEl = $("seoScore");
   const gradeEl = $("seoGrade");
   if (!wrap || !scoreEl || !gradeEl) return;
 
   const checks = evaluateSeo();
+  const groups = groupSeoChecks(checks);
+  const selectedGroup = groups.find((group) => group.key === activeGroupKey) || groups[0];
   const { score, grade } = getScoreSummary(checks);
 
   scoreEl.textContent = String(score);
   gradeEl.textContent = grade;
   scoreEl.dataset.grade = grade;
 
-  wrap.innerHTML = checks.map((item) => {
+  if (tabsWrap) {
+    tabsWrap.innerHTML = groups.map((group) => `
+      <button class="seo-tab ${selectedGroup && selectedGroup.key === group.key ? "is-active" : ""}" type="button" data-seo-group="${group.key}">${group.label}</button>
+    `).join("");
+
+    tabsWrap.querySelectorAll("[data-seo-group]").forEach((button) => {
+      button.addEventListener("click", () => renderSeoChecklist(button.dataset.seoGroup || "basic"));
+    });
+  }
+
+  wrap.innerHTML = (selectedGroup?.items || checks).map((item) => {
     const icon = item.status === "good" ? "통과" : item.status === "warn" ? "보완" : "부족";
     return `
       <div class="seo-check seo-check--${item.status}">
@@ -681,6 +780,10 @@ async function load() {
   $("summary").value = item.summary || "";
   $("cover_image").value = item.cover_image || "";
   if ($("cover_image_alt")) $("cover_image_alt").value = item.cover_image_alt || "";
+  if ($("focusKeyword")) $("focusKeyword").value = item.focus_keyword || "";
+  let longtailKeywords = [];
+  try { longtailKeywords = JSON.parse(item.longtail_keywords_json || "[]"); } catch {}
+  if ($("longtailKeywords")) $("longtailKeywords").value = Array.isArray(longtailKeywords) ? longtailKeywords.join(", ") : "";
   $("status").value = item.status || "published";
   $("content_md").value = item.content_md || "";
   if ($("faq_md")) $("faq_md").value = item.faq_md || "";
@@ -712,6 +815,8 @@ async function save() {
     summary: $("summary").value.trim(),
     cover_image: $("cover_image").value.trim(),
     cover_image_alt: $("cover_image_alt").value.trim(),
+    focus_keyword: $("focusKeyword")?.value.trim() || "",
+    longtail_keywords: parseKeywords($("longtailKeywords")?.value || ""),
     status: $("status").value,
     tags: parseTags($("tags").value),
     content_md: $("content_md").value,

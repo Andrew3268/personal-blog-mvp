@@ -15,6 +15,8 @@ export async function onRequestGet({ env, params }) {
       summary,
       cover_image,
       cover_image_alt,
+      focus_keyword,
+      longtail_keywords_json,
       tags_json,
       content_md,
       faq_md,
@@ -49,6 +51,8 @@ export async function onRequestPut({ env, params, request }) {
   const summary = String(body.summary || "").trim();
   const coverImage = String(body.cover_image || "").trim();
   const coverImageAlt = String(body.cover_image_alt || "").trim();
+  const focusKeyword = String(body.focus_keyword || "").trim();
+  const longtailKeywords = Array.isArray(body.longtail_keywords) ? body.longtail_keywords : [];
   const contentMd = String(body.content_md || "").trim();
   const faqMd = String(body.faq_md || "").trim();
   const status = String(body.status || "published").trim() || "published";
@@ -82,6 +86,8 @@ export async function onRequestPut({ env, params, request }) {
       summary = ?,
       cover_image = ?,
       cover_image_alt = ?,
+      focus_keyword = ?,
+      longtail_keywords_json = ?,
       tags_json = ?,
       content_md = ?,
       faq_md = ?,
@@ -96,6 +102,8 @@ export async function onRequestPut({ env, params, request }) {
     summary,
     coverImage,
     coverImageAlt,
+    focusKeyword,
+    JSON.stringify(longtailKeywords),
     JSON.stringify(tags),
     contentMd,
     faqMd,
