@@ -264,11 +264,16 @@ function groupSeoChecks(checks) {
   });
 
   return order
-    .map((key) => ({
-      key,
-      label: key === "basic" ? "기본" : key === "keywords" ? "키워드" : key === "structure" ? "구조/링크" : "이미지/FAQ",
-      items: grouped[key]
-    }))
+    .map((key) => {
+      const items = grouped[key];
+      const baseLabel = key === "basic" ? "기본" : key === "keywords" ? "키워드" : key === "structure" ? "구조/링크" : "이미지/FAQ";
+      const hasPassingItem = items.some((item) => item.status === "good");
+      return {
+        key,
+        label: hasPassingItem ? baseLabel : `${baseLabel} !`,
+        items
+      };
+    })
     .filter((group) => group.items.length);
 }
 
@@ -303,10 +308,12 @@ function evaluateSeo() {
   const keywordInSummary = focusKeyword ? containsKeyword(summary, focusKeyword) : false;
   const keywordInSlug = focusKeyword ? containsKeyword(slug, slugify(focusKeyword)) : false;
   const keywordInFirstParagraph = focusKeyword ? containsKeyword(firstParagraph, focusKeyword) : false;
-  const keywordInH2 = focusKeyword ? h2List.some((h) => containsKeyword(h, focusKeyword)) : false;
+  const h2KeywordCount = focusKeyword ? h2List.filter((h) => containsKeyword(h, focusKeyword)).length : 0;
+  const h3KeywordCount = focusKeyword ? h3List.filter((h) => containsKeyword(h, focusKeyword)).length : 0;
+  const keywordInH2 = h2KeywordCount > 0;
   const keywordCount = focusKeyword ? countKeywordOccurrences(plainContent, focusKeyword) : 0;
   const longtailResult = evaluateLongtailKeywords(
-    [title, metaDescription, summary, firstParagraph, plainContent, ...h2List, ...h3List],
+    [plainContent],
     longtailKeywords
   );
   const stuffingResult = evaluateStuffing(focusKeyword, plainContent);
@@ -466,6 +473,13 @@ function evaluateSeo() {
         detail: `본문 내 ${keywordCount}회 언급 · 권장 3~12회`
       },
       {
+        key: "keywordHeadingCoverage",
+        group: "structure",
+        label: "H2/H3 메인 키워드 포함 수",
+        status: (h2KeywordCount + h3KeywordCount) >= 2 ? "good" : (h2KeywordCount + h3KeywordCount) >= 1 ? "warn" : "bad",
+        detail: `H2 ${h2List.length}개 중 ${h2KeywordCount}개 · H3 ${h3List.length}개 중 ${h3KeywordCount}개에 메인 키워드가 포함되어 있습니다.`
+      },
+      {
         key: "keywordStuffing",
         group: "keywords",
         label: "키워드 스터핑 체크",
@@ -478,6 +492,7 @@ function evaluateSeo() {
   if (!longtailKeywords.length) {
     checks.push({
       key: "longtailKeywords",
+      group: "keywords",
       label: "롱테일 키워드 설정",
       status: "warn",
       detail: "롱테일 키워드를 콤마로 입력하면 포함 여부를 함께 점검합니다."
@@ -485,10 +500,11 @@ function evaluateSeo() {
   } else {
     checks.push({
       key: "longtailCoverage",
-      label: "롱테일 키워드 포함 여부",
+      group: "keywords",
+      label: "롱테일 키워드 본문 포함 여부",
       status: longtailResult.count === longtailResult.total ? "good" : longtailResult.count >= 1 ? "warn" : "bad",
       detail: longtailResult.count === longtailResult.total
-        ? `${longtailResult.total}개 모두 본문 또는 주요 영역에 포함되었습니다.`
+        ? `${longtailResult.total}개 모두 본문에 포함되었습니다.`
         : `총 ${longtailResult.total}개 중 ${longtailResult.count}개 포함 · 미포함: ${longtailResult.missing.join(", ")}`
     });
   }
