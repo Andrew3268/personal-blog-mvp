@@ -18,6 +18,12 @@ export async function onRequestGet({ params, env, request }) {
     });
   }
 
+  await env.BLOG_DB.prepare(`
+    UPDATE posts
+    SET view_count = COALESCE(view_count, 0) + 1
+    WHERE slug = ? AND status = 'published'
+  `).bind(slug).run();
+
   const updatedAt = String(meta.updated_at || "");
   const url = new URL(request.url);
   const cacheKeyUrl = `${url.origin}/post/${encodeURIComponent(slug)}?v=${encodeURIComponent(updatedAt)}`;
@@ -39,6 +45,7 @@ export async function onRequestGet({ params, env, request }) {
           tags_json,
           content_md,
           faq_md,
+          view_count,
           status,
           published_at,
           updated_at
@@ -84,8 +91,18 @@ export async function onRequestGet({ params, env, request }) {
             LIMIT 5
           `).bind(String(row.category).trim(), slug).all()).results || []
         : [];
+      const popularRows = (await env.BLOG_DB.prepare(`
+        SELECT slug, title, view_count
+        FROM posts
+        WHERE status = 'published'
+          AND slug != ?
+        ORDER BY COALESCE(view_count, 0) DESC, published_at DESC, updated_at DESC
+        LIMIT 5
+      `).bind(slug).all()).results || [];
       const faqSectionHtml = renderFaqSection(faqItems);
       const relatedPostsHtml = renderRelatedPostsSection(relatedRows, row.category);
+      const tagHighlightsHtml = renderTagHighlights(tags);
+      const popularPostsHtml = renderPopularPosts(popularRows);
 
       const titleText = String(row.title || "").trim();
       const descriptionText = buildDescription(
@@ -201,15 +218,6 @@ export async function onRequestGet({ params, env, request }) {
         ? `/posts/?category=${encodeURIComponent(String(row.category))}`
         : "/posts/";
 
-      const tagsHtml = tags.length
-        ? `<div class="row" style="gap:8px;flex-wrap:wrap">
-            ${tags.map(tag => {
-              const tagText = String(tag).trim();
-              const tagHref = `/posts/?tag=${encodeURIComponent(tagText)}`;
-              return `<a class="tag-chip" href="${tagHref}" rel="tag">#${escapeHtml(tagText)}</a>`;
-            }).join("")}
-          </div>`
-        : "";
 
       const coverImageHtml = row.cover_image
         ? `
@@ -290,8 +298,6 @@ export async function onRequestGet({ params, env, request }) {
 
         ${row.summary ? `<p class="p post-summary" itemprop="description">${escapeHtml(String(row.summary))}</p>` : ""}
 
-        ${tagsHtml}
-
         ${coverImageHtml}
 
         <meta itemprop="author" content="${escapeHtml(authorName)}" />
@@ -304,43 +310,24 @@ export async function onRequestGet({ params, env, request }) {
       <div class="post-grid">
         <section class="card post-body" aria-label="본문">
           ${bodyHtml}
+          ${tagHighlightsHtml}
           ${faqSectionHtml}
           ${relatedPostsHtml}
         </section>
 
-        <aside class="card post-side" aria-label="글 정보 및 이동">
-          <h2 class="h2">이 글 정보</h2>
-          <div class="sep"></div>
+        <aside class="card post-side" aria-label="추가 콘텐츠">
+          <section class="post-side__section post-side__ad" aria-label="광고 영역">
+            <h2 class="h2">광고 영역</h2>
+            <p class="small">이 자리는 추후 Google AdSense를 배치할 예정입니다.</p>
+            <div class="post-side__ad-slot" aria-hidden="true">AdSense Placeholder</div>
+          </section>
 
-          <ul class="list-reset small" style="display:grid;gap:10px">
-            <li><b>카테고리:</b> ${row.category ? `<a href="${categoryLink}">${escapeHtml(String(row.category))}</a>` : "미분류"}</li>
-            <li><b>발행일:</b> ${escapeHtml(publishedDate)}</li>
-            <li><b>수정일:</b> ${escapeHtml(updatedDate)}</li>
-            <li><b>주소:</b> <a href="${escapeHtml(canonical.toString())}">고정 링크</a></li>
-          </ul>
+          ${popularPostsHtml}
 
-          <div class="sep"></div>
-
-          <nav aria-label="글 이동">
-            <div class="row" style="flex-wrap:wrap">
-              <a class="btn btn--brand" href="/posts/">글 목록</a>
-              ${row.category ? `<a class="btn" href="${categoryLink}">${escapeHtml(String(row.category))} 글 보기</a>` : ""}
-            </div>
-          </nav>
-
-          ${tags.length ? `
-            <div class="sep"></div>
-            <h2 class="h2">태그</h2>
-            <div class="row" style="gap:8px;flex-wrap:wrap">
-              ${tags.map(tag => {
-                const tagText = String(tag).trim();
-                return `<a class="tag-chip" href="/posts/?tag=${encodeURIComponent(tagText)}" rel="tag">#${escapeHtml(tagText)}</a>`;
-              }).join("")}
-            </div>
-          ` : ""}
-
-          <div class="sep"></div>
-          <p class="small">이 페이지는 서버에서 HTML로 렌더링되어 검색엔진이 본문과 메타 정보를 더 안정적으로 읽을 수 있도록 구성했습니다.</p>
+          <section class="post-side__section post-side__extra" aria-label="추가 콘텐츠 영역">
+            <h2 class="h2">추가 콘텐츠 영역</h2>
+            <p class="small">나중에 다른 콘텐츠를 넣을 수 있도록 여유 공간을 확보했습니다.</p>
+          </section>
         </aside>
       </div>
     </article>
@@ -364,6 +351,42 @@ export async function onRequestGet({ params, env, request }) {
   });
 }
 
+
+function renderTagHighlights(tags) {
+  if (!Array.isArray(tags) || !tags.length) return "";
+  const cleanTags = tags.map(tag => String(tag || "").trim()).filter(Boolean);
+  if (!cleanTags.length) return "";
+  return `
+    <section class="post-tags-highlight" aria-labelledby="post-tags-highlight-title" style="margin-top:32px;padding-top:24px;border-top:1px solid var(--border)">
+      <h2 id="post-tags-highlight-title" class="h2">핵심 키워드</h2>
+      <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:14px">
+        ${cleanTags.map(tag => `<span class="tag-chip tag-chip--static">#${escapeHtml(tag)}</span>`).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderPopularPosts(items) {
+  if (!Array.isArray(items) || !items.length) return "";
+  return `
+    <section class="post-side__section post-side__popular" aria-labelledby="post-popular-title">
+      <div class="row" style="justify-content:space-between;align-items:flex-end;gap:10px">
+        <h2 id="post-popular-title" class="h2">인기글</h2>
+        <span class="small">조회순</span>
+      </div>
+      <ul class="post-side__popular-list">
+        ${items.map((item, index) => `
+          <li>
+            <a class="post-side__popular-link" href="/post/${encodeURIComponent(String(item.slug || ""))}">
+              <span class="post-side__popular-rank">${index + 1}</span>
+              <span class="post-side__popular-text">${escapeHtml(String(item.title || "제목 없음"))}</span>
+            </a>
+          </li>
+        `).join("")}
+      </ul>
+    </section>
+  `;
+}
 
 function parseFaqMarkdown(raw) {
   const lines = String(raw || "").replace(/\r/g, "").split("\n");

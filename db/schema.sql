@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS posts (
   tags_json TEXT DEFAULT '[]',
   content_md TEXT DEFAULT '',
   faq_md TEXT DEFAULT '',
+  view_count INTEGER DEFAULT 0,
   status TEXT DEFAULT 'published',
   published_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
@@ -23,3 +24,6 @@ CREATE INDEX IF NOT EXISTS idx_posts_category ON posts(category);
 CREATE INDEX IF NOT EXISTS idx_posts_status ON posts(status);
 CREATE INDEX IF NOT EXISTS idx_posts_status_category_published
 ON posts(status, category, published_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_posts_status_view_count
+ON posts(status, view_count DESC, published_at DESC);

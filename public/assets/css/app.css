@@ -62,8 +62,9 @@ img{max-width:100%;display:block}
 .post-body ul,.post-body ol{margin:0 0 18px 20px;padding:0;line-height:1.9;color:#1e293b}
 .post-body blockquote{margin:22px 0;padding:18px;border-left:4px solid var(--brand);background:rgba(91,124,255,.06);border-radius:16px}
 .post-body code{background:#eff6ff;padding:3px 6px;border-radius:8px;font-size:.92em}
-.post-side{height:max-content;position:sticky;top:82px}
+.post-side{height:max-content;position:sticky;top:82px;display:flex;flex-direction:column;gap:18px;min-height:820px}
 .tag-chip{display:inline-flex;padding:7px 10px;border-radius:999px;background:#eef2ff;color:#334155;font-size:12px;font-weight:800}
+.tag-chip--static{pointer-events:none}
 .plain-list{margin:0;padding-left:18px;line-height:1.8;color:#334155}
 .post-shell--tip .post-hero{border:1px solid rgba(34,197,94,.18);box-shadow:0 12px 32px rgba(34,197,94,.08)}
 .post-shell--review .post-hero{border:1px solid rgba(91,124,255,.22);box-shadow:0 12px 32px rgba(91,124,255,.10)}
@@ -157,3 +158,12 @@ body.has-preview-open{overflow:hidden}
 .seo-tab{appearance:none;border:1px solid rgba(91,124,255,.16);background:#fff;color:#334155;padding:8px 12px;border-radius:999px;font-size:12px;font-weight:900;cursor:pointer;transition:.2s ease}
 .seo-tab.is-active{background:#1d4ed8;color:#fff;border-color:#1d4ed8;box-shadow:0 8px 20px rgba(29,78,216,.18)}
 .seo-tab:hover{transform:translateY(-1px)}
+
+
+.post-side__section{padding:18px;border:1px solid var(--border);border-radius:20px;background:#fff}
+.post-side__ad-slot{min-height:260px;border:1px dashed rgba(91,124,255,.28);border-radius:18px;background:linear-gradient(135deg, rgba(91,124,255,.06), rgba(34,197,94,.05));display:grid;place-items:center;margin-top:14px;font-weight:900;color:#64748b}
+.post-side__popular-list{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:12px}
+.post-side__popular-link{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start}
+.post-side__popular-rank{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:999px;background:#eef2ff;color:#1d4ed8;font-size:12px;font-weight:900}
+.post-side__popular-text{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.55;color:#1e293b;font-weight:800}
+.post-side__extra{min-height:280px}
