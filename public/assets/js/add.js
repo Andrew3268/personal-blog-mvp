@@ -64,6 +64,10 @@ function countText(value) {
   return String(value || "").length;
 }
 
+function countTextWithoutSpaces(value) {
+  return String(value || "").replace(/\s/g, "").length;
+}
+
 function setCountState(outputEl, value, min, max) {
   if (!outputEl) return;
   outputEl.classList.remove("is-good", "is-warn", "is-bad");
@@ -82,11 +86,12 @@ function updateCount(inputId, outputId) {
   const inputEl = $(inputId);
   const outputEl = $(outputId);
   if (!inputEl || !outputEl) return;
-  const value = countText(inputEl.value);
-  outputEl.textContent = `${value}자`;
+  const includedValue = countText(inputEl.value);
+  const excludedValue = countTextWithoutSpaces(inputEl.value);
+  outputEl.textContent = `공백 포함 ${includedValue}자 / 제외 ${excludedValue}자`;
 
-  if (outputId === "titleCount") setCountState(outputEl, value, 20, 60);
-  else if (outputId === "metaDescriptionCount") setCountState(outputEl, value, 70, 160);
+  if (outputId === "titleCount") setCountState(outputEl, excludedValue, 20, 60);
+  else if (outputId === "metaDescriptionCount") setCountState(outputEl, excludedValue, 70, 160);
   else outputEl.classList.remove("is-good", "is-warn", "is-bad");
 }
 

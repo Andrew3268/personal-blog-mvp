@@ -93,7 +93,7 @@ img{max-width:100%;display:block}
 .seo-pill--bad{background:rgba(239,68,68,.15);color:#991b1b}
 .seo-tip-box{margin-top:4px}
 
-.label-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}.label-row--compact{justify-content:flex-start}
+.label-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap}.label-row--compact{justify-content:flex-start}
 .count-indicator{font-weight:800;white-space:nowrap}
 .count-indicator.is-good{color:#15803d}
 .count-indicator.is-warn{color:#b45309}

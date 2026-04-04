@@ -34,7 +34,6 @@
         </div>
         <div class="sep"></div>
 
-        
         <div class="grid grid--3">
           <div>
             <div class="label-row">
@@ -56,20 +55,14 @@
           </div>
         </div>
 
-        <div class="grid grid--2">
-          <div>
-            <div class="label-row label-row--compact">
-              <label class="small" for="title">제목</label>
-              <div class="small count-indicator" id="titleCount">0자</div>
-            </div>
-            <input class="input" id="title" />
+        <div>
+          <div class="label-row">
+            <label class="small" for="status">상태</label>
           </div>
-          <div>
-            <div class="label-row">
-              <label class="small" for="slugPreview">슬러그 미리보기</label>
-            </div>
-            <input class="input" id="slugPreview" disabled />
-          </div>
+          <select class="input" id="status">
+            <option value="published">발행</option>
+            <option value="draft">초안</option>
+          </select>
         </div>
 
         <div class="grid grid--2">
@@ -95,19 +88,32 @@
           </div>
           <div>
             <div class="label-row">
-              <label class="small" for="status">상태</label>
+              <label class="small" for="tags">태그 (콤마 구분)</label>
             </div>
-            <select class="input" id="status">
-              <option value="published">발행</option>
-              <option value="draft">초안</option>
-            </select>
+            <input class="input" id="tags" placeholder="예: 생활꿀팁, 욕실청소, 재활용" />
+          </div>
+        </div>
+
+        <div class="grid grid--2">
+          <div>
+            <div class="label-row label-row--compact">
+              <label class="small" for="title">제목</label>
+              <div class="small count-indicator" id="titleCount">공백 포함 0자 / 제외 0자</div>
+            </div>
+            <input class="input" id="title" />
+          </div>
+          <div>
+            <div class="label-row">
+              <label class="small" for="slugPreview">슬러그 미리보기</label>
+            </div>
+            <input class="input" id="slugPreview" disabled />
           </div>
         </div>
 
         <div>
           <div class="label-row label-row--compact">
             <label class="small" for="meta_description">메타디스크립션</label>
-            <div class="small count-indicator" id="metaDescriptionCount">0자</div>
+            <div class="small count-indicator" id="metaDescriptionCount">공백 포함 0자 / 제외 0자</div>
           </div>
           <textarea
             class="input"
@@ -117,10 +123,25 @@
           ></textarea>
         </div>
 
+        <div class="grid grid--2">
+          <div>
+            <div class="label-row">
+              <label class="small" for="cover_image">대표 이미지 URL</label>
+            </div>
+            <input class="input" id="cover_image" placeholder="https://..." />
+          </div>
+          <div>
+            <div class="label-row">
+              <label class="small" for="cover_image_alt">대표 이미지 ALT</label>
+            </div>
+            <input class="input" id="cover_image_alt" placeholder="예: 욕실 청소용 스프레이를 뿌리는 장면" />
+          </div>
+        </div>
+
         <div>
           <div class="label-row label-row--compact">
             <label class="small" for="summary">요약문</label>
-            <div class="small count-indicator" id="summaryCount">0자</div>
+            <div class="small count-indicator" id="summaryCount">공백 포함 0자 / 제외 0자</div>
           </div>
           <textarea
             class="input"
@@ -130,32 +151,10 @@
           ></textarea>
         </div>
 
-        <div class="grid grid--2">
-          <div>
-            <div class="label-row">
-              <label class="small" for="tags">태그 (콤마 구분)</label>
-            </div>
-            <input class="input" id="tags" placeholder="예: 생활꿀팁, 욕실청소, 재활용" />
-          </div>
-          <div>
-            <div class="label-row">
-              <label class="small" for="cover_image">대표 이미지 URL</label>
-            </div>
-            <input class="input" id="cover_image" placeholder="https://..." />
-          </div>
-        </div>
-
-        <div>
-          <div class="label-row">
-            <label class="small" for="cover_image_alt">대표 이미지 ALT</label>
-          </div>
-          <input class="input" id="cover_image_alt" placeholder="예: 욕실 청소용 스프레이를 뿌리는 장면" />
-        </div>
-
         <div>
           <div class="label-row label-row--compact">
             <label class="small" for="content_md">본문 (마크다운)</label>
-            <div class="small count-indicator" id="contentCount">0자</div>
+            <div class="small count-indicator" id="contentCount">공백 포함 0자 / 제외 0자</div>
           </div>
           <textarea class="input editor-textarea" id="content_md" rows="18" placeholder="도입 문단
 
@@ -167,7 +166,7 @@
         <div>
           <div class="label-row label-row--compact">
             <label class="small" for="faq_md">Q&A 전용 마크다운</label>
-            <div class="small count-indicator" id="faqCount">0자</div>
+            <div class="small count-indicator" id="faqCount">공백 포함 0자 / 제외 0자</div>
           </div>
           <textarea class="input editor-textarea" id="faq_md" rows="12" placeholder="## Q. 첫 번째 질문을 적어주세요
 답변은 아래 줄부터 작성합니다.
