@@ -580,8 +580,7 @@ function inlineFormat(text) {
 }
 
 function getPreviewAdInsertPositions(md, contentLengthWithoutSpaces) {
-  const lines = String(md || '').replace(//g, '').split('
-');
+  const lines = String(md || '').replace(/\r/g, '').split('\n');
   const h2Lines = [];
   let nonEmptyCount = 0;
   lines.forEach((line, index) => {
