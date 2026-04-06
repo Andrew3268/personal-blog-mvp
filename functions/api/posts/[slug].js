@@ -123,3 +123,18 @@ export async function onRequestPut({ env, params, request }) {
 
   return okJson({ ok: true, slug });
 }
+
+export async function onRequestDelete({ env, params }) {
+  const slug = decodeURIComponent(String(params.slug || ""));
+  if (!slug) {
+    return okJson({ message: "slug가 필요합니다." }, { status: 400 });
+  }
+
+  const existing = await env.BLOG_DB.prepare(`SELECT slug FROM posts WHERE slug = ?`).bind(slug).first();
+  if (!existing) {
+    return okJson({ message: "not_found" }, { status: 404 });
+  }
+
+  await env.BLOG_DB.prepare(`DELETE FROM posts WHERE slug = ?`).bind(slug).run();
+  return okJson({ ok: true, slug });
+}

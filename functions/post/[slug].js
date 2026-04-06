@@ -104,9 +104,8 @@ export async function onRequestGet({ params, env, request }) {
       const contentTextLength = stripMarkdown(row.content_md || "").replace(/\s+/g, "").length;
       const shouldShowSidebarAd = toBool(row.enable_sidebar_ad, true);
       const shouldShowInarticleAds = toBool(row.enable_inarticle_ads, true);
-      const inArticleAdCount = shouldShowInarticleAds ? (contentTextLength >= 2000 ? 2 : 1) : 0;
-      const inArticleAds = buildInArticleAds(adConfig, inArticleAdCount);
-      const bodyHtml = buildArticleBodyHtml(row.content_md || "", inArticleAds);
+      const inArticleAds = buildInArticleAds(adConfig, 2);
+      const bodyHtml = buildArticleBodyHtml(row.content_md || "", inArticleAds, contentTextLength);
       const faqSectionHtml = renderFaqSection(faqItems);
       const relatedPostsHtml = renderRelatedPostsSection(relatedRows, row.category);
       const tagHighlightsHtml = renderTagHighlights(tags);
@@ -294,10 +293,14 @@ export async function onRequestGet({ params, env, request }) {
             ${row.category ? `<a class="badge" href="${categoryLink}">${escapeHtml(String(row.category))}</a>` : ""}
             <span class="badge">SSR + Cache</span>
           </div>
-          <div class="small">
-            <time datetime="${escapeHtml(publishedIso || "")}">발행 ${escapeHtml(publishedDate)}</time>
-            <span aria-hidden="true"> · </span>
-            <time datetime="${escapeHtml(updatedIso || "")}">수정 ${escapeHtml(updatedDate)}</time>
+          <div class="row post-admin-actions" style="gap:8px;flex-wrap:wrap;align-items:center">
+            <div class="small">
+              <time datetime="${escapeHtml(publishedIso || "")}">발행 ${escapeHtml(publishedDate)}</time>
+              <span aria-hidden="true"> · </span>
+              <time datetime="${escapeHtml(updatedIso || "")}">수정 ${escapeHtml(updatedDate)}</time>
+            </div>
+            <a class="btn btn--sm" href="/edit.html?slug=${encodeURIComponent(slug)}">수정</a>
+            <button class="btn btn--sm btn--danger" type="button" id="deletePostBtn" data-slug="${encodeURIComponent(slug)}" data-title="${escapeHtml(titleText)}">삭제</button>
           </div>
         </div>
 
@@ -336,6 +339,30 @@ export async function onRequestGet({ params, env, request }) {
     ${footer(siteName, siteDescription)}
   </main>
 
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const deleteBtn = document.getElementById('deletePostBtn');
+    if (!deleteBtn) return;
+    deleteBtn.addEventListener('click', async () => {
+      const slug = decodeURIComponent(String(deleteBtn.dataset.slug || ''));
+      const title = String(deleteBtn.dataset.title || slug || '이 글');
+      const confirmed = window.confirm(`'${title}' 글을 삭제할까요? 삭제 후 되돌릴 수 없습니다.`);
+      if (!confirmed) return;
+      deleteBtn.disabled = true;
+      deleteBtn.textContent = '삭제 중…';
+      try {
+        const res = await fetch(`/api/posts/${encodeURIComponent(slug)}`, { method: 'DELETE' });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json?.message || `삭제 실패 (${res.status})`);
+        window.location.href = '/posts/';
+      } catch (err) {
+        alert(err?.message || '삭제 중 오류가 발생했습니다.');
+        deleteBtn.disabled = false;
+        deleteBtn.textContent = '삭제';
+      }
+    });
+  });
+</script>
   <script src="/assets/js/nav.js" defer></script>
 </body>
 </html>`;
@@ -414,18 +441,23 @@ function buildInArticleAds(config, count) {
   return ads;
 }
 
-function buildArticleBodyHtml(contentMd, adHtmlList = []) {
+function buildArticleBodyHtml(contentMd, adHtmlList = [], contentTextLength = 0) {
   const blocks = renderMarkdownBlocks(contentMd || "");
-  if (!adHtmlList.length || !blocks.length) {
-    return blocks.map((block) => block.html).join("\n");
+  if (!blocks.length) return "";
+
+  const insertPositions = getAdInsertPositions(blocks, contentTextLength, adHtmlList.length);
+  if (!insertPositions.length) {
+    return blocks.map((block) => block.html).join("
+");
   }
 
-  const insertPositions = getAdInsertPositions(blocks, adHtmlList.length);
   const adsByPosition = new Map();
   insertPositions.forEach((position, index) => {
+    const adHtml = adHtmlList[index];
+    if (!adHtml) return;
     const safePosition = Math.max(0, Math.min(position, blocks.length));
     if (!adsByPosition.has(safePosition)) adsByPosition.set(safePosition, []);
-    adsByPosition.get(safePosition).push(adHtmlList[index]);
+    adsByPosition.get(safePosition).push(adHtml);
   });
 
   const html = [];
@@ -434,22 +466,24 @@ function buildArticleBodyHtml(contentMd, adHtmlList = []) {
     queuedAds.forEach((ad) => html.push(ad));
     if (i < blocks.length) html.push(blocks[i].html);
   }
-  return html.join("\n");
+  return html.join("
+");
 }
 
-function getAdInsertPositions(blocks, adCount) {
-  const positions = [];
+function getAdInsertPositions(blocks, contentTextLength, maxAds) {
+  if (!maxAds) return [];
   const h2Positions = blocks
     .map((block, index) => ({ block, index }))
     .filter((entry) => entry.block.type === "heading" && entry.block.level === 2)
     .map((entry) => entry.index);
 
-  if (adCount >= 1) {
-    positions.push(getSectionEndPosition(blocks, h2Positions, 0) ?? getFallbackPosition(blocks, 0.38));
-  }
+  const positions = [];
+  const firstPosition = getSectionEndPosition(blocks, h2Positions, 0) ?? getFallbackPosition(blocks, 0.42);
+  positions.push(firstPosition);
 
-  if (adCount >= 2) {
-    positions.push(getSectionEndPosition(blocks, h2Positions, h2Positions.length >= 3 ? 2 : 1) ?? getFallbackPosition(blocks, 0.72));
+  const shouldAddSecond = contentTextLength >= 2000 && h2Positions.length >= 3 && maxAds >= 2;
+  if (shouldAddSecond) {
+    positions.push(getSectionEndPosition(blocks, h2Positions, 2) ?? getFallbackPosition(blocks, 0.74));
   }
 
   return dedupePositions(positions, blocks.length);

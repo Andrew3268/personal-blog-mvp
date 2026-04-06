@@ -97,6 +97,7 @@
           <div class="row" style="flex-wrap:wrap">
             ${itemStatus === 'published' ? `<a class="btn btn--brand" href="/post/${encodeURIComponent(slug)}">글 보기</a>` : ''}
             <a class="btn" href="/edit.html?slug=${encodeURIComponent(slug)}">수정</a>
+            <button class="btn btn--danger js-delete-post" type="button" data-slug="${encodeURIComponent(slug)}" data-title="${title}">삭제</button>
           </div>
         </article>
       `;
@@ -107,4 +108,31 @@
     show(errorEl, true);
     errorEl.textContent = '목록을 불러오지 못했습니다. ' + (err?.message || '');
   }
+
+  listEl?.addEventListener('click', async (event) => {
+    const deleteBtn = event.target.closest('.js-delete-post');
+    if (!deleteBtn) return;
+    const slug = decodeURIComponent(String(deleteBtn.dataset.slug || ''));
+    const title = String(deleteBtn.dataset.title || slug || '이 글');
+    if (!slug) return;
+    const confirmed = window.confirm(`'${title}' 글을 삭제할까요? 삭제 후 되돌릴 수 없습니다.`);
+    if (!confirmed) return;
+    deleteBtn.disabled = true;
+    deleteBtn.textContent = '삭제 중…';
+    try {
+      const res = await fetch(`/api/posts/${encodeURIComponent(slug)}`, { method: 'DELETE' });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.message || `삭제 실패 (${res.status})`);
+      const card = deleteBtn.closest('.post-card');
+      if (card) card.remove();
+      if (!listEl.children.length) {
+        show(emptyEl, true);
+        emptyEl.textContent = '등록된 글이 없습니다.';
+      }
+    } catch (err) {
+      alert(err?.message || '삭제 중 오류가 발생했습니다.');
+      deleteBtn.disabled = false;
+      deleteBtn.textContent = '삭제';
+    }
+  });
 })();

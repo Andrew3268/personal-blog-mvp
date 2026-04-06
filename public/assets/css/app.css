@@ -178,3 +178,9 @@ body.has-preview-open{overflow:hidden}
 .post-ad--placeholder{display:grid;gap:8px;place-items:center;text-align:center;background:rgba(91,124,255,.04);border-style:dashed;min-height:150px}
 .post-ad__placeholder-title{font-weight:900;color:var(--ink)}
 .post-side__ad .post-ad{margin-top:12px;margin-bottom:0;min-height:280px}
+
+
+.btn--sm{padding:8px 12px;font-size:12px;border-radius:999px}
+.btn--danger{border-color:rgba(220,38,38,.18);background:rgba(220,38,38,.08);color:#b91c1c}
+.btn--danger:hover{background:rgba(220,38,38,.14)}
+.post-admin-actions .small{white-space:nowrap}

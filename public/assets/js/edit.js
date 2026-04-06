@@ -585,7 +585,33 @@ function inlineFormat(text) {
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
 }
 
-function markdownToHtml(md) {
+function getPreviewAdInsertPositions(md, contentLengthWithoutSpaces) {
+  const lines = String(md || '').replace(//g, '').split('
+');
+  const h2Lines = [];
+  let nonEmptyCount = 0;
+  lines.forEach((line, index) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+    nonEmptyCount += 1;
+    if (/^##\s+/.test(trimmed)) h2Lines.push(index);
+  });
+
+  const positions = [];
+  if (h2Lines.length) {
+    positions.push(h2Lines[0]);
+    if (contentLengthWithoutSpaces >= 2000 && h2Lines.length >= 3) positions.push(h2Lines[2]);
+    return positions;
+  }
+
+  if (nonEmptyCount > 0) {
+    positions.push(Math.max(1, Math.floor(nonEmptyCount * 0.42)));
+    if (contentLengthWithoutSpaces >= 2000) positions.push(Math.max(2, Math.floor(nonEmptyCount * 0.74)));
+  }
+  return positions;
+}
+
+function markdownToHtml(md, options = {}) {
   const lines = String(md || "").replace(/\r/g, "").split("\n");
   let html = "";
   let inUl = false;
@@ -717,7 +743,7 @@ function renderPreview() {
         ${tags.length ? `<div class="row">${tags.map((tag) => `<span class="tag-chip">#${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
       </header>
       ${coverImage ? `<img class="preview-cover" src="${escapeHtml(coverImage)}" alt="${escapeHtml(coverImageAlt || `${title} 대표 이미지`)}" loading="lazy">` : ""}
-      <section class="preview-body">${markdownToHtml(contentMd)}</section>
+      <section class="preview-body">${markdownToHtml(contentMd, { adPositions: previewAdPositions, showAds: true })}</section>
       ${faqItems.length ? `
         <section class="preview-faq" aria-label="자주 묻는 질문">
           <h2>자주 묻는 질문</h2>
