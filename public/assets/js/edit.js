@@ -294,6 +294,8 @@ function evaluateSeo() {
   const metaDescription = $("meta_description").value.trim();
   const summary = $("summary").value.trim();
   const contentMd = $("content_md").value || "";
+  const contentLengthWithoutSpaces = countTextWithoutSpaces(contentMd);
+  const previewAdPositions = getPreviewAdInsertPositions(contentMd, contentLengthWithoutSpaces);
   const faqMd = $("faq_md")?.value || "";
   const faqItems = parseFaqMarkdown(faqMd);
   const focusKeyword = $("focusKeyword")?.value.trim() || "";
