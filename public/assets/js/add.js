@@ -712,6 +712,8 @@ function renderPreview() {
   const coverImage = $("cover_image").value.trim();
   const coverImageAlt = $("cover_image_alt")?.value.trim() || "";
   const contentMd = $("content_md").value || "";
+  const contentLengthWithoutSpaces = countTextWithoutSpaces(contentMd);
+  const previewAdPositions = getPreviewAdInsertPositions(contentMd, contentLengthWithoutSpaces);
   const faqMd = $("faq_md")?.value || "";
   const faqItems = parseFaqMarkdown(faqMd);
   const tags = parseTags($("tags").value);

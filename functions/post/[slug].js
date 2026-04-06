@@ -447,7 +447,7 @@ function buildArticleBodyHtml(contentMd, adHtmlList = [], contentTextLength = 0)
 
   const insertPositions = getAdInsertPositions(blocks, contentTextLength, adHtmlList.length);
   if (!insertPositions.length) {
-    TEMP
+    return blocks.map((block) => block.html).join("\n");
   }
 
   const adsByPosition = new Map();
@@ -465,7 +465,7 @@ function buildArticleBodyHtml(contentMd, adHtmlList = [], contentTextLength = 0)
     queuedAds.forEach((ad) => html.push(ad));
     if (i < blocks.length) html.push(blocks[i].html);
   }
-  TEMP5
+  return html.join("\n");
 }
 
 function getAdInsertPositions(blocks, contentTextLength, maxAds) {
