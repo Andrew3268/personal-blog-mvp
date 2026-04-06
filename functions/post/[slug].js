@@ -346,14 +346,14 @@ export async function onRequestGet({ params, env, request }) {
     deleteBtn.addEventListener('click', async () => {
       const slug = decodeURIComponent(String(deleteBtn.dataset.slug || ''));
       const title = String(deleteBtn.dataset.title || slug || '이 글');
-      const confirmed = window.confirm(`'${title}' 글을 삭제할까요? 삭제 후 되돌릴 수 없습니다.`);
+      const confirmed = window.confirm("'" + title + "' 글을 삭제할까요? 삭제 후 되돌릴 수 없습니다.");
       if (!confirmed) return;
       deleteBtn.disabled = true;
       deleteBtn.textContent = '삭제 중…';
       try {
-        const res = await fetch(`/api/posts/${encodeURIComponent(slug)}`, { method: 'DELETE' });
+        const res = await fetch('/api/posts/' + encodeURIComponent(slug), { method: 'DELETE' });
         const json = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(json?.message || `삭제 실패 (${res.status})`);
+        if (!res.ok) throw new Error((json && json.message) || ('삭제 실패 (' + res.status + ')'));
         window.location.href = '/posts/';
       } catch (err) {
         alert(err?.message || '삭제 중 오류가 발생했습니다.');
@@ -447,8 +447,7 @@ function buildArticleBodyHtml(contentMd, adHtmlList = [], contentTextLength = 0)
 
   const insertPositions = getAdInsertPositions(blocks, contentTextLength, adHtmlList.length);
   if (!insertPositions.length) {
-    return blocks.map((block) => block.html).join("
-");
+    TEMP
   }
 
   const adsByPosition = new Map();
@@ -466,8 +465,7 @@ function buildArticleBodyHtml(contentMd, adHtmlList = [], contentTextLength = 0)
     queuedAds.forEach((ad) => html.push(ad));
     if (i < blocks.length) html.push(blocks[i].html);
   }
-  return html.join("
-");
+  TEMP5
 }
 
 function getAdInsertPositions(blocks, contentTextLength, maxAds) {

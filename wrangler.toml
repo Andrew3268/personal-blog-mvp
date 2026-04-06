@@ -1,5 +1,6 @@
 name = "personal-blog-mvp"
 compatibility_date = "2026-03-25"
+pages_build_output_dir = "public"
 
 [[d1_databases]]
 binding = "BLOG_DB"
