@@ -25,6 +25,116 @@ function parseKeywords(raw) {
 }
 
 
+const TOC_TOKEN_RE = /^\[\[TOC(?::(h2|h2,h3))?\]\]$/i;
+
+function parseTocModeFromLine(line) {
+  const match = String(line || "").trim().match(TOC_TOKEN_RE);
+  return match ? (match[1] || "h2").toLowerCase() : null;
+}
+
+function stripTocTokenLines(md) {
+  return String(md || "")
+    .split("\n")
+    .filter((line) => !parseTocModeFromLine(line))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function buildHeadingSlug(text, slugCounts) {
+  const base = String(text || "")
+    .trim()
+    .toLowerCase()
+    .replace(/<[^>]+>/g, "")
+    .replace(/[^a-z0-9\-가-힣\s]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "") || "section";
+  const currentCount = slugCounts.get(base) || 0;
+  slugCounts.set(base, currentCount + 1);
+  return currentCount ? `${base}-${currentCount + 1}` : base;
+}
+
+function extractTocItems(md, mode = "h2") {
+  const includeH3 = mode === "h2,h3";
+  const lines = String(md || "").replace(/\r/g, "").split("\n");
+  const slugCounts = new Map();
+  const items = [];
+  for (const rawLine of lines) {
+    const trimmed = rawLine.trim();
+    const headingMatch = trimmed.match(/^(#{2,3})\s+(.+)$/);
+    if (!headingMatch) continue;
+    const level = headingMatch[1].length;
+    if (level === 3 && !includeH3) continue;
+    const textValue = headingMatch[2].trim();
+    const id = buildHeadingSlug(textValue, slugCounts);
+    items.push({ level, text: textValue, id });
+  }
+  return items;
+}
+
+function renderTocHtml(items, mode = "h2") {
+  if (!items.length) return "";
+  const includeH3 = mode === "h2,h3";
+  return `
+    <nav class="post-toc" aria-label="목차">
+      <div class="post-toc__title">목차</div>
+      <ol class="post-toc__list${includeH3 ? " post-toc__list--with-h3" : ""}">
+        ${items.map((item) => `
+          <li class="post-toc__item post-toc__item--h${item.level}">
+            <a href="#${escapeHtml(item.id)}">${escapeHtml(item.text)}</a>
+          </li>
+        `).join("")}
+      </ol>
+    </nav>
+  `;
+}
+
+function getSelectedTocMode() {
+  return $("tocMode")?.value || "h2";
+}
+
+function renderPreviewTocPlaceholder(mode = "h2") {
+  const label = mode === "h2,h3" ? "H2 + H3 포함" : "H2만 포함";
+  return `<div class="preview-toc-placeholder"><span>목차가 여기에 표시됩니다</span><span class="preview-toc-placeholder__meta">${label}</span></div>`;
+}
+
+function insertTocTokenAtIdealPosition(md, mode = "h2") {
+  const token = `[[TOC:${mode}]]`;
+  const clean = stripTocTokenLines(md || "");
+  if (!clean) return `${token}\n\n`;
+
+  const lines = clean.replace(/\r/g, "").split("\n");
+  const firstH2Index = lines.findIndex((line) => /^##\s+/.test(line.trim()));
+
+  if (firstH2Index > -1) {
+    const before = lines.slice(0, firstH2Index).join("\n").replace(/\s+$/, "");
+    const after = lines.slice(firstH2Index).join("\n").replace(/^\s+/, "");
+    return `${before}\n\n${token}\n\n${after}`.replace(/^\n+/, "").replace(/\n{3,}/g, "\n\n");
+  }
+
+  const blocks = clean.split(/\n\s*\n/).map((block) => block.trim()).filter(Boolean);
+  if (blocks.length <= 1) return `${token}\n\n${clean}`;
+  return `${blocks[0]}\n\n${token}\n\n${blocks.slice(1).join("\n\n")}`.replace(/\n{3,}/g, "\n\n");
+}
+
+function handleGenerateToc() {
+  const contentEl = $("content_md");
+  const statusEl = $("tocStatus");
+  if (!contentEl) return;
+  const mode = getSelectedTocMode();
+  const items = extractTocItems(contentEl.value || "", mode);
+  if (!items.length) {
+    if (statusEl) statusEl.textContent = mode === "h2,h3" ? "H2 또는 H3 소제목이 있어야 목차를 만들 수 있습니다." : "H2 소제목이 있어야 목차를 만들 수 있습니다.";
+    return;
+  }
+  contentEl.value = insertTocTokenAtIdealPosition(contentEl.value || "", mode);
+  if (statusEl) statusEl.textContent = `목차가 생성되었습니다. (${mode === "h2,h3" ? "H2 + H3" : "H2만"})`;
+  handleRealtimeChange();
+}
+
+
+
 function parseFaqMarkdown(raw) {
   const lines = String(raw || "").replace(/\r/g, "").split("\n");
   const items = [];
@@ -616,25 +726,27 @@ function renderPreviewAdBox(index) {
 }
 
 function markdownToHtml(md, options = {}) {
-  const lines = String(md || "").replace(/\r/g, "").split("\n");
+  const sourceMd = String(md || "").replace(/\r/g, "");
+  const lines = sourceMd.split("\n");
+  const tocModeInContent = lines.map((line) => parseTocModeFromLine(line)).find(Boolean) || null;
+  const tocItems = tocModeInContent ? extractTocItems(sourceMd, tocModeInContent) : [];
   const htmlParts = [];
-  const adPositions = Array.isArray(options.adPositions) ? options.adPositions : [];
-  const showAds = options.showAds === true;
-  let nonEmptyIndex = -1;
-  let adPointer = 0;
   let inUl = false;
   let inOl = false;
   let inBlockquote = false;
+  const slugCounts = new Map();
+  const adPositions = Array.isArray(options.adPositions) ? [...options.adPositions] : [];
+  let contentBlockCount = 0;
+  let adPointer = 0;
 
-  const maybeInsertAd = () => {
-    if (!showAds) return;
-    while (adPointer < adPositions.length && adPositions[adPointer] === nonEmptyIndex) {
+  function maybeInsertAd() {
+    while (options.showAds && adPointer < adPositions.length && adPositions[adPointer] === contentBlockCount) {
       htmlParts.push(renderPreviewAdBox(adPointer));
       adPointer += 1;
     }
-  };
+  }
 
-  const closeLists = () => {
+  function closeLists() {
     if (inUl) {
       htmlParts.push("</ul>");
       inUl = false;
@@ -643,14 +755,20 @@ function markdownToHtml(md, options = {}) {
       htmlParts.push("</ol>");
       inOl = false;
     }
-  };
+  }
 
-  const closeQuote = () => {
+  function closeQuote() {
     if (inBlockquote) {
       htmlParts.push("</blockquote>");
       inBlockquote = false;
     }
-  };
+  }
+
+  function pushContentBlock(html) {
+    maybeInsertAd();
+    htmlParts.push(html);
+    contentBlockCount += 1;
+  }
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
@@ -661,14 +779,19 @@ function markdownToHtml(md, options = {}) {
       continue;
     }
 
-    nonEmptyIndex += 1;
+    const tocMode = parseTocModeFromLine(line);
+    if (tocMode) {
+      closeLists();
+      closeQuote();
+      pushContentBlock(tocItems.length ? renderTocHtml(tocItems, tocMode) : renderPreviewTocPlaceholder(tocMode));
+      continue;
+    }
 
     const imageMatch = line.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
     if (imageMatch) {
       closeLists();
       closeQuote();
-      htmlParts.push(`<figure class="preview-figure"><img src="${escapeHtml(imageMatch[2])}" alt="${escapeHtml(imageMatch[1])}" loading="lazy"></figure>`);
-      maybeInsertAd();
+      pushContentBlock(`<figure class="preview-figure"><img src="${escapeHtml(imageMatch[2])}" alt="${escapeHtml(imageMatch[1])}" loading="lazy"></figure>`);
       continue;
     }
 
@@ -677,19 +800,21 @@ function markdownToHtml(md, options = {}) {
       closeLists();
       closeQuote();
       const level = Math.min(6, headingMatch[1].length);
-      htmlParts.push(`<h${level}>${inlineFormat(headingMatch[2])}</h${level}>`);
-      maybeInsertAd();
+      const headingText = headingMatch[2].trim();
+      const headingId = buildHeadingSlug(headingText, slugCounts);
+      pushContentBlock(`<h${level} id="${escapeHtml(headingId)}">${inlineFormat(headingText)}</h${level}>`);
       continue;
     }
 
     if (/^>\s?/.test(line)) {
       closeLists();
       if (!inBlockquote) {
+        maybeInsertAd();
         htmlParts.push("<blockquote>");
         inBlockquote = true;
       }
       htmlParts.push(`<p>${inlineFormat(line.replace(/^>\s?/, ""))}</p>`);
-      maybeInsertAd();
+      contentBlockCount += 1;
       continue;
     }
 
@@ -698,11 +823,12 @@ function markdownToHtml(md, options = {}) {
       closeQuote();
       if (!inUl) {
         closeLists();
+        maybeInsertAd();
         htmlParts.push("<ul>");
         inUl = true;
       }
       htmlParts.push(`<li>${inlineFormat(ulMatch[1])}</li>`);
-      maybeInsertAd();
+      contentBlockCount += 1;
       continue;
     }
 
@@ -711,23 +837,24 @@ function markdownToHtml(md, options = {}) {
       closeQuote();
       if (!inOl) {
         closeLists();
+        maybeInsertAd();
         htmlParts.push("<ol>");
         inOl = true;
       }
       htmlParts.push(`<li>${inlineFormat(olMatch[1])}</li>`);
-      maybeInsertAd();
+      contentBlockCount += 1;
       continue;
     }
 
     closeLists();
     closeQuote();
-    htmlParts.push(`<p>${inlineFormat(line)}</p>`);
-    maybeInsertAd();
+    pushContentBlock(`<p>${inlineFormat(line)}</p>`);
   }
 
   closeLists();
   closeQuote();
-  while (showAds && adPointer < adPositions.length) {
+
+  while (options.showAds && adPointer < adPositions.length) {
     htmlParts.push(renderPreviewAdBox(adPointer));
     adPointer += 1;
   }
@@ -879,6 +1006,8 @@ async function save() {
 }
 
 function handleRealtimeChange() {
+  const tocStatus = $("tocStatus");
+  if (tocStatus) tocStatus.textContent = "";
   updateSlugPreview();
   updateAllCounts();
   renderSeoChecklist();
@@ -892,6 +1021,7 @@ function handleRealtimeChange() {
 });
 
 $("saveBtn").addEventListener("click", save);
+$("generateTocBtn")?.addEventListener("click", handleGenerateToc);
 $("previewOpenBtn")?.addEventListener("click", openPreview);
 $("previewCloseBtn")?.addEventListener("click", closePreview);
 $("previewBackdrop")?.addEventListener("click", closePreview);

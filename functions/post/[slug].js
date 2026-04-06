@@ -1,5 +1,5 @@
 import { escapeHtml, jsonld, okHtml, edgeCache } from "../_utils.js";
-import { renderMarkdown, renderMarkdownBlocks } from "../../lib/posts/renderer.js";
+import { renderMarkdown, renderMarkdownBlocks, buildTocItemsFromBlocks, renderTocHtml } from "../../lib/posts/renderer.js";
 
 export async function onRequestGet({ params, env, request }) {
   const slug = decodeURIComponent(String(params.slug || ""));
