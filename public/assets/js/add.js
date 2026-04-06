@@ -91,7 +91,7 @@ function renderTocHtml(items, mode = "h2") {
 }
 
 function getSelectedTocMode() {
-  return $("tocMode")?.value || "h2";
+  return $("includeTocH3")?.checked ? "h2,h3" : "h2";
 }
 
 function renderPreviewTocPlaceholder(mode = "h2") {
@@ -118,22 +118,46 @@ function insertTocTokenAtIdealPosition(md, mode = "h2") {
   return `${blocks[0]}\n\n${token}\n\n${blocks.slice(1).join("\n\n")}`.replace(/\n{3,}/g, "\n\n");
 }
 
-function handleGenerateToc() {
+function applyTocControls() {
   const contentEl = $("content_md");
   const statusEl = $("tocStatus");
-  if (!contentEl) return;
+  const enableTocEl = $("enableToc");
+  if (!contentEl || !enableTocEl) return;
+
+  if (!enableTocEl.checked) {
+    contentEl.value = stripTocTokenLines(contentEl.value || "");
+    if (statusEl) statusEl.textContent = "목차가 제거되었습니다.";
+    handleRealtimeChange();
+    return;
+  }
+
   const mode = getSelectedTocMode();
   const items = extractTocItems(contentEl.value || "", mode);
   if (!items.length) {
+    enableTocEl.checked = false;
     if (statusEl) statusEl.textContent = mode === "h2,h3" ? "H2 또는 H3 소제목이 있어야 목차를 만들 수 있습니다." : "H2 소제목이 있어야 목차를 만들 수 있습니다.";
+    handleRealtimeChange();
     return;
   }
+
   contentEl.value = insertTocTokenAtIdealPosition(contentEl.value || "", mode);
-  if (statusEl) statusEl.textContent = `목차가 생성되었습니다. (${mode === "h2,h3" ? "H2 + H3" : "H2만"})`;
+  if (statusEl) statusEl.textContent = `목차가 적용되었습니다. (${mode === "h2,h3" ? "H2 + H3" : "H2만"})`;
   handleRealtimeChange();
 }
 
-
+function syncTocControlsFromContent() {
+  const contentEl = $("content_md");
+  const enableTocEl = $("enableToc");
+  const includeTocH3El = $("includeTocH3");
+  if (!contentEl || !enableTocEl || !includeTocH3El) return;
+  const mode = String(contentEl.value || "")
+    .replace(/\r/g, "")
+    .split("\n")
+    .map((line) => parseTocModeFromLine(line))
+    .find(Boolean) || null;
+  enableTocEl.checked = !!mode;
+  includeTocH3El.checked = mode === "h2,h3";
+}
 
 function parseFaqMarkdown(raw) {
   const lines = String(raw || "").replace(/\r/g, "").split("\n");
@@ -1008,6 +1032,7 @@ async function save() {
 function handleRealtimeChange() {
   const tocStatus = $("tocStatus");
   if (tocStatus) tocStatus.textContent = "";
+  syncTocControlsFromContent();
   updateSlugPreview();
   updateAllCounts();
   renderSeoChecklist();
@@ -1021,7 +1046,11 @@ function handleRealtimeChange() {
 });
 
 $("saveBtn").addEventListener("click", save);
-$("generateTocBtn")?.addEventListener("click", handleGenerateToc);
+$("enableToc")?.addEventListener("change", applyTocControls);
+$("includeTocH3")?.addEventListener("change", () => {
+  if (!$("enableToc")?.checked) return;
+  applyTocControls();
+});
 $("previewOpenBtn")?.addEventListener("click", openPreview);
 $("previewCloseBtn")?.addEventListener("click", closePreview);
 $("previewBackdrop")?.addEventListener("click", closePreview);
@@ -1033,6 +1062,7 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") closePreview();
 });
 
+syncTocControlsFromContent();
 updateSlugPreview();
 updateAllCounts();
 renderSeoChecklist();

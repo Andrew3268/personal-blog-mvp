@@ -497,25 +497,35 @@ function buildArticleBodyHtml(contentMd, adHtmlList = [], contentTextLength = 0)
   const blocks = renderMarkdownBlocks(contentMd || "");
   if (!blocks.length) return "";
 
-  const insertPositions = getAdInsertPositions(blocks, contentTextLength, adHtmlList.length);
+  const tocBlock = blocks.find((block) => block.type === "toc");
+  const tocItems = tocBlock ? buildTocItemsFromBlocks(blocks, tocBlock.mode || "h2") : [];
+  const renderedBlocks = blocks.map((block) => {
+    if (block.type !== "toc") return block;
+    return {
+      ...block,
+      html: tocItems.length ? renderTocHtml(tocItems, block.mode || "h2") : ""
+    };
+  });
+
+  const insertPositions = getAdInsertPositions(renderedBlocks, contentTextLength, adHtmlList.length);
   if (!insertPositions.length) {
-    return blocks.map((block) => block.html).join("\n");
+    return renderedBlocks.map((block) => block.html).join("\n");
   }
 
   const adsByPosition = new Map();
   insertPositions.forEach((position, index) => {
     const adHtml = adHtmlList[index];
     if (!adHtml) return;
-    const safePosition = Math.max(0, Math.min(position, blocks.length));
+    const safePosition = Math.max(0, Math.min(position, renderedBlocks.length));
     if (!adsByPosition.has(safePosition)) adsByPosition.set(safePosition, []);
     adsByPosition.get(safePosition).push(adHtml);
   });
 
   const html = [];
-  for (let i = 0; i <= blocks.length; i += 1) {
+  for (let i = 0; i <= renderedBlocks.length; i += 1) {
     const queuedAds = adsByPosition.get(i) || [];
     queuedAds.forEach((ad) => html.push(ad));
-    if (i < blocks.length) html.push(blocks[i].html);
+    if (i < renderedBlocks.length) html.push(renderedBlocks[i].html);
   }
   return html.join("\n");
 }

@@ -163,6 +163,26 @@
 
         <div>
           <div class="label-row label-row--compact">
+            <label class="small">목차 생성</label>
+          </div>
+          <div class="toc-toolbar toc-toolbar--checkbox">
+            <div class="toc-toolbar__controls toc-toolbar__controls--checkbox">
+              <label class="checkbox-chip" for="enableToc">
+                <input type="checkbox" id="enableToc" />
+                <span>목차 생성</span>
+              </label>
+              <label class="checkbox-chip" for="includeTocH3">
+                <input type="checkbox" id="includeTocH3" />
+                <span>H3 포함</span>
+              </label>
+            </div>
+            <span class="small" id="tocStatus"></span>
+          </div>
+          <div class="small toc-help">체크하면 목차가 도입 문단 다음, 첫 번째 H2 소제목 바로 앞에 자동 삽입됩니다.</div>
+        </div>
+
+        <div>
+          <div class="label-row label-row--compact">
             <label class="small" for="content_md">본문 (마크다운)</label>
             <div class="small count-indicator" id="contentCount">공백 포함 0자 / 제외 0자</div>
           </div>
@@ -171,17 +191,6 @@
 ## 소제목
 - 항목 1
 - 항목 2"></textarea>
-          <div class="toc-toolbar">
-            <div class="toc-toolbar__controls">
-              <select class="input" id="tocMode" aria-label="목차 포함 범위 선택">
-                <option value="h2">목차: H2만 포함</option>
-                <option value="h2,h3">목차: H2 + H3 포함</option>
-              </select>
-              <button class="btn" id="generateTocBtn" type="button">목차 생성</button>
-            </div>
-            <span class="small" id="tocStatus"></span>
-          </div>
-          <div class="small toc-help">목차는 도입 문단 다음, 첫 번째 H2 소제목 바로 앞에 자동 삽입됩니다.</div>
         </div>
 
         <div>

@@ -192,9 +192,13 @@ body.has-preview-open{overflow:hidden}
 .post-admin-actions .small{white-space:nowrap}
 
 
-.toc-toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:12px 0 0}
+.toc-toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:4px 0 0}
 .toc-toolbar__controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.toc-toolbar__controls--checkbox{gap:12px}
 .toc-toolbar .input{width:auto;min-width:180px}
+.checkbox-chip{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--border);border-radius:999px;background:#fff;cursor:pointer;font-weight:700;color:#111827}
+.checkbox-chip input{margin:0;width:16px;height:16px}
+.checkbox-chip:has(input:checked){border-color:#5B7CFF;background:#eef2ff;color:#1e3a8a}
 .toc-help{margin-top:8px}
 .post-toc{padding:18px 20px;border:1px solid var(--border);border-radius:20px;background:linear-gradient(180deg,#f8fbff,#ffffff);margin:8px 0 24px;box-shadow:0 10px 24px rgba(15,23,42,.04)}
 .post-toc__title{font-size:18px;font-weight:800;letter-spacing:-.03em;margin-bottom:12px;color:#111827}
