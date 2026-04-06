@@ -38,6 +38,8 @@ export async function onRequestGet({ env, request }) {
       cover_image_alt,
       focus_keyword,
       longtail_keywords_json,
+      enable_sidebar_ad,
+      enable_inarticle_ads,
       tags_json,
       status,
       published_at,
@@ -77,6 +79,8 @@ export async function onRequestPost({ env, request }) {
   const longtailKeywords = Array.isArray(body.longtail_keywords) ? body.longtail_keywords : [];
   const contentMd = String(body.content_md || "").trim();
   const faqMd = String(body.faq_md || "").trim();
+  const enableSidebarAd = body.enable_sidebar_ad === false ? 0 : 1;
+  const enableInarticleAds = body.enable_inarticle_ads === false ? 0 : 1;
   const status = String(body.status || "published").trim() || "published";
   const tags = Array.isArray(body.tags) ? body.tags : [];
 
@@ -103,10 +107,12 @@ export async function onRequestPost({ env, request }) {
       tags_json,
       content_md,
       faq_md,
+      enable_sidebar_ad,
+      enable_inarticle_ads,
       status,
       published_at,
       updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(slug) DO UPDATE SET
       title = excluded.title,
       category = excluded.category,
@@ -119,6 +125,8 @@ export async function onRequestPost({ env, request }) {
       tags_json = excluded.tags_json,
       content_md = excluded.content_md,
       faq_md = excluded.faq_md,
+      enable_sidebar_ad = excluded.enable_sidebar_ad,
+      enable_inarticle_ads = excluded.enable_inarticle_ads,
       status = excluded.status,
       published_at = excluded.published_at,
       updated_at = excluded.updated_at
@@ -135,6 +143,8 @@ export async function onRequestPost({ env, request }) {
     JSON.stringify(tags),
     contentMd,
     faqMd,
+    enableSidebarAd,
+    enableInarticleAds,
     status,
     now,
     now

@@ -17,6 +17,8 @@ export async function onRequestGet({ env, params }) {
       cover_image_alt,
       focus_keyword,
       longtail_keywords_json,
+      enable_sidebar_ad,
+      enable_inarticle_ads,
       tags_json,
       content_md,
       faq_md,
@@ -55,6 +57,8 @@ export async function onRequestPut({ env, params, request }) {
   const longtailKeywords = Array.isArray(body.longtail_keywords) ? body.longtail_keywords : [];
   const contentMd = String(body.content_md || "").trim();
   const faqMd = String(body.faq_md || "").trim();
+  const enableSidebarAd = body.enable_sidebar_ad === false ? 0 : 1;
+  const enableInarticleAds = body.enable_inarticle_ads === false ? 0 : 1;
   const status = String(body.status || "published").trim() || "published";
   const tags = Array.isArray(body.tags) ? body.tags : [];
 
@@ -91,6 +95,8 @@ export async function onRequestPut({ env, params, request }) {
       tags_json = ?,
       content_md = ?,
       faq_md = ?,
+      enable_sidebar_ad = ?,
+      enable_inarticle_ads = ?,
       status = ?,
       published_at = ?,
       updated_at = ?
@@ -107,6 +113,8 @@ export async function onRequestPut({ env, params, request }) {
     JSON.stringify(tags),
     contentMd,
     faqMd,
+    enableSidebarAd,
+    enableInarticleAds,
     status,
     publishedAt,
     now,

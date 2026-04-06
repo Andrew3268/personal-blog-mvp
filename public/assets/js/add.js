@@ -785,6 +785,8 @@ async function save() {
     focus_keyword: $("focusKeyword")?.value.trim() || "",
     longtail_keywords: parseKeywords($("longtailKeywords")?.value || ""),
     status: $("status").value,
+    enable_sidebar_ad: Boolean($("enable_sidebar_ad")?.checked),
+    enable_inarticle_ads: Boolean($("enable_inarticle_ads")?.checked),
     tags: parseTags($("tags").value),
     content_md: $("content_md").value,
     faq_md: $("faq_md") ? $("faq_md").value : ""

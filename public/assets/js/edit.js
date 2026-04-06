@@ -806,6 +806,8 @@ async function load() {
   try { longtailKeywords = JSON.parse(item.longtail_keywords_json || "[]"); } catch {}
   if ($("longtailKeywords")) $("longtailKeywords").value = Array.isArray(longtailKeywords) ? longtailKeywords.join(", ") : "";
   $("status").value = item.status || "published";
+  if ($("enable_sidebar_ad")) $("enable_sidebar_ad").checked = !(String(item.enable_sidebar_ad ?? 1) === "0");
+  if ($("enable_inarticle_ads")) $("enable_inarticle_ads").checked = !(String(item.enable_inarticle_ads ?? 1) === "0");
   $("content_md").value = item.content_md || "";
   if ($("faq_md")) $("faq_md").value = item.faq_md || "";
 
@@ -839,6 +841,8 @@ async function save() {
     focus_keyword: $("focusKeyword")?.value.trim() || "",
     longtail_keywords: parseKeywords($("longtailKeywords")?.value || ""),
     status: $("status").value,
+    enable_sidebar_ad: Boolean($("enable_sidebar_ad")?.checked),
+    enable_inarticle_ads: Boolean($("enable_inarticle_ads")?.checked),
     tags: parseTags($("tags").value),
     content_md: $("content_md").value,
     faq_md: $("faq_md") ? $("faq_md").value : ""

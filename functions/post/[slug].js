@@ -1,5 +1,5 @@
 import { escapeHtml, jsonld, okHtml, edgeCache } from "../_utils.js";
-import { renderMarkdown } from "../../lib/posts/renderer.js";
+import { renderMarkdown, renderMarkdownBlocks } from "../../lib/posts/renderer.js";
 
 export async function onRequestGet({ params, env, request }) {
   const slug = decodeURIComponent(String(params.slug || ""));
@@ -46,6 +46,8 @@ export async function onRequestGet({ params, env, request }) {
           content_md,
           faq_md,
           view_count,
+          enable_sidebar_ad,
+          enable_inarticle_ads,
           status,
           published_at,
           updated_at
@@ -69,7 +71,6 @@ export async function onRequestGet({ params, env, request }) {
       }
 
       const origin = url.origin;
-
       const canonical = new URL(request.url);
       canonical.pathname = `/post/${encodeURIComponent(slug)}`;
       canonical.search = "";
@@ -78,7 +79,6 @@ export async function onRequestGet({ params, env, request }) {
       const siteName = "Wacky Blog";
       const siteDescription = "실용적인 생활 정보와 정리된 가이드를 제공하는 블로그";
       const authorName = "Steve Lee";
-      const bodyHtml = renderMarkdown(row.content_md || "");
       const faqItems = parseFaqMarkdown(row.faq_md || "");
       const relatedRows = row.category
         ? (await env.BLOG_DB.prepare(`
@@ -99,10 +99,20 @@ export async function onRequestGet({ params, env, request }) {
         ORDER BY COALESCE(view_count, 0) DESC, published_at DESC, updated_at DESC
         LIMIT 5
       `).bind(slug).all()).results || [];
+
+      const adConfig = buildAdsenseConfig(env);
+      const contentTextLength = stripMarkdown(row.content_md || "").replace(/\s+/g, "").length;
+      const shouldShowSidebarAd = toBool(row.enable_sidebar_ad, true);
+      const shouldShowInarticleAds = toBool(row.enable_inarticle_ads, true);
+      const inArticleAdCount = shouldShowInarticleAds ? (contentTextLength >= 2000 ? 2 : 1) : 0;
+      const inArticleAds = buildInArticleAds(adConfig, inArticleAdCount);
+      const bodyHtml = buildArticleBodyHtml(row.content_md || "", inArticleAds);
       const faqSectionHtml = renderFaqSection(faqItems);
       const relatedPostsHtml = renderRelatedPostsSection(relatedRows, row.category);
       const tagHighlightsHtml = renderTagHighlights(tags);
       const popularPostsHtml = renderPopularPosts(popularRows);
+      const sidebarAdHtml = shouldShowSidebarAd ? renderSidebarAd(adConfig) : "";
+      const adsenseHeadScript = renderAdsenseHeadScript(adConfig, shouldShowSidebarAd || shouldShowInarticleAds);
 
       const titleText = String(row.title || "").trim();
       const descriptionText = buildDescription(
@@ -138,7 +148,6 @@ export async function onRequestGet({ params, env, request }) {
       });
 
       const breadcrumbHtml = renderBreadcrumbs(breadcrumbItems);
-
       const breadcrumbJsonLd = {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
@@ -213,12 +222,9 @@ export async function onRequestGet({ params, env, request }) {
       const coverImagePreload = row.cover_image
         ? `<link rel="preload" as="image" href="${escapeHtml(row.cover_image)}" fetchpriority="high" />`
         : "";
-
       const categoryLink = row.category
         ? `/posts/?category=${encodeURIComponent(String(row.category))}`
         : "/posts/";
-
-
       const coverImageHtml = row.cover_image
         ? `
         <figure class="post-cover-wrap">
@@ -249,6 +255,7 @@ export async function onRequestGet({ params, env, request }) {
   <meta name="keywords" content="${escapeHtml(buildKeywords(row.category, tags))}" />
   <link rel="canonical" href="${escapeHtml(canonical.toString())}" />
   ${coverImagePreload}
+  ${adsenseHeadScript}
 
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="${escapeHtml(siteName)}" />
@@ -316,14 +323,8 @@ export async function onRequestGet({ params, env, request }) {
         </section>
 
         <aside class="card post-side" aria-label="추가 콘텐츠">
-          <section class="post-side__section post-side__ad" aria-label="광고 영역">
-            <h2 class="h2">광고 영역</h2>
-            <p class="small">이 자리는 추후 Google AdSense를 배치할 예정입니다.</p>
-            <div class="post-side__ad-slot" aria-hidden="true">AdSense Placeholder</div>
-          </section>
-
+          ${sidebarAdHtml}
           ${popularPostsHtml}
-
           <section class="post-side__section post-side__extra" aria-label="추가 콘텐츠 영역">
             <h2 class="h2">추가 콘텐츠 영역</h2>
             <p class="small">나중에 다른 콘텐츠를 넣을 수 있도록 여유 공간을 확보했습니다.</p>
@@ -351,16 +352,149 @@ export async function onRequestGet({ params, env, request }) {
   });
 }
 
+function toBool(value, defaultValue = true) {
+  if (value === null || value === undefined || value === "") return defaultValue;
+  if (typeof value === "number") return value !== 0;
+  const normalized = String(value).trim().toLowerCase();
+  return !(normalized === "0" || normalized === "false" || normalized === "off" || normalized === "no");
+}
+
+function buildAdsenseConfig(env) {
+  return {
+    client: String(env.ADSENSE_CLIENT || "").trim(),
+    sidebarSlot: String(env.ADSENSE_SLOT_SIDEBAR || "").trim(),
+    inArticleSlot1: String(env.ADSENSE_SLOT_INARTICLE_1 || "").trim(),
+    inArticleSlot2: String(env.ADSENSE_SLOT_INARTICLE_2 || "").trim()
+  };
+}
+
+function renderAdsenseHeadScript(config, shouldLoad) {
+  if (!shouldLoad || !config.client) return "";
+  return `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${escapeHtml(config.client)}" crossorigin="anonymous"></script>`;
+}
+
+function renderAdUnit({ config, slot, label, kind }) {
+  const safeLabel = escapeHtml(label);
+  if (config.client && slot) {
+    return `
+      <div class="post-ad post-ad--${escapeHtml(kind)}" aria-label="${safeLabel}">
+        <ins class="adsbygoogle"
+          style="display:block"
+          data-ad-client="${escapeHtml(config.client)}"
+          data-ad-slot="${escapeHtml(slot)}"
+          data-ad-format="auto"
+          data-full-width-responsive="true"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="post-ad post-ad--placeholder post-ad--${escapeHtml(kind)}" aria-label="${safeLabel}">
+      <div class="post-ad__placeholder-title">${safeLabel}</div>
+      <div class="small">광고 코드는 전역 설정에서 한 번만 관리합니다.</div>
+    </div>
+  `;
+}
+
+function renderSidebarAd(config) {
+  return `
+    <section class="post-side__section post-side__ad" aria-label="광고 영역">
+      <h2 class="h2">광고 영역</h2>
+      <p class="small">사이드바 고정 광고 영역입니다.</p>
+      ${renderAdUnit({ config, slot: config.sidebarSlot, label: "사이드바 광고", kind: "sidebar" })}
+    </section>
+  `;
+}
+
+function buildInArticleAds(config, count) {
+  const ads = [];
+  if (count >= 1) ads.push(renderAdUnit({ config, slot: config.inArticleSlot1, label: "본문 광고 1", kind: "inline" }));
+  if (count >= 2) ads.push(renderAdUnit({ config, slot: config.inArticleSlot2 || config.inArticleSlot1, label: "본문 광고 2", kind: "inline" }));
+  return ads;
+}
+
+function buildArticleBodyHtml(contentMd, adHtmlList = []) {
+  const blocks = renderMarkdownBlocks(contentMd || "");
+  if (!adHtmlList.length || !blocks.length) {
+    return blocks.map((block) => block.html).join("\n");
+  }
+
+  const insertPositions = getAdInsertPositions(blocks, adHtmlList.length);
+  const adsByPosition = new Map();
+  insertPositions.forEach((position, index) => {
+    const safePosition = Math.max(0, Math.min(position, blocks.length));
+    if (!adsByPosition.has(safePosition)) adsByPosition.set(safePosition, []);
+    adsByPosition.get(safePosition).push(adHtmlList[index]);
+  });
+
+  const html = [];
+  for (let i = 0; i <= blocks.length; i += 1) {
+    const queuedAds = adsByPosition.get(i) || [];
+    queuedAds.forEach((ad) => html.push(ad));
+    if (i < blocks.length) html.push(blocks[i].html);
+  }
+  return html.join("\n");
+}
+
+function getAdInsertPositions(blocks, adCount) {
+  const positions = [];
+  const h2Positions = blocks
+    .map((block, index) => ({ block, index }))
+    .filter((entry) => entry.block.type === "heading" && entry.block.level === 2)
+    .map((entry) => entry.index);
+
+  if (adCount >= 1) {
+    positions.push(getSectionEndPosition(blocks, h2Positions, 0) ?? getFallbackPosition(blocks, 0.38));
+  }
+
+  if (adCount >= 2) {
+    positions.push(getSectionEndPosition(blocks, h2Positions, h2Positions.length >= 3 ? 2 : 1) ?? getFallbackPosition(blocks, 0.72));
+  }
+
+  return dedupePositions(positions, blocks.length);
+}
+
+function getSectionEndPosition(blocks, h2Positions, sectionIndex) {
+  if (!h2Positions.length) return null;
+  const safeSectionIndex = Math.min(sectionIndex, h2Positions.length - 1);
+  const nextH2Index = h2Positions[safeSectionIndex + 1];
+  if (typeof nextH2Index === "number") return nextH2Index;
+  return blocks.length;
+}
+
+function getFallbackPosition(blocks, ratio) {
+  if (!blocks.length) return 0;
+  const contentBlockIndexes = blocks
+    .map((block, index) => ({ block, index }))
+    .filter((entry) => entry.block.type !== "heading")
+    .map((entry) => entry.index);
+  if (!contentBlockIndexes.length) return blocks.length;
+  const target = Math.max(0, Math.min(contentBlockIndexes.length - 1, Math.floor(contentBlockIndexes.length * ratio)));
+  return contentBlockIndexes[target] + 1;
+}
+
+function dedupePositions(positions, blockLength) {
+  const result = [];
+  for (const position of positions) {
+    let safePosition = Math.max(0, Math.min(position, blockLength));
+    while (result.includes(safePosition) && safePosition < blockLength) {
+      safePosition += 1;
+    }
+    result.push(safePosition);
+  }
+  return result;
+}
 
 function renderTagHighlights(tags) {
   if (!Array.isArray(tags) || !tags.length) return "";
-  const cleanTags = tags.map(tag => String(tag || "").trim()).filter(Boolean);
+  const cleanTags = tags.map((tag) => String(tag || "").trim()).filter(Boolean);
   if (!cleanTags.length) return "";
   return `
     <section class="post-tags-highlight" aria-labelledby="post-tags-highlight-title" style="margin-top:32px;padding-top:24px;border-top:1px solid var(--border)">
       <h2 id="post-tags-highlight-title" class="h2">핵심 키워드</h2>
       <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:14px">
-        ${cleanTags.map(tag => `<span class="tag-chip tag-chip--static">#${escapeHtml(tag)}</span>`).join("")}
+        ${cleanTags.map((tag) => `<span class="tag-chip tag-chip--static">#${escapeHtml(tag)}</span>`).join("")}
       </div>
     </section>
   `;
@@ -441,7 +575,6 @@ function renderFaqSection(items) {
     </section>
   `;
 }
-
 
 function renderRelatedPostsSection(items, category) {
   if (!Array.isArray(items) || !items.length) return "";

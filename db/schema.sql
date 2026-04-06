@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS posts (
   content_md TEXT DEFAULT '',
   faq_md TEXT DEFAULT '',
   view_count INTEGER DEFAULT 0,
+  enable_sidebar_ad INTEGER DEFAULT 1,
+  enable_inarticle_ads INTEGER DEFAULT 1,
   status TEXT DEFAULT 'published',
   published_at TEXT NOT NULL,
   updated_at TEXT NOT NULL

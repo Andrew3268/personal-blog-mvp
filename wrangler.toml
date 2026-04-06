@@ -5,3 +5,9 @@ compatibility_date = "2026-03-25"
 binding = "BLOG_DB"
 database_name = "personal-blog-db"
 database_id = "e57c2488-da7e-4fa2-962f-be0c952a61e2"
+# 아래 값은 실제 운영값으로 채워주세요.
+# [vars]
+# ADSENSE_CLIENT = "ca-pub-xxxxxxxxxxxxxxxx"
+# ADSENSE_SLOT_SIDEBAR = "1234567890"
+# ADSENSE_SLOT_INARTICLE_1 = "1234567890"
+# ADSENSE_SLOT_INARTICLE_2 = "1234567890"
