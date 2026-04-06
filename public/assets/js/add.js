@@ -606,27 +606,48 @@ function getPreviewAdInsertPositions(md, contentLengthWithoutSpaces) {
   return positions;
 }
 
+function renderPreviewAdBox(index) {
+  return `
+    <div class="post-ad post-ad--inline post-ad--placeholder" aria-label="본문 광고 ${index + 1}">
+      <div class="post-ad__placeholder-title">본문 광고 ${index + 1}</div>
+      <div class="small">실제 페이지에서는 화면 근처에서만 지연 로드됩니다.</div>
+    </div>
+  `;
+}
+
 function markdownToHtml(md, options = {}) {
   const lines = String(md || "").replace(/\r/g, "").split("\n");
-  let html = "";
+  const htmlParts = [];
+  const adPositions = Array.isArray(options.adPositions) ? options.adPositions : [];
+  const showAds = options.showAds === true;
+  let nonEmptyIndex = -1;
+  let adPointer = 0;
   let inUl = false;
   let inOl = false;
   let inBlockquote = false;
 
+  const maybeInsertAd = () => {
+    if (!showAds) return;
+    while (adPointer < adPositions.length && adPositions[adPointer] === nonEmptyIndex) {
+      htmlParts.push(renderPreviewAdBox(adPointer));
+      adPointer += 1;
+    }
+  };
+
   const closeLists = () => {
     if (inUl) {
-      html += "</ul>";
+      htmlParts.push("</ul>");
       inUl = false;
     }
     if (inOl) {
-      html += "</ol>";
+      htmlParts.push("</ol>");
       inOl = false;
     }
   };
 
   const closeQuote = () => {
     if (inBlockquote) {
-      html += "</blockquote>";
+      htmlParts.push("</blockquote>");
       inBlockquote = false;
     }
   };
@@ -640,11 +661,14 @@ function markdownToHtml(md, options = {}) {
       continue;
     }
 
+    nonEmptyIndex += 1;
+
     const imageMatch = line.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
     if (imageMatch) {
       closeLists();
       closeQuote();
-      html += `<figure class="preview-figure"><img src="${escapeHtml(imageMatch[2])}" alt="${escapeHtml(imageMatch[1])}" loading="lazy"></figure>`;
+      htmlParts.push(`<figure class="preview-figure"><img src="${escapeHtml(imageMatch[2])}" alt="${escapeHtml(imageMatch[1])}" loading="lazy"></figure>`);
+      maybeInsertAd();
       continue;
     }
 
@@ -653,17 +677,19 @@ function markdownToHtml(md, options = {}) {
       closeLists();
       closeQuote();
       const level = Math.min(6, headingMatch[1].length);
-      html += `<h${level}>${inlineFormat(headingMatch[2])}</h${level}>`;
+      htmlParts.push(`<h${level}>${inlineFormat(headingMatch[2])}</h${level}>`);
+      maybeInsertAd();
       continue;
     }
 
     if (/^>\s?/.test(line)) {
       closeLists();
       if (!inBlockquote) {
-        html += "<blockquote>";
+        htmlParts.push("<blockquote>");
         inBlockquote = true;
       }
-      html += `<p>${inlineFormat(line.replace(/^>\s?/, ""))}</p>`;
+      htmlParts.push(`<p>${inlineFormat(line.replace(/^>\s?/, ""))}</p>`);
+      maybeInsertAd();
       continue;
     }
 
@@ -672,10 +698,11 @@ function markdownToHtml(md, options = {}) {
       closeQuote();
       if (!inUl) {
         closeLists();
-        html += "<ul>";
+        htmlParts.push("<ul>");
         inUl = true;
       }
-      html += `<li>${inlineFormat(ulMatch[1])}</li>`;
+      htmlParts.push(`<li>${inlineFormat(ulMatch[1])}</li>`);
+      maybeInsertAd();
       continue;
     }
 
@@ -684,20 +711,28 @@ function markdownToHtml(md, options = {}) {
       closeQuote();
       if (!inOl) {
         closeLists();
-        html += "<ol>";
+        htmlParts.push("<ol>");
         inOl = true;
       }
-      html += `<li>${inlineFormat(olMatch[1])}</li>`;
+      htmlParts.push(`<li>${inlineFormat(olMatch[1])}</li>`);
+      maybeInsertAd();
       continue;
     }
 
     closeLists();
     closeQuote();
-    html += `<p>${inlineFormat(line)}</p>`;
+    htmlParts.push(`<p>${inlineFormat(line)}</p>`);
+    maybeInsertAd();
   }
 
   closeLists();
   closeQuote();
+  while (showAds && adPointer < adPositions.length) {
+    htmlParts.push(renderPreviewAdBox(adPointer));
+    adPointer += 1;
+  }
+
+  const html = htmlParts.join("");
   return html || '<p class="preview-empty">본문을 입력하면 여기에 미리보기가 표시됩니다.</p>';
 }
 

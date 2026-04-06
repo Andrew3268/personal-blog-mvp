@@ -112,6 +112,7 @@ export async function onRequestGet({ params, env, request }) {
       const popularPostsHtml = renderPopularPosts(popularRows);
       const sidebarAdHtml = shouldShowSidebarAd ? renderSidebarAd(adConfig) : "";
       const adsenseHeadScript = renderAdsenseHeadScript(adConfig, shouldShowSidebarAd || shouldShowInarticleAds);
+      const adsenseRuntimeScript = renderAdsenseRuntimeScript(adConfig, shouldShowSidebarAd || shouldShowInarticleAds);
 
       const titleText = String(row.title || "").trim();
       const descriptionText = buildDescription(
@@ -363,6 +364,7 @@ export async function onRequestGet({ params, env, request }) {
     });
   });
 </script>
+  ${adsenseRuntimeScript}
   <script src="/assets/js/nav.js" defer></script>
 </body>
 </html>`;
@@ -400,27 +402,77 @@ function renderAdsenseHeadScript(config, shouldLoad) {
   return `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${escapeHtml(config.client)}" crossorigin="anonymous"></script>`;
 }
 
+function renderAdsenseRuntimeScript(config, shouldLoad) {
+  if (!shouldLoad || !config.client) return "";
+  return `<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const adSlots = Array.from(document.querySelectorAll('.js-lazy-ad[data-ad-loaded="false"]'));
+    if (!adSlots.length) return;
+
+    const loadAd = (slot) => {
+      if (!slot || slot.dataset.adLoaded === 'true') return;
+      const client = String(slot.dataset.adClient || '').trim();
+      const adSlot = String(slot.dataset.adSlot || '').trim();
+      if (!client || !adSlot) return;
+
+      slot.dataset.adLoaded = 'true';
+      slot.innerHTML = '<ins class="adsbygoogle" style="display:block" data-ad-client="' + client + '" data-ad-slot="' + adSlot + '" data-ad-format="auto" data-full-width-responsive="true"></ins>';
+
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      } catch (error) {
+        slot.dataset.adLoaded = 'error';
+        slot.innerHTML = '';
+      }
+    };
+
+    if (!('IntersectionObserver' in window)) {
+      adSlots.forEach(loadAd);
+      return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        loadAd(entry.target);
+        observer.unobserve(entry.target);
+      });
+    }, {
+      root: null,
+      rootMargin: '800px 0px 800px 0px',
+      threshold: 0.01
+    });
+
+    adSlots.forEach((slot) => observer.observe(slot));
+  });
+  </script>`;
+}
+
 function renderAdUnit({ config, slot, label, kind }) {
   const safeLabel = escapeHtml(label);
   if (config.client && slot) {
     return `
-      <div class="post-ad post-ad--${escapeHtml(kind)}" aria-label="${safeLabel}">
-        <ins class="adsbygoogle"
-          style="display:block"
+      <section class="post-ad post-ad--${escapeHtml(kind)}" aria-label="${safeLabel}">
+        <div
+          class="post-ad__slot js-lazy-ad"
           data-ad-client="${escapeHtml(config.client)}"
           data-ad-slot="${escapeHtml(slot)}"
-          data-ad-format="auto"
-          data-full-width-responsive="true"></ins>
-        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-      </div>
+          data-ad-kind="${escapeHtml(kind)}"
+          data-ad-loaded="false"
+        >
+          <div class="post-ad__skeleton" aria-hidden="true">
+            <span class="post-ad__skeleton-label">${safeLabel}</span>
+          </div>
+        </div>
+      </section>
     `;
   }
 
   return `
-    <div class="post-ad post-ad--placeholder post-ad--${escapeHtml(kind)}" aria-label="${safeLabel}">
+    <section class="post-ad post-ad--placeholder post-ad--${escapeHtml(kind)}" aria-label="${safeLabel}">
       <div class="post-ad__placeholder-title">${safeLabel}</div>
       <div class="small">광고 코드는 전역 설정에서 한 번만 관리합니다.</div>
-    </div>
+    </section>
   `;
 }
 
