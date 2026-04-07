@@ -551,3 +551,9 @@ body.has-preview-open{overflow:hidden}
 .skeleton-box--popular{height:18px;width:100%;border-radius:999px}
 @media (max-width:920px){.skeleton-box--media{min-height:190px}}
 @media (max-width:720px){.skeleton-box--media{min-height:180px}.skeleton-box--title{width:92%}.skeleton-box--button{width:96px;height:40px}}
+
+
+.posts-load-more{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:18px}
+.posts-load-more__btn{min-width:220px;justify-content:center}
+.posts-load-more__fallback{font-size:14px}
+.posts-skeleton-chunk{display:grid;gap:16px;margin-top:16px}
