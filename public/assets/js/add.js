@@ -262,7 +262,8 @@ function parseInlineImageToken(line = "") {
     key: match[1].toUpperCase(),
     url: String(attrs.url || attrs.id || "").trim(),
     alt: String(attrs.alt || "").trim(),
-    caption: String(attrs.caption || "").trim()
+    caption: String(attrs.caption || "").trim(),
+    position: Math.max(1, parseInt(attrs.position || "0", 10) || (match[1].toUpperCase() === "POST_IMAGE_1" ? 3 : 5))
   };
 }
 
@@ -277,8 +278,8 @@ function stripInlineImageTokenLines(md = "") {
 
 function parseInlineImageMetaFromMarkdown(md = "") {
   const result = {
-    image1: { enabled: false, url: "", alt: "", caption: "" },
-    image2: { enabled: false, url: "", alt: "", caption: "" }
+    image1: { enabled: false, url: "", alt: "", caption: "", position: 3 },
+    image2: { enabled: false, url: "", alt: "", caption: "", position: 5 }
   };
   String(md || "").split("\n").forEach((line) => {
     const token = parseInlineImageToken(line);
@@ -288,6 +289,7 @@ function parseInlineImageMetaFromMarkdown(md = "") {
     target.url = token.url;
     target.alt = token.alt;
     target.caption = token.caption;
+    target.position = token.position;
   });
   return result;
 }
@@ -297,7 +299,8 @@ function buildInlineImageToken(key, data) {
   const safeUrl = String((data.url || data.id || "")).trim().replace(/"/g, "&quot;");
   const safeAlt = String(data.alt || "").trim().replace(/"/g, "&quot;");
   const safeCaption = String(data.caption || "").trim().replace(/"/g, "&quot;");
-  return `[[${key} url="${safeUrl}" alt="${safeAlt}" caption="${safeCaption}"]]`;
+  const safePosition = Math.max(1, parseInt(data.position || 0, 10) || (key === "POST_IMAGE_1" ? 3 : 5));
+  return `[[${key} url="${safeUrl}" alt="${safeAlt}" caption="${safeCaption}" position="${safePosition}"]]`;
 }
 
 function collectInlineImageFormData() {
@@ -306,13 +309,15 @@ function collectInlineImageFormData() {
       enabled: !!($("enableInlineImage1")?.checked),
       url: $("inlineImage1Id")?.value.trim() || "",
       alt: $("inlineImage1Alt")?.value.trim() || "",
-      caption: $("inlineImage1Caption")?.value.trim() || ""
+      caption: $("inlineImage1Caption")?.value.trim() || "",
+      position: Math.max(1, parseInt($("inlineImage1Position")?.value || "3", 10) || 3)
     },
     image2: {
       enabled: !!($("enableInlineImage2")?.checked),
       url: $("inlineImage2Id")?.value.trim() || "",
       alt: $("inlineImage2Alt")?.value.trim() || "",
-      caption: $("inlineImage2Caption")?.value.trim() || ""
+      caption: $("inlineImage2Caption")?.value.trim() || "",
+      position: Math.max(1, parseInt($("inlineImage2Position")?.value || "5", 10) || 5)
     }
   };
 }
@@ -324,10 +329,12 @@ function applyInlineImageFormData(meta = {}) {
   if ($("inlineImage1Id")) $("inlineImage1Id").value = image1.url || image1.id || "";
   if ($("inlineImage1Alt")) $("inlineImage1Alt").value = image1.alt || "";
   if ($("inlineImage1Caption")) $("inlineImage1Caption").value = image1.caption || "";
+  if ($("inlineImage1Position")) $("inlineImage1Position").value = String(Math.max(1, parseInt(image1.position || 3, 10) || 3));
   if ($("enableInlineImage2")) $("enableInlineImage2").checked = !!image2.enabled;
   if ($("inlineImage2Id")) $("inlineImage2Id").value = image2.url || image2.id || "";
   if ($("inlineImage2Alt")) $("inlineImage2Alt").value = image2.alt || "";
   if ($("inlineImage2Caption")) $("inlineImage2Caption").value = image2.caption || "";
+  if ($("inlineImage2Position")) $("inlineImage2Position").value = String(Math.max(1, parseInt(image2.position || 5, 10) || 5));
   syncInlineImageVisibility();
 }
 
@@ -1191,10 +1198,12 @@ function markdownToHtml(md, options = {}) {
       pushContentBlock(`<h${level} id="${escapeHtml(headingId)}">${inlineFormat(headingText)}</h${level}>`);
       if (level === 2) {
         h2Count += 1;
-        if (h2Count === 3 && inlineImages.image1?.enabled && (inlineImages.image1?.url || inlineImages.image1?.id)) {
+        const image1Target = Math.max(1, parseInt(inlineImages.image1?.position || 3, 10) || 3);
+        const image2Target = Math.max(1, parseInt(inlineImages.image2?.position || 5, 10) || 5);
+        if (h2Count === image1Target && inlineImages.image1?.enabled && (inlineImages.image1?.url || inlineImages.image1?.id)) {
           pushContentBlock(renderInlineImageFigure(inlineImages.image1, 1));
         }
-        if (h2Count === 5 && inlineImages.image2?.enabled && (inlineImages.image2?.url || inlineImages.image2?.id)) {
+        if (h2Count === image2Target && inlineImages.image2?.enabled && (inlineImages.image2?.url || inlineImages.image2?.id)) {
           pushContentBlock(renderInlineImageFigure(inlineImages.image2, 2));
         }
       }
@@ -1412,7 +1421,7 @@ function handleRealtimeChange() {
   renderPreview();
 }
 
-["title", "meta_description", "summary", "content_md", "faq_md", "focusKeyword", "longtailKeywords", "cover_image", "cover_image_alt", "tags", "category", "inlineImage1Id", "inlineImage1Alt", "inlineImage1Caption", "inlineImage2Id", "inlineImage2Alt", "inlineImage2Caption"].forEach((id) => {
+["title", "meta_description", "summary", "content_md", "faq_md", "focusKeyword", "longtailKeywords", "cover_image", "cover_image_alt", "tags", "category", "inlineImage1Id", "inlineImage1Alt", "inlineImage1Caption", "inlineImage1Position", "inlineImage2Id", "inlineImage2Alt", "inlineImage2Caption", "inlineImage2Position"].forEach((id) => {
   const el = $(id);
   if (el) el.addEventListener("input", handleRealtimeChange);
   if (el && el.tagName === "SELECT") el.addEventListener("change", handleRealtimeChange);

@@ -152,7 +152,7 @@
         <div class="notice inline-image-box">
           <strong>본문 중간 이미지</strong>
           <div class="sep"></div>
-          <div class="small">체크한 이미지가 있으면 공개 페이지에서 이미지 1은 3번째 H2 아래, 이미지 2는 5번째 H2 아래에 자동 삽입됩니다.</div>
+          <div class="small">체크한 이미지는 선택한 번째의 H2 바로 아래에 자동 삽입됩니다.</div>
 
           <div class="inline-image-grid">
             <div class="inline-image-card">
@@ -171,7 +171,22 @@
                 </div>
                 <div>
                   <div class="label-row"><label class="small" for="inlineImage1Caption">캡션</label></div>
-                  <input class="input" id="inlineImage1Caption" placeholder="예: 3번째 소제목 아래에 들어갈 설명" />
+                  <input class="input" id="inlineImage1Caption" placeholder="예: 이미지 설명 문구" />
+                </div>
+                <div>
+                  <div class="label-row"><label class="small" for="inlineImage1Position">삽입 위치</label></div>
+                  <select class="input" id="inlineImage1Position">
+                    <option value="1">1번째 H2 아래</option>
+                    <option value="2">2번째 H2 아래</option>
+                    <option value="3" selected>3번째 H2 아래</option>
+                    <option value="4">4번째 H2 아래</option>
+                    <option value="5">5번째 H2 아래</option>
+                    <option value="6">6번째 H2 아래</option>
+                    <option value="7">7번째 H2 아래</option>
+                    <option value="8">8번째 H2 아래</option>
+                    <option value="9">9번째 H2 아래</option>
+                    <option value="10">10번째 H2 아래</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -193,6 +208,21 @@
                 <div>
                   <div class="label-row"><label class="small" for="inlineImage2Caption">캡션</label></div>
                   <input class="input" id="inlineImage2Caption" placeholder="예: 추가 설명이 필요하면 캡션 입력" />
+                </div>
+                <div>
+                  <div class="label-row"><label class="small" for="inlineImage2Position">삽입 위치</label></div>
+                  <select class="input" id="inlineImage2Position">
+                    <option value="1">1번째 H2 아래</option>
+                    <option value="2">2번째 H2 아래</option>
+                    <option value="3">3번째 H2 아래</option>
+                    <option value="4">4번째 H2 아래</option>
+                    <option value="5" selected>5번째 H2 아래</option>
+                    <option value="6">6번째 H2 아래</option>
+                    <option value="7">7번째 H2 아래</option>
+                    <option value="8">8번째 H2 아래</option>
+                    <option value="9">9번째 H2 아래</option>
+                    <option value="10">10번째 H2 아래</option>
+                  </select>
                 </div>
               </div>
             </div>
