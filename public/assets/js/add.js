@@ -25,6 +25,221 @@ function parseKeywords(raw) {
 }
 
 
+function normalizeCategoryName(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+let categoryItems = [];
+let editingCategoryName = "";
+
+function getCurrentCategoryValue() {
+  return $("category")?.value?.trim() || "";
+}
+
+function renderCategoryOptions(selectedValue = "") {
+  const selectEl = $("category");
+  if (!selectEl) return;
+  const currentValue = normalizeCategoryName(selectedValue || getCurrentCategoryValue());
+  const names = categoryItems.map((item) => normalizeCategoryName(item.name || item)).filter(Boolean);
+  const uniqueNames = [...new Set(names)];
+  if (currentValue && !uniqueNames.includes(currentValue)) uniqueNames.unshift(currentValue);
+  selectEl.innerHTML = [
+    '<option value="">카테고리 선택</option>',
+    ...uniqueNames.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
+  ].join("");
+  selectEl.value = currentValue || "";
+}
+
+function setCategoryManagerStatus(message = "", isError = false) {
+  const statusEl = $("categoryManagerStatus");
+  if (!statusEl) return;
+  statusEl.textContent = message;
+  statusEl.style.color = isError ? "#b91c1c" : "";
+}
+
+function renderCategoryManagerList() {
+  const listEl = $("categoryManagerList");
+  if (!listEl) return;
+  if (!categoryItems.length) {
+    listEl.innerHTML = '<div class="category-manager__empty small">등록된 카테고리가 없습니다. 위 입력창에서 새 카테고리를 추가해 주세요.</div>';
+    return;
+  }
+
+  listEl.innerHTML = categoryItems.map((item) => {
+    const name = normalizeCategoryName(item.name || item);
+    const isEditing = editingCategoryName === name;
+    return `
+      <div class="category-manager__item" data-category-item="${escapeHtml(name)}">
+        <div>
+          ${isEditing
+            ? `<input class="input" data-category-edit-input="${escapeHtml(name)}" value="${escapeHtml(name)}" />`
+            : `<div class="category-manager__name">${escapeHtml(name)}</div>`}
+        </div>
+        <div class="category-manager__actions">
+          ${isEditing
+            ? `
+              <button class="btn btn--brand" type="button" data-category-save="${escapeHtml(name)}">저장</button>
+              <button class="btn" type="button" data-category-cancel>취소</button>
+            `
+            : `
+              <button class="btn" type="button" data-category-edit="${escapeHtml(name)}">수정</button>
+              <button class="btn" type="button" data-category-delete="${escapeHtml(name)}">삭제</button>
+            `}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+async function requestCategoryApi(method, payload = {}) {
+  const res = await fetch('/api/categories', {
+    method,
+    headers: { 'content-type': 'application/json' },
+    body: method === 'GET' ? undefined : JSON.stringify(payload)
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json?.message || '카테고리 요청에 실패했습니다.');
+  return json;
+}
+
+async function loadCategories(selectedValue = "") {
+  try {
+    const json = await requestCategoryApi('GET');
+    categoryItems = Array.isArray(json.items) ? json.items : [];
+    renderCategoryOptions(selectedValue);
+    renderCategoryManagerList();
+  } catch (error) {
+    setCategoryManagerStatus(error.message || '카테고리를 불러오지 못했습니다.', true);
+  }
+}
+
+function openCategoryModal() {
+  const modal = $('categoryModal');
+  const backdrop = $('categoryModalBackdrop');
+  const openBtn = $('openCategoryModalBtn');
+  if (!modal || !backdrop || !openBtn) return;
+  backdrop.hidden = false;
+  modal.classList.add('is-open');
+  modal.setAttribute('aria-hidden', 'false');
+  openBtn.setAttribute('aria-expanded', 'true');
+  document.body.classList.add('has-preview-open');
+  setCategoryManagerStatus('');
+  $('newCategoryName')?.focus();
+}
+
+function closeCategoryModal() {
+  const modal = $('categoryModal');
+  const backdrop = $('categoryModalBackdrop');
+  const openBtn = $('openCategoryModalBtn');
+  if (!modal || !backdrop || !openBtn) return;
+  modal.classList.remove('is-open');
+  modal.setAttribute('aria-hidden', 'true');
+  backdrop.hidden = true;
+  openBtn.setAttribute('aria-expanded', 'false');
+  editingCategoryName = '';
+  renderCategoryManagerList();
+  document.body.classList.remove('has-preview-open');
+}
+
+async function addCategory() {
+  const inputEl = $('newCategoryName');
+  const name = normalizeCategoryName(inputEl?.value || '');
+  if (!name) {
+    setCategoryManagerStatus('카테고리 이름을 입력해 주세요.', true);
+    inputEl?.focus();
+    return;
+  }
+  try {
+    const json = await requestCategoryApi('POST', { name });
+    categoryItems = Array.isArray(json.items) ? json.items : categoryItems;
+    renderCategoryOptions(name);
+    renderCategoryManagerList();
+    if (inputEl) inputEl.value = '';
+    setCategoryManagerStatus('카테고리가 추가되었습니다.');
+    handleRealtimeChange();
+  } catch (error) {
+    setCategoryManagerStatus(error.message || '카테고리 추가에 실패했습니다.', true);
+  }
+}
+
+async function saveEditedCategory(currentName) {
+  const inputEl = document.querySelector(`[data-category-edit-input="${CSS.escape(currentName)}"]`);
+  const newName = normalizeCategoryName(inputEl?.value || '');
+  if (!newName) {
+    setCategoryManagerStatus('새 카테고리 이름을 입력해 주세요.', true);
+    inputEl?.focus();
+    return;
+  }
+  try {
+    const json = await requestCategoryApi('PUT', { current_name: currentName, new_name: newName });
+    const previousSelected = getCurrentCategoryValue();
+    categoryItems = Array.isArray(json.items) ? json.items : categoryItems;
+    editingCategoryName = '';
+    renderCategoryOptions(previousSelected === currentName ? newName : previousSelected);
+    renderCategoryManagerList();
+    setCategoryManagerStatus('카테고리가 수정되었습니다.');
+    handleRealtimeChange();
+  } catch (error) {
+    setCategoryManagerStatus(error.message || '카테고리 수정에 실패했습니다.', true);
+  }
+}
+
+async function deleteCategory(name) {
+  const ok = window.confirm(`'${name}' 카테고리를 삭제할까요?\n기존 글에 연결된 카테고리는 비워집니다.`);
+  if (!ok) return;
+  try {
+    const json = await requestCategoryApi('DELETE', { name });
+    const previousSelected = getCurrentCategoryValue();
+    categoryItems = Array.isArray(json.items) ? json.items : categoryItems;
+    editingCategoryName = '';
+    renderCategoryOptions(previousSelected === name ? '' : previousSelected);
+    renderCategoryManagerList();
+    setCategoryManagerStatus('카테고리가 삭제되었습니다.');
+    handleRealtimeChange();
+  } catch (error) {
+    setCategoryManagerStatus(error.message || '카테고리 삭제에 실패했습니다.', true);
+  }
+}
+
+function bindCategoryManagerEvents() {
+  $('openCategoryModalBtn')?.addEventListener('click', openCategoryModal);
+  $('closeCategoryModalBtn')?.addEventListener('click', closeCategoryModal);
+  $('categoryModalBackdrop')?.addEventListener('click', closeCategoryModal);
+  $('addCategoryBtn')?.addEventListener('click', addCategory);
+  $('newCategoryName')?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      addCategory();
+    }
+  });
+  $('categoryManagerList')?.addEventListener('click', (event) => {
+    const target = event.target.closest('button');
+    if (!target) return;
+    const editName = target.dataset.categoryEdit;
+    const saveName = target.dataset.categorySave;
+    const deleteName = target.dataset.categoryDelete;
+    if (editName) {
+      editingCategoryName = editName;
+      renderCategoryManagerList();
+      document.querySelector(`[data-category-edit-input="${CSS.escape(editName)}"]`)?.focus();
+      return;
+    }
+    if (saveName) {
+      saveEditedCategory(saveName);
+      return;
+    }
+    if (deleteName) {
+      deleteCategory(deleteName);
+      return;
+    }
+    if (target.hasAttribute('data-category-cancel')) {
+      editingCategoryName = '';
+      renderCategoryManagerList();
+    }
+  });
+}
+
+
 const TOC_TOKEN_RE = /^\[\[TOC(?::(h2|h2,h3))?\]\]$/i;
 
 function parseTocModeFromLine(line) {
@@ -1068,6 +1283,7 @@ function handleRealtimeChange() {
 });
 
 $("saveBtn").addEventListener("click", save);
+bindCategoryManagerEvents();
 $("enableToc")?.addEventListener("change", applyTocControls);
 $("includeTocH3")?.addEventListener("change", () => {
   if (!$("enableToc")?.checked) return;
@@ -1081,10 +1297,11 @@ document.querySelectorAll("[data-preview-width]").forEach((button) => {
 });
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") closePreview();
+  if (event.key === "Escape") { closePreview(); closeCategoryModal(); }
 });
 
 syncTocControlsFromContent();
+loadCategories();
 updateSlugPreview();
 updateAllCounts();
 renderSeoChecklist();

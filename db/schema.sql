@@ -29,3 +29,13 @@ ON posts(status, category, published_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_posts_status_view_count
 ON posts(status, view_count DESC, published_at DESC);
+
+
+CREATE TABLE IF NOT EXISTS categories (
+  name TEXT PRIMARY KEY,
+  sort_order INTEGER DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_categories_sort_order ON categories(sort_order ASC, name ASC);

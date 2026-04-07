@@ -56,23 +56,12 @@
 
         <div class="grid grid--2">
           <div>
-            <div class="label-row">
+            <div class="label-row label-row--between">
               <label class="small" for="category">카테고리</label>
+              <button class="btn btn--small" id="openCategoryModalBtn" type="button" aria-controls="categoryModal" aria-expanded="false">카테고리 설정</button>
             </div>
             <select class="input" id="category">
               <option value="">카테고리 선택</option>
-              <option value="생활 꿀팁">생활 꿀팁</option>
-              <option value="살림 노하우">살림 노하우</option>
-              <option value="청소">청소</option>
-              <option value="주방">주방</option>
-              <option value="욕실">욕실</option>
-              <option value="세탁">세탁</option>
-              <option value="정리수납">정리수납</option>
-              <option value="리뷰">리뷰</option>
-              <option value="쇼핑">쇼핑</option>
-              <option value="반려동물">반려동물</option>
-              <option value="건강">건강</option>
-              <option value="디지털">디지털</option>
             </select>
           </div>
           <div>
@@ -267,6 +256,30 @@
       <div class="preview-frame preview-frame--pc" id="previewFrame">
         <div class="preview-page" id="previewContent"></div>
       </div>
+    </div>
+  </aside>
+
+  <div class="modal-backdrop" id="categoryModalBackdrop" hidden></div>
+  <aside class="modal-sheet modal-sheet--category" id="categoryModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="categoryModalTitle">
+    <div class="modal-sheet__header">
+      <div>
+        <div class="small seo-eyebrow">카테고리 관리</div>
+        <h2 class="h2" id="categoryModalTitle">카테고리 설정</h2>
+      </div>
+      <button class="btn" id="closeCategoryModalBtn" type="button">닫기</button>
+    </div>
+    <div class="sep"></div>
+    <div class="modal-sheet__body">
+      <div class="category-manager__create">
+        <div class="small">새 카테고리 추가</div>
+        <div class="category-manager__create-row">
+          <input class="input" id="newCategoryName" placeholder="예: 계절 팁" />
+          <button class="btn btn--brand" id="addCategoryBtn" type="button">추가</button>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <div class="category-manager__list" id="categoryManagerList"></div>
+      <div class="small" id="categoryManagerStatus"></div>
     </div>
   </aside>
 
