@@ -1,5 +1,5 @@
 import { escapeHtml, jsonld, okHtml, edgeCache } from "../_utils.js";
-import { renderMarkdown, renderMarkdownBlocks, buildTocItemsFromBlocks, renderTocHtml } from "../../lib/posts/renderer.js";
+import { renderMarkdown, renderMarkdownBlocks, buildTocItemsFromBlocks, renderTocHtml, parseInlineImages, stripInlineImageTokens } from "../../lib/posts/renderer.js";
 
 export async function onRequestGet({ params, env, request }) {
   const slug = decodeURIComponent(String(params.slug || ""));
@@ -101,11 +101,11 @@ export async function onRequestGet({ params, env, request }) {
       `).bind(slug).all()).results || [];
 
       const adConfig = buildAdsenseConfig(env);
-      const contentTextLength = stripMarkdown(row.content_md || "").replace(/\s+/g, "").length;
+      const contentTextLength = stripMarkdown(stripInlineImageTokens(row.content_md || "")).replace(/\s+/g, "").length;
       const shouldShowSidebarAd = toBool(row.enable_sidebar_ad, true);
       const shouldShowInarticleAds = toBool(row.enable_inarticle_ads, true);
       const inArticleAds = buildInArticleAds(adConfig, 2);
-      const bodyHtml = buildArticleBodyHtml(row.content_md || "", inArticleAds, contentTextLength);
+      const bodyHtml = buildArticleBodyHtml(row.content_md || "", inArticleAds, contentTextLength, env);
       const faqSectionHtml = renderFaqSection(faqItems);
       const relatedPostsHtml = renderRelatedPostsSection(relatedRows, row.category);
       const tagHighlightsHtml = renderTagHighlights(tags);
@@ -493,8 +493,10 @@ function buildInArticleAds(config, count) {
   return ads;
 }
 
-function buildArticleBodyHtml(contentMd, adHtmlList = [], contentTextLength = 0) {
-  const blocks = renderMarkdownBlocks(contentMd || "");
+function buildArticleBodyHtml(contentMd, adHtmlList = [], contentTextLength = 0, env = {}) {
+  const inlineImages = parseInlineImages(contentMd || "");
+  const deliveryHash = String(env.CF_IMAGE_DELIVERY_HASH || env.CF_IMAGES_DELIVERY_HASH || "").trim();
+  const blocks = renderMarkdownBlocks(contentMd || "", { inlineImages, deliveryHash, imageVariant: "post-inline" });
   if (!blocks.length) return "";
 
   const tocBlock = blocks.find((block) => block.type === "toc");

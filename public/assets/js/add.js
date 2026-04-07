@@ -242,6 +242,146 @@ function bindCategoryManagerEvents() {
 
 const TOC_TOKEN_RE = /^\[\[TOC(?::(h2|h2,h3))?\]\]$/i;
 
+const INLINE_IMAGE_TOKEN_RE = /^\[\[(POST_IMAGE_[12])\s+(.+?)\]\]$/i;
+
+function parseTokenAttributes(raw = "") {
+  const attrs = {};
+  const re = /(\w+)="([^"]*)"/g;
+  let match;
+  while ((match = re.exec(String(raw || ""))) !== null) {
+    attrs[match[1]] = match[2];
+  }
+  return attrs;
+}
+
+function parseInlineImageToken(line = "") {
+  const match = String(line || "").trim().match(INLINE_IMAGE_TOKEN_RE);
+  if (!match) return null;
+  const attrs = parseTokenAttributes(match[2]);
+  return {
+    key: match[1].toUpperCase(),
+    id: String(attrs.id || "").trim(),
+    alt: String(attrs.alt || "").trim(),
+    caption: String(attrs.caption || "").trim()
+  };
+}
+
+function stripInlineImageTokenLines(md = "") {
+  return String(md || "")
+    .split("\n")
+    .filter((line) => !parseInlineImageToken(line))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function parseInlineImageMetaFromMarkdown(md = "") {
+  const result = {
+    image1: { enabled: false, id: "", alt: "", caption: "" },
+    image2: { enabled: false, id: "", alt: "", caption: "" }
+  };
+  String(md || "").split("\n").forEach((line) => {
+    const token = parseInlineImageToken(line);
+    if (!token) return;
+    const target = token.key === "POST_IMAGE_1" ? result.image1 : result.image2;
+    target.enabled = !!token.id;
+    target.id = token.id;
+    target.alt = token.alt;
+    target.caption = token.caption;
+  });
+  return result;
+}
+
+function buildInlineImageToken(key, data) {
+  if (!data || !data.enabled || !String(data.id || "").trim()) return "";
+  const safeId = String(data.id || "").trim().replace(/"/g, "&quot;");
+  const safeAlt = String(data.alt || "").trim().replace(/"/g, "&quot;");
+  const safeCaption = String(data.caption || "").trim().replace(/"/g, "&quot;");
+  return `[[${key} id="${safeId}" alt="${safeAlt}" caption="${safeCaption}"]]`;
+}
+
+function collectInlineImageFormData() {
+  return {
+    image1: {
+      enabled: !!($("enableInlineImage1")?.checked),
+      id: $("inlineImage1Id")?.value.trim() || "",
+      alt: $("inlineImage1Alt")?.value.trim() || "",
+      caption: $("inlineImage1Caption")?.value.trim() || ""
+    },
+    image2: {
+      enabled: !!($("enableInlineImage2")?.checked),
+      id: $("inlineImage2Id")?.value.trim() || "",
+      alt: $("inlineImage2Alt")?.value.trim() || "",
+      caption: $("inlineImage2Caption")?.value.trim() || ""
+    }
+  };
+}
+
+function applyInlineImageFormData(meta = {}) {
+  const image1 = meta.image1 || {};
+  const image2 = meta.image2 || {};
+  if ($("enableInlineImage1")) $("enableInlineImage1").checked = !!image1.enabled;
+  if ($("inlineImage1Id")) $("inlineImage1Id").value = image1.id || "";
+  if ($("inlineImage1Alt")) $("inlineImage1Alt").value = image1.alt || "";
+  if ($("inlineImage1Caption")) $("inlineImage1Caption").value = image1.caption || "";
+  if ($("enableInlineImage2")) $("enableInlineImage2").checked = !!image2.enabled;
+  if ($("inlineImage2Id")) $("inlineImage2Id").value = image2.id || "";
+  if ($("inlineImage2Alt")) $("inlineImage2Alt").value = image2.alt || "";
+  if ($("inlineImage2Caption")) $("inlineImage2Caption").value = image2.caption || "";
+  syncInlineImageVisibility();
+}
+
+function syncInlineImageVisibility() {
+  [["enableInlineImage1", "inlineImage1Fields"], ["enableInlineImage2", "inlineImage2Fields"]].forEach(([toggleId, fieldId]) => {
+    const toggle = $(toggleId);
+    const field = $(fieldId);
+    if (!toggle || !field) return;
+    field.hidden = !toggle.checked;
+  });
+}
+
+function buildContentWithInlineImageTokens(md = "") {
+  const cleanMd = stripInlineImageTokenLines(md);
+  const meta = collectInlineImageFormData();
+  const tokens = [
+    buildInlineImageToken("POST_IMAGE_1", meta.image1),
+    buildInlineImageToken("POST_IMAGE_2", meta.image2)
+  ].filter(Boolean);
+  return [...tokens, cleanMd].filter(Boolean).join("\n\n").trim();
+}
+
+function buildCloudflareImageUrl(imageId, variant = "post-inline") {
+  const deliveryHash = String(window.CF_IMAGE_DELIVERY_HASH || "").trim();
+  if (!deliveryHash || !imageId) return "";
+  return `https://imagedelivery.net/${deliveryHash}/${encodeURIComponent(imageId)}/${variant}`;
+}
+
+function renderInlineImageFigure(data = {}, index = 1) {
+  const imageId = String(data.id || "").trim();
+  if (!imageId) return "";
+  const alt = String(data.alt || `본문 이미지 ${index}`).trim();
+  const caption = String(data.caption || "").trim();
+  const imageUrl = buildCloudflareImageUrl(imageId);
+  if (!imageUrl) {
+    return `
+      <figure class="preview-inline-image preview-inline-image--placeholder">
+        <div class="post-ad post-ad--placeholder" aria-label="본문 이미지 ${index}">
+          <div class="post-ad__placeholder-title">본문 이미지 ${index}</div>
+          <div class="small">CF_IMAGE_DELIVERY_HASH 설정 후 실제 이미지가 표시됩니다.</div>
+        </div>
+        ${caption ? `<figcaption>${escapeHtml(caption)}</figcaption>` : ""}
+      </figure>
+    `;
+  }
+  return `
+    <figure class="preview-inline-image">
+      <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(alt)}" loading="lazy" decoding="async" />
+      ${caption ? `<figcaption>${escapeHtml(caption)}</figcaption>` : ""}
+    </figure>
+  `;
+}
+
+
 function parseTocModeFromLine(line) {
   const match = String(line || "").trim().match(TOC_TOKEN_RE);
   return match ? (match[1] || "h2").toLowerCase() : null;
@@ -659,6 +799,7 @@ function evaluateSeo() {
   const metaDescription = $("meta_description").value.trim();
   const summary = $("summary").value.trim();
   const contentMd = $("content_md").value || "";
+  const inlineImages = collectInlineImageFormData();
   const contentLengthWithoutSpaces = countTextWithoutSpaces(contentMd);
   const previewAdPositions = getPreviewAdInsertPositions(contentMd, contentLengthWithoutSpaces);
   const faqMd = $("faq_md")?.value || "";
@@ -987,7 +1128,8 @@ function renderPreviewAdBox(index) {
 }
 
 function markdownToHtml(md, options = {}) {
-  const sourceMd = String(md || "").replace(/\r/g, "");
+  const inlineImages = options.inlineImages || parseInlineImageMetaFromMarkdown(md);
+  const sourceMd = stripInlineImageTokenLines(String(md || "").replace(/\r/g, ""));
   const lines = sourceMd.split("\n");
   const tocModeInContent = lines.map((line) => parseTocModeFromLine(line)).find(Boolean) || null;
   const tocItems = tocModeInContent ? extractTocItems(sourceMd, tocModeInContent) : [];
@@ -1064,6 +1206,15 @@ function markdownToHtml(md, options = {}) {
       const headingText = headingMatch[2].trim();
       const headingId = buildHeadingSlug(headingText, slugCounts);
       pushContentBlock(`<h${level} id="${escapeHtml(headingId)}">${inlineFormat(headingText)}</h${level}>`);
+      if (level === 2) {
+        h2Count += 1;
+        if (h2Count === 3 && inlineImages.image1?.enabled && inlineImages.image1?.id) {
+          pushContentBlock(renderInlineImageFigure(inlineImages.image1, 1));
+        }
+        if (h2Count === 5 && inlineImages.image2?.enabled && inlineImages.image2?.id) {
+          pushContentBlock(renderInlineImageFigure(inlineImages.image2, 2));
+        }
+      }
       continue;
     }
 
@@ -1135,6 +1286,7 @@ function renderPreview() {
   const coverImage = $("cover_image").value.trim();
   const coverImageAlt = $("cover_image_alt")?.value.trim() || "";
   const contentMd = $("content_md").value || "";
+  const inlineImages = collectInlineImageFormData();
   const contentLengthWithoutSpaces = countTextWithoutSpaces(contentMd);
   const previewAdPositions = getPreviewAdInsertPositions(contentMd, contentLengthWithoutSpaces);
   const faqMd = $("faq_md")?.value || "";
@@ -1163,7 +1315,7 @@ function renderPreview() {
         ${tags.length ? `<div class="row">${tags.map((tag) => `<span class="tag-chip">#${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
       </header>
       ${coverImage ? `<img class="preview-cover" src="${escapeHtml(coverImage)}" alt="${escapeHtml(coverImageAlt || `${title} 대표 이미지`)}" loading="lazy">` : ""}
-      <section class="preview-body">${markdownToHtml(contentMd, { adPositions: previewAdPositions, showAds: true })}</section>
+      <section class="preview-body">${markdownToHtml(contentMd, { adPositions: previewAdPositions, showAds: true, inlineImages })}</section>
       ${faqItems.length ? `
         <section class="preview-faq" aria-label="자주 묻는 질문">
           <h2>자주 묻는 질문</h2>
@@ -1240,7 +1392,7 @@ async function save() {
     enable_sidebar_ad: Boolean($("enable_sidebar_ad")?.checked),
     enable_inarticle_ads: Boolean($("enable_inarticle_ads")?.checked),
     tags: parseTags($("tags").value),
-    content_md: $("content_md").value,
+    content_md: buildContentWithInlineImageTokens($("content_md").value),
     faq_md: $("faq_md") ? $("faq_md").value : ""
   };
 
@@ -1269,6 +1421,7 @@ async function save() {
 function handleRealtimeChange() {
   const tocStatus = $("tocStatus");
   if (tocStatus) tocStatus.textContent = "";
+  syncInlineImageVisibility();
   syncTocControlsFromContent();
   updateSlugPreview();
   updateAllCounts();
@@ -1276,12 +1429,14 @@ function handleRealtimeChange() {
   renderPreview();
 }
 
-["title", "meta_description", "summary", "content_md", "faq_md", "focusKeyword", "longtailKeywords", "cover_image", "cover_image_alt", "tags", "category"].forEach((id) => {
+["title", "meta_description", "summary", "content_md", "faq_md", "focusKeyword", "longtailKeywords", "cover_image", "cover_image_alt", "tags", "category", "inlineImage1Id", "inlineImage1Alt", "inlineImage1Caption", "inlineImage2Id", "inlineImage2Alt", "inlineImage2Caption"].forEach((id) => {
   const el = $(id);
   if (el) el.addEventListener("input", handleRealtimeChange);
   if (el && el.tagName === "SELECT") el.addEventListener("change", handleRealtimeChange);
 });
 
+$("enableInlineImage1")?.addEventListener("change", handleRealtimeChange);
+$("enableInlineImage2")?.addEventListener("change", handleRealtimeChange);
 $("saveBtn").addEventListener("click", save);
 bindCategoryManagerEvents();
 $("enableToc")?.addEventListener("change", applyTocControls);
@@ -1300,6 +1455,7 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") { closePreview(); closeCategoryModal(); }
 });
 
+syncInlineImageVisibility();
 syncTocControlsFromContent();
 loadCategories();
 updateSlugPreview();

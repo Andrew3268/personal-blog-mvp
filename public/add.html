@@ -149,6 +149,56 @@
           <div class="small toc-help">체크하면 목차가 도입 문단 다음, 첫 번째 H2 소제목 바로 앞에 자동 삽입됩니다.</div>
         </div>
 
+        <div class="notice inline-image-box">
+          <strong>본문 중간 이미지</strong>
+          <div class="sep"></div>
+          <div class="small">체크한 이미지가 있으면 공개 페이지에서 이미지 1은 3번째 H2 아래, 이미지 2는 5번째 H2 아래에 자동 삽입됩니다.</div>
+
+          <div class="inline-image-grid">
+            <div class="inline-image-card">
+              <label class="checkbox-chip" for="enableInlineImage1">
+                <input type="checkbox" id="enableInlineImage1" />
+                <span>이미지 1 추가</span>
+              </label>
+              <div class="inline-image-fields" id="inlineImage1Fields" hidden>
+                <div>
+                  <div class="label-row"><label class="small" for="inlineImage1Id">Cloudflare Image ID</label></div>
+                  <input class="input" id="inlineImage1Id" placeholder="예: 4f2c9b9f-xxxx-xxxx-xxxx" />
+                </div>
+                <div>
+                  <div class="label-row"><label class="small" for="inlineImage1Alt">ALT 텍스트</label></div>
+                  <input class="input" id="inlineImage1Alt" placeholder="예: 냉장 해동 중인 고기 이미지" />
+                </div>
+                <div>
+                  <div class="label-row"><label class="small" for="inlineImage1Caption">캡션</label></div>
+                  <input class="input" id="inlineImage1Caption" placeholder="예: 3번째 소제목 아래에 들어갈 설명" />
+                </div>
+              </div>
+            </div>
+
+            <div class="inline-image-card">
+              <label class="checkbox-chip" for="enableInlineImage2">
+                <input type="checkbox" id="enableInlineImage2" />
+                <span>이미지 2 추가</span>
+              </label>
+              <div class="inline-image-fields" id="inlineImage2Fields" hidden>
+                <div>
+                  <div class="label-row"><label class="small" for="inlineImage2Id">Cloudflare Image ID</label></div>
+                  <input class="input" id="inlineImage2Id" placeholder="예: 8a7d4c2e-xxxx-xxxx-xxxx" />
+                </div>
+                <div>
+                  <div class="label-row"><label class="small" for="inlineImage2Alt">ALT 텍스트</label></div>
+                  <input class="input" id="inlineImage2Alt" placeholder="예: 5번째 소제목 아래에 들어갈 이미지 설명" />
+                </div>
+                <div>
+                  <div class="label-row"><label class="small" for="inlineImage2Caption">캡션</label></div>
+                  <input class="input" id="inlineImage2Caption" placeholder="예: 추가 설명이 필요하면 캡션 입력" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div>
           <div class="label-row label-row--compact">
             <label class="small" for="content_md">본문 (마크다운)</label>
