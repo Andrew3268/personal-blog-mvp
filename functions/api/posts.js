@@ -42,6 +42,7 @@ export async function onRequestGet({ env, request }) {
       enable_inarticle_ads,
       tags_json,
       status,
+      view_count,
       published_at,
       updated_at
     FROM posts

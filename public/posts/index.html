@@ -43,28 +43,22 @@
       </section>
 
       <aside class="post-side posts-sidebar" aria-label="글 목록 사이드바">
-        <section class="post-side__section">
-          <h2 class="h2">목록 한눈에 보기</h2>
+        <section class="post-side__section" aria-labelledby="posts-overview-title">
+          <h2 id="posts-overview-title" class="h2">목록 한눈에 보기</h2>
           <div id="postsSummary" class="posts-sidebar__summary" style="margin-top:14px"></div>
+          <div id="postsCategories" class="posts-sidebar__chips" style="margin-top:16px"></div>
         </section>
 
-        <section class="post-side__section">
-          <h2 class="h2">빠른 이동</h2>
-          <div class="posts-sidebar__actions" style="margin-top:14px">
-            <a class="btn btn--brand" href="/add.html">새 글 작성</a>
-            <a class="btn" href="/posts/">발행글</a>
-            <a class="btn" href="/posts/?status=draft">초안글</a>
+        <section class="post-side__section" aria-labelledby="posts-ad-title">
+          <h2 id="posts-ad-title" class="h2">광고 영역</h2>
+          <div class="post-side__ad-slot post-side__ad-slot--placeholder" aria-label="향후 애드센스 광고 영역">
+            <span>애드센스 광고가 들어갈 자리</span>
           </div>
         </section>
 
-        <section class="post-side__section" aria-labelledby="posts-categories-title">
-          <h2 id="posts-categories-title" class="h2">카테고리</h2>
-          <div id="postsCategories" class="posts-sidebar__chips" style="margin-top:14px"></div>
-        </section>
-
-        <section class="post-side__section" aria-labelledby="posts-recent-title">
-          <h2 id="posts-recent-title" class="h2">최근 글</h2>
-          <ul id="postsRecent" class="post-side__popular-list" style="margin-top:14px"></ul>
+        <section class="post-side__section" aria-labelledby="posts-popular-title">
+          <h2 id="posts-popular-title" class="h2">인기글</h2>
+          <ul id="postsPopular" class="post-side__popular-list" style="margin-top:14px"></ul>
         </section>
       </aside>
     </div>

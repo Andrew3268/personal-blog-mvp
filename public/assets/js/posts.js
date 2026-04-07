@@ -8,7 +8,7 @@
   const pageDescEl = $('#postsPageDescription');
   const postsSummaryEl = $('#postsSummary');
   const postsCategoriesEl = $('#postsCategories');
-  const postsRecentEl = $('#postsRecent');
+  const postsPopularEl = $('#postsPopular');
 
   const show = (el, on) => { if (el) el.hidden = !on; };
   const escapeHtml = (s) => String(s ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
@@ -57,8 +57,8 @@
     });
 
     const categoryEntries = [...categoryMap.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'ko'));
-    const recentItems = [...items]
-      .sort((a, b) => String(b.updated_at || b.published_at || '').localeCompare(String(a.updated_at || a.published_at || '')))
+    const popularItems = [...items]
+      .sort((a, b) => (Number(b.view_count || 0) - Number(a.view_count || 0)) || String(b.published_at || b.updated_at || '').localeCompare(String(a.published_at || a.updated_at || '')))
       .slice(0, 5);
 
     if (postsSummaryEl) {
@@ -75,9 +75,9 @@
         : '<span class="small">표시할 카테고리가 없습니다.</span>';
     }
 
-    if (postsRecentEl) {
-      postsRecentEl.innerHTML = recentItems.length
-        ? recentItems.map((item, index) => `
+    if (postsPopularEl) {
+      postsPopularEl.innerHTML = popularItems.length
+        ? popularItems.map((item, index) => `
             <li>
               <a class="post-side__popular-link" href="/post/${encodeURIComponent(String(item.slug || ''))}">
                 <span class="post-side__popular-rank">${index + 1}</span>
@@ -85,7 +85,7 @@
               </a>
             </li>
           `).join('')
-        : '<li class="small">최근 글이 없습니다.</li>';
+        : '<li class="small">인기글이 없습니다.</li>';
     }
   }
 

@@ -183,6 +183,23 @@ body.has-preview-open{overflow:hidden}
 
 .post-side__section{padding:18px;border:1px solid var(--border);border-radius:20px;background:#fff}
 .post-side__ad-slot{min-height:260px;border:1px dashed rgba(91,124,255,.28);border-radius:18px;background:linear-gradient(135deg, rgba(91,124,255,.06), rgba(34,197,94,.05));display:grid;place-items:center;margin-top:14px;font-weight:900;color:#64748b}
+
+.posts-sidebar__summary + .posts-sidebar__chips {
+  padding-top: 16px;
+  border-top: 1px solid rgba(148,163,184,.16);
+}
+
+.post-side__ad-slot--placeholder {
+  min-height: 240px;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.post-side__ad-slot--placeholder span {
+  display: inline-block;
+  max-width: 180px;
+}
 .post-side__popular-list{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:12px}
 .post-side__popular-link{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start}
 .post-side__popular-rank{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:999px;background:#eef2ff;color:#1d4ed8;font-size:12px;font-weight:900}
