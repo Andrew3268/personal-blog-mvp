@@ -1147,6 +1147,7 @@ function markdownToHtml(md, options = {}) {
   const adPositions = Array.isArray(options.adPositions) ? [...options.adPositions] : [];
   let contentBlockCount = 0;
   let adPointer = 0;
+  let h2Count = 0;
 
   function maybeInsertAd() {
     while (options.showAds && adPointer < adPositions.length && adPositions[adPointer] === contentBlockCount) {
