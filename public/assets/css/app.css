@@ -555,5 +555,4 @@ body.has-preview-open{overflow:hidden}
 
 .posts-load-more{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:18px}
 .posts-load-more__btn{min-width:220px;justify-content:center}
-.posts-load-more__fallback{font-size:14px}
 .posts-skeleton-chunk{display:grid;gap:16px;margin-top:16px}

@@ -11,7 +11,6 @@
   const postsPopularEl = $('#postsPopular');
   const loadMoreWrap = $('#postsLoadMoreWrap');
   const loadMoreBtn = $('#postsLoadMoreBtn');
-  const paginationFallback = $('#postsPaginationFallback');
 
   const show = (el, on) => { if (el) el.hidden = !on; };
   const escapeHtml = (s) => String(s ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
@@ -206,11 +205,6 @@
     if (loadMoreBtn) {
       loadMoreBtn.disabled = !hasMore || isLoading;
       loadMoreBtn.textContent = isLoading ? '불러오는 중…' : '더보기';
-    }
-    if (paginationFallback) {
-      if (hasMore && pagination.next_page) {
-        paginationFallback.href = buildPostsPageUrl(Number(pagination.next_page));
-      }
     }
   }
 
