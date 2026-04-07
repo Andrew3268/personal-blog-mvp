@@ -11,6 +11,56 @@
   const postsPopularEl = $('#postsPopular');
 
   const show = (el, on) => { if (el) el.hidden = !on; };
+
+  function renderPostsSkeleton(count = 5) {
+    if (!listEl) return;
+    listEl.innerHTML = Array.from({ length: count }).map(() => `
+      <article class="card post-card post-card--row post-card--skeleton" aria-hidden="true">
+        <div class="post-card__thumb post-card__thumb--row skeleton-box skeleton-box--media"></div>
+        <div class="post-card__body">
+          <div class="post-meta post-meta--row">
+            <div class="row" style="gap:8px;flex-wrap:wrap">
+              <span class="skeleton-box skeleton-box--chip"></span>
+              <span class="skeleton-box skeleton-box--chip skeleton-box--chip-short"></span>
+            </div>
+            <span class="skeleton-box skeleton-box--date"></span>
+          </div>
+          <div class="skeleton-stack">
+            <span class="skeleton-box skeleton-box--title"></span>
+            <span class="skeleton-box skeleton-box--text"></span>
+            <span class="skeleton-box skeleton-box--text skeleton-box--text-short"></span>
+          </div>
+          <div class="row post-admin-actions" style="flex-wrap:wrap">
+            <span class="skeleton-box skeleton-box--button"></span>
+            <span class="skeleton-box skeleton-box--button skeleton-box--button-muted"></span>
+          </div>
+        </div>
+      </article>
+    `).join('');
+  }
+
+  function renderSidebarSkeleton() {
+    if (postsSummaryEl) {
+      postsSummaryEl.innerHTML = `
+        <div class="posts-summary-card posts-summary-card--skeleton"><span class="skeleton-box skeleton-box--summary-number"></span><span class="skeleton-box skeleton-box--summary-label"></span></div>
+        <div class="posts-summary-card posts-summary-card--skeleton"><span class="skeleton-box skeleton-box--summary-number"></span><span class="skeleton-box skeleton-box--summary-label"></span></div>
+        <div class="posts-summary-card posts-summary-card--skeleton"><span class="skeleton-box skeleton-box--summary-number"></span><span class="skeleton-box skeleton-box--summary-label"></span></div>
+      `;
+    }
+
+    if (postsCategoriesEl) {
+      postsCategoriesEl.innerHTML = Array.from({ length: 6 }).map(() => '<span class="posts-sidebar__chip posts-sidebar__chip--skeleton skeleton-box"></span>').join('');
+    }
+
+    if (postsPopularEl) {
+      postsPopularEl.innerHTML = Array.from({ length: 5 }).map((_, index) => `
+        <li class="post-side__popular-link post-side__popular-link--skeleton" aria-hidden="true">
+          <span class="post-side__popular-rank post-side__popular-rank--skeleton">${index + 1}</span>
+          <span class="skeleton-box skeleton-box--popular"></span>
+        </li>
+      `).join('');
+    }
+  }
   const escapeHtml = (s) => String(s ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 
   const url = new URL(window.location.href);
@@ -93,17 +143,17 @@
   if (pageDescEl) pageDescEl.innerHTML = getPageDescription();
 
   try {
-    show(loadingEl, true);
+    show(loadingEl, false);
     show(errorEl, false);
     show(emptyEl, false);
+    renderPostsSkeleton();
+    renderSidebarSkeleton();
 
     const res = await fetch(apiUrl.toString(), { headers: { accept: 'application/json' } });
     if (!res.ok) throw new Error('API 오류: ' + res.status);
 
     const data = await res.json();
     const items = Array.isArray(data?.items) ? data.items : [];
-
-    show(loadingEl, false);
 
     if (!items.length) {
       show(emptyEl, true);
@@ -162,6 +212,8 @@
       `;
     }).join('');
   } catch (err) {
+    listEl.innerHTML = '';
+    renderSidebar([]);
     show(loadingEl, false);
     show(emptyEl, false);
     show(errorEl, true);
