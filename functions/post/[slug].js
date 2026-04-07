@@ -495,8 +495,7 @@ function buildInArticleAds(config, count) {
 
 function buildArticleBodyHtml(contentMd, adHtmlList = [], contentTextLength = 0, env = {}) {
   const inlineImages = parseInlineImages(contentMd || "");
-  const deliveryHash = String(env.CF_IMAGE_DELIVERY_HASH || env.CF_IMAGES_DELIVERY_HASH || "").trim();
-  const blocks = renderMarkdownBlocks(contentMd || "", { inlineImages, deliveryHash, imageVariant: "post-inline" });
+  const blocks = renderMarkdownBlocks(contentMd || "", { inlineImages });
   if (!blocks.length) return "";
 
   const tocBlock = blocks.find((block) => block.type === "toc");

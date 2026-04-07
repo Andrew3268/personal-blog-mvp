@@ -260,7 +260,7 @@ function parseInlineImageToken(line = "") {
   const attrs = parseTokenAttributes(match[2]);
   return {
     key: match[1].toUpperCase(),
-    id: String(attrs.id || "").trim(),
+    url: String(attrs.url || attrs.id || "").trim(),
     alt: String(attrs.alt || "").trim(),
     caption: String(attrs.caption || "").trim()
   };
@@ -277,15 +277,15 @@ function stripInlineImageTokenLines(md = "") {
 
 function parseInlineImageMetaFromMarkdown(md = "") {
   const result = {
-    image1: { enabled: false, id: "", alt: "", caption: "" },
-    image2: { enabled: false, id: "", alt: "", caption: "" }
+    image1: { enabled: false, url: "", alt: "", caption: "" },
+    image2: { enabled: false, url: "", alt: "", caption: "" }
   };
   String(md || "").split("\n").forEach((line) => {
     const token = parseInlineImageToken(line);
     if (!token) return;
     const target = token.key === "POST_IMAGE_1" ? result.image1 : result.image2;
-    target.enabled = !!token.id;
-    target.id = token.id;
+    target.enabled = !!token.url;
+    target.url = token.url;
     target.alt = token.alt;
     target.caption = token.caption;
   });
@@ -293,24 +293,24 @@ function parseInlineImageMetaFromMarkdown(md = "") {
 }
 
 function buildInlineImageToken(key, data) {
-  if (!data || !data.enabled || !String(data.id || "").trim()) return "";
-  const safeId = String(data.id || "").trim().replace(/"/g, "&quot;");
+  if (!data || !data.enabled || !String((data.url || data.id || "")).trim()) return "";
+  const safeUrl = String((data.url || data.id || "")).trim().replace(/"/g, "&quot;");
   const safeAlt = String(data.alt || "").trim().replace(/"/g, "&quot;");
   const safeCaption = String(data.caption || "").trim().replace(/"/g, "&quot;");
-  return `[[${key} id="${safeId}" alt="${safeAlt}" caption="${safeCaption}"]]`;
+  return `[[${key} url="${safeUrl}" alt="${safeAlt}" caption="${safeCaption}"]]`;
 }
 
 function collectInlineImageFormData() {
   return {
     image1: {
       enabled: !!($("enableInlineImage1")?.checked),
-      id: $("inlineImage1Id")?.value.trim() || "",
+      url: $("inlineImage1Id")?.value.trim() || "",
       alt: $("inlineImage1Alt")?.value.trim() || "",
       caption: $("inlineImage1Caption")?.value.trim() || ""
     },
     image2: {
       enabled: !!($("enableInlineImage2")?.checked),
-      id: $("inlineImage2Id")?.value.trim() || "",
+      url: $("inlineImage2Id")?.value.trim() || "",
       alt: $("inlineImage2Alt")?.value.trim() || "",
       caption: $("inlineImage2Caption")?.value.trim() || ""
     }
@@ -321,11 +321,11 @@ function applyInlineImageFormData(meta = {}) {
   const image1 = meta.image1 || {};
   const image2 = meta.image2 || {};
   if ($("enableInlineImage1")) $("enableInlineImage1").checked = !!image1.enabled;
-  if ($("inlineImage1Id")) $("inlineImage1Id").value = image1.id || "";
+  if ($("inlineImage1Id")) $("inlineImage1Id").value = image1.url || image1.id || "";
   if ($("inlineImage1Alt")) $("inlineImage1Alt").value = image1.alt || "";
   if ($("inlineImage1Caption")) $("inlineImage1Caption").value = image1.caption || "";
   if ($("enableInlineImage2")) $("enableInlineImage2").checked = !!image2.enabled;
-  if ($("inlineImage2Id")) $("inlineImage2Id").value = image2.id || "";
+  if ($("inlineImage2Id")) $("inlineImage2Id").value = image2.url || image2.id || "";
   if ($("inlineImage2Alt")) $("inlineImage2Alt").value = image2.alt || "";
   if ($("inlineImage2Caption")) $("inlineImage2Caption").value = image2.caption || "";
   syncInlineImageVisibility();
@@ -350,32 +350,14 @@ function buildContentWithInlineImageTokens(md = "") {
   return [...tokens, cleanMd].filter(Boolean).join("\n\n").trim();
 }
 
-function buildCloudflareImageUrl(imageId, variant = "post-inline") {
-  const deliveryHash = String(window.CF_IMAGE_DELIVERY_HASH || "").trim();
-  if (!deliveryHash || !imageId) return "";
-  return `https://imagedelivery.net/${deliveryHash}/${encodeURIComponent(imageId)}/${variant}`;
-}
-
 function renderInlineImageFigure(data = {}, index = 1) {
-  const imageId = String(data.id || "").trim();
-  if (!imageId) return "";
+  const imageUrl = String((data.url || data.id || "")).trim();
+  if (!imageUrl) return "";
   const alt = String(data.alt || `본문 이미지 ${index}`).trim();
   const caption = String(data.caption || "").trim();
-  const imageUrl = buildCloudflareImageUrl(imageId);
-  if (!imageUrl) {
-    return `
-      <figure class="preview-inline-image preview-inline-image--placeholder">
-        <div class="post-ad post-ad--placeholder" aria-label="본문 이미지 ${index}">
-          <div class="post-ad__placeholder-title">본문 이미지 ${index}</div>
-          <div class="small">CF_IMAGE_DELIVERY_HASH 설정 후 실제 이미지가 표시됩니다.</div>
-        </div>
-        ${caption ? `<figcaption>${escapeHtml(caption)}</figcaption>` : ""}
-      </figure>
-    `;
-  }
   return `
     <figure class="preview-inline-image">
-      <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(alt)}" loading="lazy" decoding="async" />
+      <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(alt)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
       ${caption ? `<figcaption>${escapeHtml(caption)}</figcaption>` : ""}
     </figure>
   `;
@@ -1215,10 +1197,10 @@ function markdownToHtml(md, options = {}) {
       pushContentBlock(`<h${level} id="${escapeHtml(headingId)}">${inlineFormat(headingText)}</h${level}>`);
       if (level === 2) {
         h2Count += 1;
-        if (h2Count === 3 && inlineImages.image1?.enabled && inlineImages.image1?.id) {
+        if (h2Count === 3 && inlineImages.image1?.enabled && (inlineImages.image1?.url || inlineImages.image1?.id)) {
           pushContentBlock(renderInlineImageFigure(inlineImages.image1, 1));
         }
-        if (h2Count === 5 && inlineImages.image2?.enabled && inlineImages.image2?.id) {
+        if (h2Count === 5 && inlineImages.image2?.enabled && (inlineImages.image2?.url || inlineImages.image2?.id)) {
           pushContentBlock(renderInlineImageFigure(inlineImages.image2, 2));
         }
       }
