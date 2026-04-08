@@ -556,3 +556,27 @@ body.has-preview-open{overflow:hidden}
 .posts-load-more{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:18px}
 .posts-load-more__btn{min-width:220px;justify-content:center}
 .posts-skeleton-chunk{display:grid;gap:16px;margin-top:16px}
+
+/* Affiliate link UI */
+.affiliate-links-box { margin-top: 18px; }
+.affiliate-links-box__head { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+.affiliate-items-stack { display:grid; gap:14px; margin-top:14px; }
+.affiliate-item-card { border:1px solid rgba(15,23,42,.08); border-radius:18px; background:#fff; padding:16px; box-shadow:0 8px 24px rgba(15,23,42,.04); }
+.affiliate-item-card__top { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; }
+.affiliate-item-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 14px; }
+.affiliate-links-box__actions { display:flex; align-items:center; gap:12px; margin-top:14px; flex-wrap:wrap; }
+.preview-affiliate-card, .post-affiliate-card { display:grid; grid-template-columns:160px minmax(0,1fr); gap:18px; align-items:center; border:1px solid rgba(15,23,42,.08); border-radius:20px; padding:16px; background:linear-gradient(180deg,#fff 0%,#fbfdff 100%); box-shadow:0 12px 30px rgba(15,23,42,.06); margin:20px 0; }
+.preview-affiliate-card__media, .post-affiliate-card__media { width:100%; }
+.preview-affiliate-card__media img, .post-affiliate-card__img { width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:16px; display:block; background:#f3f6fb; }
+.preview-affiliate-card__placeholder, .post-affiliate-card__placeholder { aspect-ratio:1/1; display:grid; place-items:center; border-radius:16px; background:#f3f6fb; color:#64748b; font-size:13px; }
+.preview-affiliate-card__content, .post-affiliate-card__content { display:grid; gap:10px; }
+.preview-affiliate-card__title, .post-affiliate-card__title { margin:0; font-size:20px; line-height:1.35; }
+.preview-affiliate-card__prices, .post-affiliate-card__prices { display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; }
+.preview-affiliate-card__price-label { color:#64748b; font-size:13px; }
+.preview-affiliate-card__sale, .post-affiliate-card__sale { color:#dc2626; font-weight:700; }
+.preview-affiliate-card__discount, .post-affiliate-card__discount { display:inline-flex; align-items:center; padding:4px 9px; border-radius:999px; background:#fee2e2; color:#b91c1c; font-size:12px; font-weight:700; }
+.post-affiliate-card__current { color:#0f172a; font-weight:600; }
+.preview-affiliate-card__button, .post-affiliate-card__button { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 16px; border-radius:12px; background:#0f172a; color:#fff; text-decoration:none; font-weight:700; }
+.preview-affiliate-card__button.is-disabled, .post-affiliate-card__button.is-disabled { opacity:.5; pointer-events:none; }
+@media (max-width: 900px) { .affiliate-item-grid { grid-template-columns:1fr; } }
+@media (max-width: 720px) { .preview-affiliate-card, .post-affiliate-card { grid-template-columns:1fr; } }
