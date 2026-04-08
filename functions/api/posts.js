@@ -1,19 +1,10 @@
 import { okJson } from "../_utils.js";
 
-function clampInt(value, fallback, min, max) {
-  const num = Number.parseInt(String(value || ""), 10);
-  if (!Number.isFinite(num)) return fallback;
-  return Math.min(max, Math.max(min, num));
-}
-
 export async function onRequestGet({ env, request }) {
   const url = new URL(request.url);
   const status = String(url.searchParams.get("status") || "published").trim().toLowerCase();
   const category = String(url.searchParams.get("category") || "").trim();
   const tag = String(url.searchParams.get("tag") || "").trim();
-  const page = clampInt(url.searchParams.get("page"), 1, 1, 9999);
-  const perPage = clampInt(url.searchParams.get("per_page"), 8, 1, 24);
-  const offset = (page - 1) * perPage;
 
   const allowedStatuses = new Set(["published", "draft", "all"]);
   const safeStatus = allowedStatuses.has(status) ? status : "published";
@@ -36,9 +27,7 @@ export async function onRequestGet({ env, request }) {
     binds.push(tag);
   }
 
-  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
-
-  const itemsSql = `
+  const sql = `
     SELECT
       slug,
       title,
@@ -53,80 +42,22 @@ export async function onRequestGet({ env, request }) {
       enable_inarticle_ads,
       tags_json,
       status,
-      view_count,
       published_at,
       updated_at
     FROM posts
-    ${whereSql}
+    ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
     ORDER BY updated_at DESC, published_at DESC
-    LIMIT ? OFFSET ?
+    LIMIT 200
   `;
 
-  const countSql = `SELECT COUNT(*) AS total FROM posts ${whereSql}`;
-
-  const baseBind = [...binds];
-  const [itemsRows, countRow, categoryRows, popularRows, statusRows] = await Promise.all([
-    env.BLOG_DB.prepare(itemsSql).bind(...baseBind, perPage, offset).all(),
-    env.BLOG_DB.prepare(countSql).bind(...binds).first(),
-    env.BLOG_DB.prepare(`
-      SELECT TRIM(COALESCE(category, '')) AS category_name, COUNT(*) AS count
-      FROM posts
-      ${whereSql}
-      GROUP BY TRIM(COALESCE(category, ''))
-      ORDER BY count DESC, category_name COLLATE NOCASE ASC
-      LIMIT 20
-    `).bind(...binds).all(),
-    env.BLOG_DB.prepare(`
-      SELECT slug, title, view_count, updated_at, published_at
-      FROM posts
-      ${whereSql}
-      ORDER BY view_count DESC, updated_at DESC, published_at DESC
-      LIMIT 5
-    `).bind(...binds).all(),
-    env.BLOG_DB.prepare(`
-      SELECT status, COUNT(*) AS count
-      FROM posts
-      ${whereSql}
-      GROUP BY status
-    `).bind(...binds).all()
-  ]);
-
-  const total = Number(countRow?.total || 0);
-  const totalPages = Math.max(1, Math.ceil(total / perPage));
-  const statusMap = new Map((statusRows?.results || []).map((row) => [String(row.status || "published").trim().toLowerCase(), Number(row.count || 0)]));
+  const rows = await env.BLOG_DB.prepare(sql).bind(...binds).all();
 
   return okJson({
-    items: itemsRows.results || [],
+    items: rows.results || [],
     filters: {
       status: safeStatus,
       category,
       tag
-    },
-    pagination: {
-      page,
-      per_page: perPage,
-      total,
-      total_pages: totalPages,
-      has_more: page < totalPages,
-      next_page: page < totalPages ? page + 1 : null
-    },
-    sidebar: {
-      counts: {
-        total,
-        published: statusMap.get("published") || 0,
-        draft: statusMap.get("draft") || 0
-      },
-      categories: (categoryRows.results || []).map((row) => ({
-        name: String(row.category_name || "").trim() || "미분류",
-        count: Number(row.count || 0)
-      })),
-      popular: (popularRows.results || []).map((row) => ({
-        slug: row.slug,
-        title: row.title,
-        view_count: Number(row.view_count || 0),
-        updated_at: row.updated_at,
-        published_at: row.published_at
-      }))
     }
   });
 }
