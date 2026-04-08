@@ -243,7 +243,6 @@ function bindCategoryManagerEvents() {
 const TOC_TOKEN_RE = /^\[\[TOC(?::(h2|h2,h3))?\]\]$/i;
 
 const INLINE_IMAGE_TOKEN_RE = /^\[\[(POST_IMAGE_[12])\s+(.+?)\]\]$/i;
-const AFFILIATE_TOKEN_RE = /^\[\[(POST_AFFILIATE_(?:[1-5]))\s+(.+?)\]\]$/i;
 
 function parseTokenAttributes(raw = "") {
   const attrs = {};
@@ -368,199 +367,6 @@ function renderInlineImageFigure(data = {}, index = 1) {
       <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(alt)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
       ${caption ? `<figcaption>${escapeHtml(caption)}</figcaption>` : ""}
     </figure>
-  `;
-}
-
-
-function parseAffiliateToken(line = "") {
-  const match = String(line || "").trim().match(AFFILIATE_TOKEN_RE);
-  if (!match) return null;
-  const attrs = parseTokenAttributes(match[2]);
-  return {
-    key: match[1].toUpperCase(),
-    imageUrl: String(attrs.image || attrs.imageUrl || "").trim(),
-    linkUrl: String(attrs.link || attrs.linkUrl || "").trim(),
-    productName: String(attrs.name || attrs.productName || "").trim(),
-    currentPrice: String(attrs.current || attrs.currentPrice || "").trim(),
-    salePrice: String(attrs.sale || attrs.salePrice || "").trim(),
-    discountRate: String(attrs.discount || attrs.discountRate || "").trim(),
-    buttonText: String(attrs.button || attrs.buttonText || "상품 보기").trim() || "상품 보기",
-    position: Math.max(1, parseInt(attrs.position || attrs.h2 || "1", 10) || 1)
-  };
-}
-
-function stripAffiliateTokenLines(md = "") {
-  return String(md || "")
-    .split("\n")
-    .filter((line) => !parseAffiliateToken(line))
-    .join("\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
-
-function parseAffiliateMetaFromMarkdown(md = "") {
-  const items = Array.from({ length: 5 }, (_, index) => ({
-    enabled: false,
-    imageUrl: "",
-    linkUrl: "",
-    productName: "",
-    currentPrice: "",
-    salePrice: "",
-    discountRate: "",
-    buttonText: "상품 보기",
-    position: index + 1
-  }));
-
-  String(md || "").split("\n").forEach((line) => {
-    const token = parseAffiliateToken(line);
-    if (!token) return;
-    const match = token.key.match(/(\d+)$/);
-    const idx = match ? Math.max(0, Math.min(4, parseInt(match[1], 10) - 1)) : 0;
-    items[idx] = {
-      enabled: !!(token.imageUrl || token.linkUrl || token.productName),
-      imageUrl: token.imageUrl,
-      linkUrl: token.linkUrl,
-      productName: token.productName,
-      currentPrice: token.currentPrice,
-      salePrice: token.salePrice,
-      discountRate: token.discountRate,
-      buttonText: token.buttonText || "상품 보기",
-      position: token.position
-    };
-  });
-
-  return {
-    enabled: items.some((item) => item.enabled),
-    items
-  };
-}
-
-function buildAffiliateToken(index, data = {}) {
-  if (!data || !data.enabled) return "";
-  const hasContent = [data.imageUrl, data.linkUrl, data.productName, data.currentPrice, data.salePrice, data.discountRate, data.buttonText]
-    .some((value) => String(value || "").trim());
-  if (!hasContent) return "";
-  const esc = (value) => String(value || "").trim().replace(/"/g, '&quot;');
-  const safePosition = Math.max(1, parseInt(data.position || index || 1, 10) || index || 1);
-  return `[[POST_AFFILIATE_${index} image="${esc(data.imageUrl)}" link="${esc(data.linkUrl)}" name="${esc(data.productName)}" current="${esc(data.currentPrice)}" sale="${esc(data.salePrice)}" discount="${esc(data.discountRate)}" button="${esc(data.buttonText || "상품 보기")}" position="${safePosition}"]]`;
-}
-
-function collectAffiliateFormData() {
-  const enabled = !!($("enableAffiliateLinks")?.checked);
-  const items = Array.from({ length: 5 }, (_, index) => {
-    const no = index + 1;
-    return {
-      enabled,
-      imageUrl: $("affiliateImageUrl" + no)?.value.trim() || "",
-      linkUrl: $("affiliateLinkUrl" + no)?.value.trim() || "",
-      productName: $("affiliateProductName" + no)?.value.trim() || "",
-      currentPrice: $("affiliateCurrentPrice" + no)?.value.trim() || "",
-      salePrice: $("affiliateSalePrice" + no)?.value.trim() || "",
-      discountRate: $("affiliateDiscountRate" + no)?.value.trim() || "",
-      buttonText: $("affiliateButtonText" + no)?.value.trim() || "상품 보기",
-      position: Math.max(1, parseInt($("affiliatePosition" + no)?.value || String(no), 10) || no)
-    };
-  });
-  return { enabled, items };
-}
-
-function getVisibleAffiliateItemCount() {
-  return document.querySelectorAll('.affiliate-item-card:not([hidden])').length;
-}
-
-function syncAffiliateSectionVisibility() {
-  const enabled = !!($("enableAffiliateLinks")?.checked);
-  const section = $("affiliateLinksFields");
-  if (section) section.hidden = !enabled;
-  const addBtn = $("addAffiliateItemBtn");
-  if (addBtn) addBtn.hidden = !enabled || getVisibleAffiliateItemCount() >= 5;
-}
-
-function applyAffiliateFormData(meta = {}) {
-  const items = Array.isArray(meta.items) ? meta.items : [];
-  const enabled = !!(meta.enabled || items.some((item) => item && item.enabled));
-  if ($("enableAffiliateLinks")) $("enableAffiliateLinks").checked = enabled;
-  document.querySelectorAll('.affiliate-item-card').forEach((card) => { card.hidden = true; });
-  let visible = 0;
-  items.forEach((item, index) => {
-    if (!item || !item.enabled) return;
-    const no = index + 1;
-    visible = Math.max(visible, no);
-    const card = $("affiliateItem" + no);
-    if (card) card.hidden = false;
-    if ($("affiliateImageUrl" + no)) $("affiliateImageUrl" + no).value = item.imageUrl || "";
-    if ($("affiliateLinkUrl" + no)) $("affiliateLinkUrl" + no).value = item.linkUrl || "";
-    if ($("affiliateProductName" + no)) $("affiliateProductName" + no).value = item.productName || "";
-    if ($("affiliateCurrentPrice" + no)) $("affiliateCurrentPrice" + no).value = item.currentPrice || "";
-    if ($("affiliateSalePrice" + no)) $("affiliateSalePrice" + no).value = item.salePrice || "";
-    if ($("affiliateDiscountRate" + no)) $("affiliateDiscountRate" + no).value = item.discountRate || "";
-    if ($("affiliateButtonText" + no)) $("affiliateButtonText" + no).value = item.buttonText || "상품 보기";
-    if ($("affiliatePosition" + no)) $("affiliatePosition" + no).value = String(Math.max(1, parseInt(item.position || no, 10) || no));
-  });
-  if (enabled && visible === 0) visible = 1;
-  if (!enabled) visible = 0;
-  for (let i = 1; i <= visible; i += 1) {
-    const card = $("affiliateItem" + i);
-    if (card) card.hidden = false;
-  }
-  syncAffiliateSectionVisibility();
-}
-
-function addAffiliateItemCard() {
-  const current = getVisibleAffiliateItemCount();
-  if (current >= 5) return;
-  const next = $("affiliateItem" + (current + 1));
-  if (next) next.hidden = false;
-  syncAffiliateSectionVisibility();
-}
-
-function removeAffiliateItemCard(no) {
-  const card = $("affiliateItem" + no);
-  if (card) card.hidden = true;
-  ["affiliateImageUrl", "affiliateLinkUrl", "affiliateProductName", "affiliateCurrentPrice", "affiliateSalePrice", "affiliateDiscountRate", "affiliateButtonText"].forEach((prefix) => {
-    const el = $(prefix + no);
-    if (el) el.value = "";
-  });
-  const posEl = $("affiliatePosition" + no);
-  if (posEl) posEl.value = String(no);
-  if (getVisibleAffiliateItemCount() === 0 && $("enableAffiliateLinks")) {
-    $("enableAffiliateLinks").checked = false;
-  }
-  syncAffiliateSectionVisibility();
-}
-
-function buildContentWithMetaTokens(md = "") {
-  const cleanMd = stripAffiliateTokenLines(stripInlineImageTokenLines(md));
-  const imageMeta = collectInlineImageFormData();
-  const affiliateMeta = collectAffiliateFormData();
-  const imageTokens = [
-    buildInlineImageToken("POST_IMAGE_1", imageMeta.image1),
-    buildInlineImageToken("POST_IMAGE_2", imageMeta.image2)
-  ].filter(Boolean);
-  const affiliateTokens = affiliateMeta.enabled
-    ? affiliateMeta.items.map((item, index) => buildAffiliateToken(index + 1, item)).filter(Boolean)
-    : [];
-  return [...imageTokens, ...affiliateTokens, cleanMd].filter(Boolean).join("\n\n").trim();
-}
-
-function renderAffiliatePreviewCard(data = {}, index = 1) {
-  if (!data || !(data.imageUrl || data.linkUrl || data.productName)) return "";
-  const buttonText = String(data.buttonText || "상품 보기").trim() || "상품 보기";
-  return `
-    <article class="preview-affiliate-card">
-      <div class="preview-affiliate-card__media">
-        ${data.imageUrl ? `<img src="${escapeHtml(data.imageUrl)}" alt="${escapeHtml(data.productName || `제휴 상품 ${index}`)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" />` : `<div class="preview-affiliate-card__placeholder">상품 이미지</div>`}
-      </div>
-      <div class="preview-affiliate-card__content">
-        ${data.productName ? `<h3 class="preview-affiliate-card__title">${escapeHtml(data.productName)}</h3>` : ""}
-        <div class="preview-affiliate-card__prices">
-          ${data.currentPrice ? `<span class="preview-affiliate-card__price-label">현재가</span><strong>${escapeHtml(data.currentPrice)}</strong>` : ""}
-          ${data.salePrice ? `<span class="preview-affiliate-card__sale">할인가 ${escapeHtml(data.salePrice)}</span>` : ""}
-          ${data.discountRate ? `<span class="preview-affiliate-card__discount">${escapeHtml(data.discountRate)}</span>` : ""}
-        </div>
-        ${data.linkUrl ? `<a class="preview-affiliate-card__button" href="${escapeHtml(data.linkUrl)}" target="_blank" rel="noopener noreferrer nofollow sponsored">${escapeHtml(buttonText)}</a>` : `<span class="preview-affiliate-card__button is-disabled">${escapeHtml(buttonText)}</span>`}
-      </div>
-    </article>
   `;
 }
 
@@ -1392,12 +1198,6 @@ function markdownToHtml(md, options = {}) {
       pushContentBlock(`<h${level} id="${escapeHtml(headingId)}">${inlineFormat(headingText)}</h${level}>`);
       if (level === 2) {
         h2Count += 1;
-        (affiliates.items || []).forEach((item, index) => {
-          const target = Math.max(1, parseInt(item?.position || index + 1, 10) || index + 1);
-          if (item?.enabled && h2Count === target) {
-            pushContentBlock(renderAffiliatePreviewCard(item, index + 1));
-          }
-        });
         const image1Target = Math.max(1, parseInt(inlineImages.image1?.position || 3, 10) || 3);
         const image2Target = Math.max(1, parseInt(inlineImages.image2?.position || 5, 10) || 5);
         if (h2Count === image1Target && inlineImages.image1?.enabled && (inlineImages.image1?.url || inlineImages.image1?.id)) {
@@ -1507,7 +1307,7 @@ function renderPreview() {
         ${tags.length ? `<div class="row">${tags.map((tag) => `<span class="tag-chip">#${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
       </header>
       ${coverImage ? `<img class="preview-cover" src="${escapeHtml(coverImage)}" alt="${escapeHtml(coverImageAlt || `${title} 대표 이미지`)}" loading="lazy">` : ""}
-      <section class="preview-body">${markdownToHtml(contentMd, { adPositions: previewAdPositions, showAds: true, inlineImages, affiliates: affiliateMeta })}</section>
+      <section class="preview-body">${markdownToHtml(contentMd, { adPositions: previewAdPositions, showAds: true, inlineImages })}</section>
       ${faqItems.length ? `
         <section class="preview-faq" aria-label="자주 묻는 질문">
           <h2>자주 묻는 질문</h2>
@@ -1584,7 +1384,7 @@ async function save() {
     enable_sidebar_ad: Boolean($("enable_sidebar_ad")?.checked),
     enable_inarticle_ads: Boolean($("enable_inarticle_ads")?.checked),
     tags: parseTags($("tags").value),
-    content_md: buildContentWithMetaTokens($("content_md").value),
+    content_md: buildContentWithInlineImageTokens($("content_md").value),
     faq_md: $("faq_md") ? $("faq_md").value : ""
   };
 
@@ -1621,7 +1421,7 @@ function handleRealtimeChange() {
   renderPreview();
 }
 
-["title", "meta_description", "summary", "content_md", "faq_md", "focusKeyword", "longtailKeywords", "cover_image", "cover_image_alt", "tags", "category", "inlineImage1Id", "inlineImage1Alt", "inlineImage1Caption", "inlineImage1Position", "inlineImage2Id", "inlineImage2Alt", "inlineImage2Caption", "inlineImage2Position", "affiliateImageUrl1", "affiliateLinkUrl1", "affiliateProductName1", "affiliateCurrentPrice1", "affiliateSalePrice1", "affiliateDiscountRate1", "affiliateButtonText1", "affiliatePosition1", "affiliateImageUrl2", "affiliateLinkUrl2", "affiliateProductName2", "affiliateCurrentPrice2", "affiliateSalePrice2", "affiliateDiscountRate2", "affiliateButtonText2", "affiliatePosition2", "affiliateImageUrl3", "affiliateLinkUrl3", "affiliateProductName3", "affiliateCurrentPrice3", "affiliateSalePrice3", "affiliateDiscountRate3", "affiliateButtonText3", "affiliatePosition3", "affiliateImageUrl4", "affiliateLinkUrl4", "affiliateProductName4", "affiliateCurrentPrice4", "affiliateSalePrice4", "affiliateDiscountRate4", "affiliateButtonText4", "affiliatePosition4", "affiliateImageUrl5", "affiliateLinkUrl5", "affiliateProductName5", "affiliateCurrentPrice5", "affiliateSalePrice5", "affiliateDiscountRate5", "affiliateButtonText5", "affiliatePosition5"].forEach((id) => {
+["title", "meta_description", "summary", "content_md", "faq_md", "focusKeyword", "longtailKeywords", "cover_image", "cover_image_alt", "tags", "category", "inlineImage1Id", "inlineImage1Alt", "inlineImage1Caption", "inlineImage1Position", "inlineImage2Id", "inlineImage2Alt", "inlineImage2Caption", "inlineImage2Position"].forEach((id) => {
   const el = $(id);
   if (el) el.addEventListener("input", handleRealtimeChange);
   if (el && el.tagName === "SELECT") el.addEventListener("change", handleRealtimeChange);
@@ -1629,11 +1429,6 @@ function handleRealtimeChange() {
 
 $("enableInlineImage1")?.addEventListener("change", handleRealtimeChange);
 $("enableInlineImage2")?.addEventListener("change", handleRealtimeChange);
-$("enableAffiliateLinks")?.addEventListener("change", handleRealtimeChange);
-$("addAffiliateItemBtn")?.addEventListener("click", () => { addAffiliateItemCard(); handleRealtimeChange(); });
-document.querySelectorAll("[data-affiliate-remove]").forEach((button) => {
-  button.addEventListener("click", () => { removeAffiliateItemCard(Number(button.dataset.affiliateRemove || "0")); handleRealtimeChange(); });
-});
 $("saveBtn").addEventListener("click", save);
 bindCategoryManagerEvents();
 $("enableToc")?.addEventListener("change", applyTocControls);
