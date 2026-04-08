@@ -1608,7 +1608,8 @@ async function load() {
   if ($("enable_inarticle_ads")) $("enable_inarticle_ads").checked = !(String(item.enable_inarticle_ads ?? 1) === "0");
   const rawContentMd = item.content_md || "";
   applyInlineImageFormData(parseInlineImageMetaFromMarkdown(rawContentMd));
-  $("content_md").value = stripInlineImageTokenLines(rawContentMd);
+  applyAffiliateFormData(parseAffiliateMetaFromMarkdown(rawContentMd));
+  $("content_md").value = stripAffiliateTokenLines(stripInlineImageTokenLines(rawContentMd));
   if ($("faq_md")) $("faq_md").value = item.faq_md || "";
 
   let tags = [];
