@@ -1319,7 +1319,8 @@ function renderPreviewAdBox(index) {
 
 function markdownToHtml(md, options = {}) {
   const inlineImages = options.inlineImages || parseInlineImageMetaFromMarkdown(md);
-  const sourceMd = stripInlineImageTokenLines(String(md || "").replace(/\r/g, ""));
+  const affiliates = options.affiliates || parseAffiliateMetaFromMarkdown(md);
+  const sourceMd = stripAffiliateTokenLines(stripInlineImageTokenLines(String(md || "").replace(/\r/g, "")));
   const lines = sourceMd.split("\n");
   const tocModeInContent = lines.map((line) => parseTocModeFromLine(line)).find(Boolean) || null;
   const tocItems = tocModeInContent ? extractTocItems(sourceMd, tocModeInContent) : [];
