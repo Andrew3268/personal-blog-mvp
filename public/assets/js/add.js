@@ -1480,6 +1480,7 @@ function renderPreview() {
   const coverImageAlt = $("cover_image_alt")?.value.trim() || "";
   const contentMd = $("content_md").value || "";
   const inlineImages = collectInlineImageFormData();
+  const affiliateMeta = collectAffiliateFormData();
   const contentLengthWithoutSpaces = countTextWithoutSpaces(contentMd);
   const previewAdPositions = getPreviewAdInsertPositions(contentMd, contentLengthWithoutSpaces);
   const faqMd = $("faq_md")?.value || "";
