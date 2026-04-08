@@ -1616,6 +1616,7 @@ function handleRealtimeChange() {
   const tocStatus = $("tocStatus");
   if (tocStatus) tocStatus.textContent = "";
   syncInlineImageVisibility();
+  syncAffiliateSectionVisibility();
   syncTocControlsFromContent();
   updateSlugPreview();
   updateAllCounts();
@@ -1655,6 +1656,7 @@ document.addEventListener("keydown", (event) => {
 });
 
 syncInlineImageVisibility();
+syncAffiliateSectionVisibility();
 syncTocControlsFromContent();
 loadCategories();
 updateSlugPreview();

@@ -1677,6 +1677,7 @@ function handleRealtimeChange() {
   const tocStatus = $("tocStatus");
   if (tocStatus) tocStatus.textContent = "";
   syncInlineImageVisibility();
+  syncAffiliateSectionVisibility();
   syncTocControlsFromContent();
   updateSlugPreview();
   updateAllCounts();
