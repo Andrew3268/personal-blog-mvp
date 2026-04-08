@@ -758,16 +758,16 @@ function renderBreadcrumbs(items) {
   const list = items
     .map((item, index) => {
       const isLast = index === items.length - 1;
-      if (isLast) {
-        return `<li aria-current="page"><span>${escapeHtml(item.name)}</span></li>`;
-      }
-      return `<li><a href="${escapeHtml(item.url)}">${escapeHtml(item.name)}</a></li>`;
+      const content = isLast
+        ? `<span>${escapeHtml(item.name)}</span>`
+        : `<a href="${escapeHtml(item.url)}">${escapeHtml(item.name)}</a>`;
+      return `<li${isLast ? ' aria-current="page"' : ''}>${content}</li>`;
     })
     .join("");
 
   return `
   <nav class="breadcrumb small" aria-label="브레드크럼" style="margin:16px 0 20px">
-    <ol class="list-reset" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+    <ol class="list-reset">
       ${list}
     </ol>
   </nav>`;
