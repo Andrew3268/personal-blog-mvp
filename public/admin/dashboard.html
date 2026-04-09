@@ -29,8 +29,8 @@
         <p class="p hero-desc">발행 현황, 인기글, 최근 수정 글을 가볍게 확인하고 바로 글 작성과 관리 작업으로 이동할 수 있습니다.</p>
         <div class="row dashboard-actions" style="margin-top:12px;flex-wrap:wrap">
           <a class="btn btn--brand" href="/add.html">새 글 작성</a>
-          <a class="btn" href="/posts/?status=all">전체 글 보기</a>
-          <button class="btn" id="adminLogoutBtn" type="button">로그아웃</button>
+          <a class="btn" href="/">블로그 홈으로 가기</a>
+          <a class="btn" href="/posts/?status=draft">초안글 보기</a>
         </div>
       </div>
       <div class="dashboard-stats" aria-label="글 운영 현황">
@@ -53,7 +53,7 @@
       <article class="card dashboard-panel">
         <div class="dashboard-panel__head">
           <h2 class="h2">인기글 TOP 10</h2>
-          <span class="small">제목과 조회수만 표시</span>
+          <span class="small">제목 · 조회수 · 작성일 · 수정일</span>
         </div>
         <ol class="dashboard-popular" id="dashboardPopularList">
           <li class="small">불러오는 중…</li>
@@ -61,16 +61,7 @@
       </article>
 
       <aside class="dashboard-side">
-        <article class="card dashboard-panel">
-          <div class="dashboard-panel__head">
-            <h2 class="h2">빠른 관리</h2>
-          </div>
-          <div class="dashboard-quick-links">
-            <a class="dashboard-quick-link" href="/add.html">글 작성하기</a>
-            <a class="dashboard-quick-link" href="/posts/?status=all">전체 글 관리</a>
-            <a class="dashboard-quick-link" href="/posts/?status=draft">초안 글 확인</a>
-          </div>
-        </article>
+        
 
         <article class="card dashboard-panel">
           <div class="dashboard-panel__head">

@@ -41,12 +41,18 @@ async function initDashboard() {
   draftEl.textContent = formatNumber(counts.draft || 0);
 
   popularListEl.innerHTML = popular.length
-    ? popular.map((item, index) => `
+    ? popular.map((item, index) => {
+        const publishedAt = item.published_at ? String(item.published_at).slice(0, 10) : '-';
+        const updatedAt = item.updated_at ? String(item.updated_at).slice(0, 10) : '-';
+        return `
         <li class="dashboard-popular__item">
-          <a href="/post/${encodeURIComponent(item.slug)}" target="_blank" rel="noopener noreferrer">${index + 1}. ${escapeHtml(item.title)}</a>
+          <div class="dashboard-popular__main">
+            <a href="/post/${encodeURIComponent(item.slug)}" target="_blank" rel="noopener noreferrer">${index + 1}. ${escapeHtml(item.title)}</a>
+            <div class="dashboard-popular__meta">작성 ${escapeHtml(publishedAt)} · 수정 ${escapeHtml(updatedAt)}</div>
+          </div>
           <span class="dashboard-popular__views">조회수 ${formatNumber(item.view_count)}</span>
         </li>
-      `).join('')
+      `}).join('')
     : '<li class="small">표시할 인기글이 없습니다.</li>';
 
   recentListEl.innerHTML = items.length
@@ -63,10 +69,4 @@ async function initDashboard() {
     : '<span class="chip">카테고리 없음</span>';
 }
 
-async function logout() {
-  await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
-  location.href = '/admin/';
-}
-
-document.getElementById('adminLogoutBtn')?.addEventListener('click', logout);
 initDashboard();
