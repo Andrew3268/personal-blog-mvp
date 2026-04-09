@@ -25,6 +25,7 @@
   let currentPage = initialPage;
   let hasMore = false;
   let isLoading = false;
+  let isAdmin = false;
 
   function buildApiUrl(page) {
     const apiUrl = new URL('/api/posts', window.location.origin);
@@ -59,6 +60,12 @@
     if (category) return `<b>${escapeHtml(category)}</b> 카테고리 글만 모아 보여줍니다.`;
     if (tag) return `<b>#${escapeHtml(tag)}</b> 태그가 포함된 글만 모아 보여줍니다.`;
     return '목록은 페이지 단위로 빠르게 불러오고, <b>더보기</b>로 이어서 탐색할 수 있습니다.';
+  }
+
+  async function loadAdminState() {
+    const state = await (window.__adminSessionPromise || fetch('/api/admin/session', { credentials: 'same-origin' }).then((res) => res.ok ? res.json() : { authenticated: false }));
+    isAdmin = Boolean(state && state.authenticated);
+    return state;
   }
 
   function renderPostsSkeleton(count = 5, append = false) {
@@ -187,8 +194,8 @@
             <div class="post-card__summary">${summary}</div>
             <div class="row post-admin-actions" style="flex-wrap:wrap">
               ${itemStatus === 'published' ? `<a class="btn btn--brand" href="/post/${encodeURIComponent(slug)}">글 보기</a>` : ''}
-              <a class="btn" href="/edit.html?slug=${encodeURIComponent(slug)}">수정</a>
-              <button class="btn btn--danger js-delete-post" type="button" data-slug="${encodeURIComponent(slug)}" data-title="${escapeHtml(rawTitle)}">삭제</button>
+              ${isAdmin ? `<a class="btn" href="/edit.html?slug=${encodeURIComponent(slug)}">수정</a>` : ''}
+              ${isAdmin ? `<button class="btn btn--danger js-delete-post" type="button" data-slug="${encodeURIComponent(slug)}" data-title="${escapeHtml(rawTitle)}">삭제</button>` : ''}
             </div>
           </div>
         </article>

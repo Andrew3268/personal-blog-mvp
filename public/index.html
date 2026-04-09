@@ -16,7 +16,7 @@
         <a href="/" data-path="/">홈</a>
         <a href="/posts/" data-path="/posts">글 목록</a>
         <a href="/about/" data-path="/about">소개</a>
-        <a href="/admin/">관리자</a>
+        <a href="/admin/" data-admin-link hidden>관리자</a>
       </nav>
     </div>
   </header>
@@ -29,7 +29,7 @@
         <a class="btn btn--brand" href="/posts/">전체 글 보기</a>
         <a class="btn" href="/about/">소개 보기</a>
         <a class="btn" href="/admin/">관리자 로그인</a>
-        <a class="btn" href="/api/posts">JSON 보기</a>
+        <a class="btn" href="/admin/dashboard.html" data-dashboard-link hidden>대시보드</a>
       </div>
     </section>
 
@@ -46,8 +46,8 @@
       </section>
 
       <aside class="post-side posts-sidebar" aria-label="글 목록 사이드바">
-        <section class="post-side__section" aria-labelledby="posts-overview-title">
-          <h2 id="posts-overview-title" class="h2">목록 한눈에 보기</h2>
+        <section class="post-side__section" aria-labelledby="posts-overview-title" data-dashboard-link data-admin-only hidden>
+          <h2 id="posts-overview-title" class="h2 posts-sidebar__dashboard-title">대시보드 바로가기</h2>
           <div id="postsSummary" class="posts-sidebar__summary" style="margin-top:14px"></div>
           <div id="postsCategories" class="posts-sidebar__chips" style="margin-top:16px"></div>
         </section>
@@ -68,6 +68,7 @@
   </main>
 
   <footer class="footer container"><div class="footer__inner"><div>© 2026 Wacky Blog</div></div></footer>
+  <script src="/assets/js/admin-ui.js" defer></script>
   <script src="/assets/js/nav.js" defer></script>
   <script src="/assets/js/posts.js" defer></script>
 </body>
