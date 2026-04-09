@@ -11,7 +11,6 @@ export async function onRequestGet({ env, request }) {
   const items = rows.results || [];
   const urls = [
     `${origin}/`,
-    `${origin}/posts/`,
     `${origin}/about/`
   ];
 

@@ -42,7 +42,7 @@
   }
 
   function buildPostsPageUrl(page) {
-    const nextUrl = new URL('/posts/', window.location.origin);
+    const nextUrl = new URL('/', window.location.origin);
     if (safeStatus && safeStatus !== 'published') nextUrl.searchParams.set('status', safeStatus);
     if (category) nextUrl.searchParams.set('category', category);
     if (tag) nextUrl.searchParams.set('tag', tag);
@@ -141,7 +141,7 @@
 
     if (postsCategoriesBarEl) {
       postsCategoriesBarEl.innerHTML = categories.length
-        ? categories.map((item) => `<a class="topbar-categories__chip" href="/posts/?category=${encodeURIComponent(item.name)}">${escapeHtml(item.name)} <span>${Number(item.count || 0)}</span></a>`).join('')
+        ? categories.map((item) => `<a class="topbar-categories__chip" href="/?category=${encodeURIComponent(item.name)}">${escapeHtml(item.name)} <span>${Number(item.count || 0)}</span></a>`).join('')
         : '<span class="small">표시할 카테고리가 없습니다.</span>';
     }
 
@@ -165,7 +165,7 @@
       const title = escapeHtml(rawTitle);
       const categoryText = String(it.category || '').trim();
       const categoryHtml = categoryText
-        ? `<a class="badge" href="/posts/?category=${encodeURIComponent(categoryText)}">${escapeHtml(categoryText)}</a>`
+        ? `<a class="badge" href="/?category=${encodeURIComponent(categoryText)}">${escapeHtml(categoryText)}</a>`
         : `<span class="badge">미분류</span>`;
       const summary = escapeHtml(it.summary || '요약이 아직 없습니다.');
       const slug = String(it.slug || '');

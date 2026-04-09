@@ -138,7 +138,7 @@ export async function onRequestGet({ params, env, request }) {
       if (row.category) {
         breadcrumbItems.push({
           name: String(row.category),
-          url: `${origin}/posts/?category=${encodeURIComponent(String(row.category))}`
+          url: `${origin}/?category=${encodeURIComponent(String(row.category))}`
         });
       }
 
@@ -223,8 +223,8 @@ export async function onRequestGet({ params, env, request }) {
         ? `<link rel="preload" as="image" href="${escapeHtml(row.cover_image)}" fetchpriority="high" />`
         : "";
       const categoryLink = row.category
-        ? `/posts/?category=${encodeURIComponent(String(row.category))}`
-        : "/posts/";
+        ? `/?category=${encodeURIComponent(String(row.category))}`
+        : "/";
       const coverImageHtml = row.cover_image
         ? `
         <figure class="post-cover-wrap">
@@ -349,7 +349,7 @@ export async function onRequestGet({ params, env, request }) {
         const res = await fetch('/api/posts/' + encodeURIComponent(slug), { method: 'DELETE' });
         const json = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error((json && json.message) || ('삭제 실패 (' + res.status + ')'));
-        window.location.href = '/posts/';
+        window.location.href = '/';
       } catch (err) {
         alert(err?.message || '삭제 중 오류가 발생했습니다.');
         deleteBtn.disabled = false;
@@ -676,7 +676,7 @@ function renderRelatedPostsSection(items, category) {
           <h2 id="post-related-title" class="h2" style="margin:0">${escapeHtml(headingText)}</h2>
           <p class="small" style="margin:8px 0 0">같은 카테고리의 최신 글 5개를 보여드립니다.</p>
         </div>
-        ${categoryText ? `<a class="btn" href="/posts/?category=${encodeURIComponent(categoryText)}">카테고리 전체 보기</a>` : ""}
+        ${categoryText ? `<a class="btn" href="/?category=${encodeURIComponent(categoryText)}">카테고리 전체 보기</a>` : ""}
       </div>
       <ul class="list-reset" style="display:grid;gap:10px;margin-top:16px">
         ${items.map((item, index) => `
@@ -784,7 +784,7 @@ function renderNotFound(slug) {
       <h1 class="h1">글을 찾을 수 없습니다</h1>
       <p class="p">요청한 slug: ${escapeHtml(slug)}</p>
       <div class="row" style="margin-top:14px">
-        <a class="btn btn--brand" href="/posts/">글 목록</a>
+        <a class="btn btn--brand" href="/">블로그 홈</a>
         <a class="btn" href="/">홈</a>
       </div>
     </section>
