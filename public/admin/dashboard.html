@@ -15,49 +15,83 @@
       <nav class="nav" aria-label="관리자 메뉴">
         <a href="/" data-path="/">공개 홈</a>
         <a href="/add.html" data-path="/add.html">글 작성</a>
-        <a href="/posts/?status=draft">초안글</a>
         <a href="/about/" data-path="/about">소개</a>
       </nav>
     </div>
   </header>
 
-  <main class="container">
-    <section class="hero card">
+  <main class="container dashboard-shell">
+    <section class="hero card dashboard-hero">
       <div class="hero-copy">
         <span class="badge">Admin Dashboard</span>
         <span class="badge" id="adminDashboardEmail">로그인 확인 중</span>
         <h1 class="hero-title">관리자용 글 운영 화면</h1>
-        <p class="p hero-desc">이곳은 관리자 전용 진입 화면입니다. 글 작성, 수정, 초안 확인, 카테고리 관리와 같은 작업은 로그인 후에만 접근할 수 있습니다.</p>
-        <div class="row" style="margin-top:12px;flex-wrap:wrap">
+        <p class="p hero-desc">발행 현황, 인기글, 최근 수정 글을 가볍게 확인하고 바로 글 작성과 관리 작업으로 이동할 수 있습니다.</p>
+        <div class="row dashboard-actions" style="margin-top:12px;flex-wrap:wrap">
           <a class="btn btn--brand" href="/add.html">새 글 작성</a>
-          <a class="btn" href="/posts/?status=draft">초안 글 보기</a>
+          <a class="btn" href="/posts/?status=all">전체 글 보기</a>
           <button class="btn" id="adminLogoutBtn" type="button">로그아웃</button>
         </div>
       </div>
-      <div class="hero-panel">
-        <div class="mini-flow">
-          <div>1. 관리자 로그인</div>
-          <div>2. 글 작성 / 수정</div>
-          <div>3. D1 저장</div>
-          <div>4. /post/slug SSR</div>
-          <div>5. 캐시 + 배포</div>
+      <div class="dashboard-stats" aria-label="글 운영 현황">
+        <div class="dashboard-stat">
+          <div class="dashboard-stat__label">작성된 글</div>
+          <strong class="dashboard-stat__value" id="dashboardTotalCount">-</strong>
+        </div>
+        <div class="dashboard-stat">
+          <div class="dashboard-stat__label">발행 글</div>
+          <strong class="dashboard-stat__value" id="dashboardPublishedCount">-</strong>
+        </div>
+        <div class="dashboard-stat">
+          <div class="dashboard-stat__label">초안 글</div>
+          <strong class="dashboard-stat__value" id="dashboardDraftCount">-</strong>
         </div>
       </div>
     </section>
 
-    <section class="grid grid--3" style="margin-top:16px">
-      <article class="card feature-card">
-        <h2 class="h2">글 작성</h2>
-        <p class="p">SEO 설정, 목차, 본문 이미지, 제휴 링크까지 한 화면에서 관리할 수 있습니다.</p>
+    <section class="dashboard-grid" style="margin-top:16px">
+      <article class="card dashboard-panel">
+        <div class="dashboard-panel__head">
+          <h2 class="h2">인기글 TOP 10</h2>
+          <span class="small">제목과 조회수만 표시</span>
+        </div>
+        <ol class="dashboard-popular" id="dashboardPopularList">
+          <li class="small">불러오는 중…</li>
+        </ol>
       </article>
-      <article class="card feature-card">
-        <h2 class="h2">초안 관리</h2>
-        <p class="p">발행 전 초안 글을 분리해서 확인하고, 필요한 항목만 수정 후 다시 발행할 수 있습니다.</p>
-      </article>
-      <article class="card feature-card">
-        <h2 class="h2">공개 홈 분리</h2>
-        <p class="p">공개 홈은 글 목록 중심으로, 관리자 화면은 별도 경로에서 안전하게 운영합니다.</p>
-      </article>
+
+      <aside class="dashboard-side">
+        <article class="card dashboard-panel">
+          <div class="dashboard-panel__head">
+            <h2 class="h2">빠른 관리</h2>
+          </div>
+          <div class="dashboard-quick-links">
+            <a class="dashboard-quick-link" href="/add.html">글 작성하기</a>
+            <a class="dashboard-quick-link" href="/posts/?status=all">전체 글 관리</a>
+            <a class="dashboard-quick-link" href="/posts/?status=draft">초안 글 확인</a>
+          </div>
+        </article>
+
+        <article class="card dashboard-panel">
+          <div class="dashboard-panel__head">
+            <h2 class="h2">최근 수정 글</h2>
+            <span class="small">최근 5개</span>
+          </div>
+          <ul class="dashboard-recent" id="dashboardRecentList">
+            <li class="small">불러오는 중…</li>
+          </ul>
+        </article>
+
+        <article class="card dashboard-panel">
+          <div class="dashboard-panel__head">
+            <h2 class="h2">카테고리 분포</h2>
+            <span class="small">상위 8개</span>
+          </div>
+          <div class="dashboard-category-chips" id="dashboardCategoryChips">
+            <span class="chip">불러오는 중…</span>
+          </div>
+        </article>
+      </aside>
     </section>
   </main>
 

@@ -280,6 +280,8 @@ export async function onRequestGet({ params, env, request }) {
   ${faqJsonLd ? jsonld(faqJsonLd) : ""}
 </head>
 <body>
+  <a href="#main-content" class="skip-link">본문 바로가기</a>
+
   ${topbar()}
 
   <main id="main-content" class="container">
@@ -290,9 +292,9 @@ export async function onRequestGet({ params, env, request }) {
         <div class="row" style="justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
           <div class="row" style="gap:8px;flex-wrap:wrap">
             ${row.category ? `<a class="badge" href="${categoryLink}">${escapeHtml(String(row.category))}</a>` : ""}
-            <span class="badge" data-admin-only hidden>발행</span>
+            <span class="badge">SSR + Cache</span>
           </div>
-          <div class="row post-admin-actions" data-admin-only hidden style="gap:8px;flex-wrap:wrap;align-items:center">
+          <div class="row post-admin-actions" style="gap:8px;flex-wrap:wrap;align-items:center">
             <div class="small">
               <time datetime="${escapeHtml(publishedIso || "")}">발행 ${escapeHtml(publishedDate)}</time>
               <span aria-hidden="true"> · </span>
@@ -363,7 +365,6 @@ export async function onRequestGet({ params, env, request }) {
   });
 </script>
   ${adsenseRuntimeScript}
-  <script src="/assets/js/admin-ui.js" defer></script>
   <script src="/assets/js/nav.js" defer></script>
 </body>
 </html>`;
@@ -807,9 +808,10 @@ function topbar() {
       </a>
       <nav class="nav" aria-label="주요 메뉴">
         <a href="/" data-path="/">홈</a>
+        <a href="/posts/" data-path="/posts">글 목록</a>
+        <a href="/posts/?status=draft">초안글 보기</a>
         <a href="/about/" data-path="/about">소개</a>
-        <a href="/add.html" data-path="/add.html" data-admin-only hidden>글 작성</a>
-        <a href="/admin/" data-admin-link hidden>관리자</a>
+        <a href="/add.html" data-path="/add.html">글 작성</a>
       </nav>
     </div>
   </header>`;

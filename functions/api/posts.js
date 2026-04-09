@@ -83,7 +83,7 @@ export async function onRequestGet({ env, request }) {
       FROM posts
       ${whereSql}
       ORDER BY view_count DESC, updated_at DESC, published_at DESC
-      LIMIT 5
+      LIMIT 10
     `).bind(...binds).all(),
     env.BLOG_DB.prepare(`
       SELECT status, COUNT(*) AS count
