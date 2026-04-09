@@ -14,7 +14,6 @@
       <a class="brand" href="/"><span class="brand__mark">W</span><span>Wacky Blog</span></a>
       <nav class="nav" aria-label="주요 메뉴">
         <a href="/" data-path="/">홈</a>
-        <a href="/posts/" data-path="/posts">글 목록</a>
         <a href="/about/" data-path="/about">소개</a>
         <a href="/admin/" data-admin-link hidden>관리자</a>
       </nav>
@@ -27,14 +26,13 @@
       <p id="postsPageDescription" class="p">목록은 <b>/api/posts</b>에서 불러오며, 실제 공개 페이지는 각 <b>/post/slug</b> 주소에서 SSR로 열립니다.</p>
       <div class="row" style="flex-wrap:wrap">
         <a class="btn btn--brand" href="/add.html" data-admin-only hidden>새 글 작성</a>
-        <a class="btn" href="/posts/">발행글 보기</a>
-        <a class="btn" href="/posts/?status=draft" data-admin-only hidden>초안글 보기</a>
-        <a class="btn" href="/admin/dashboard.html" data-dashboard-link hidden>대시보드</a>
+                <a class="btn" href="/admin/dashboard.html" data-dashboard-link hidden>대시보드</a>
       </div>
     </section>
 
     <div class="posts-layout" style="margin-top:16px">
       <section class="posts-main" aria-label="글 목록 영역">
+        <div id="postsCategoriesBar" class="posts-categories-bar" hidden></div>
         <div id="postsLoading" class="small">글 목록 불러오는 중…</div>
         <div id="postsError" class="small" hidden style="color:#b00020"></div>
         <div id="postsEmpty" class="small" hidden>등록된 글이 없습니다.</div>
@@ -46,11 +44,6 @@
       </section>
 
       <aside class="post-side posts-sidebar" aria-label="글 목록 사이드바">
-        <section class="post-side__section" aria-labelledby="posts-overview-title" data-dashboard-link data-admin-only hidden>
-          <h2 id="posts-overview-title" class="h2 posts-sidebar__dashboard-title">대시보드 바로가기</h2>
-          <div id="postsSummary" class="posts-sidebar__summary" style="margin-top:14px"></div>
-          <div id="postsCategories" class="posts-sidebar__chips" style="margin-top:16px"></div>
-        </section>
 
         <section class="post-side__section" aria-labelledby="posts-ad-title">
           <h2 id="posts-ad-title" class="h2">광고 영역</h2>

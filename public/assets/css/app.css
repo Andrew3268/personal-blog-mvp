@@ -622,3 +622,50 @@ body.has-preview-open{overflow:hidden}
 @media (max-width:768px){.topbar-admin-badge{font-size:10px;padding:3px 7px}.nav__logout{width:100%;justify-content:center}}
 
 [data-dashboard-link]{cursor:pointer}
+
+
+.home-hero {
+  display:grid;
+  grid-template-columns:minmax(0, 1.45fr) minmax(280px, .85fr);
+  gap:24px;
+  align-items:stretch;
+  padding:28px 0 10px;
+}
+.home-hero__copy {
+  background:linear-gradient(135deg, rgba(91,124,255,.1), rgba(125,211,252,.16));
+  border:1px solid rgba(91,124,255,.14);
+  border-radius:28px;
+  padding:28px;
+  box-shadow:0 20px 45px rgba(15,23,42,.06);
+}
+.home-hero__title { font-size:clamp(2rem, 4vw, 3rem); line-height:1.15; margin:14px 0 0; }
+.home-hero__desc { margin:14px 0 0; font-size:1.02rem; color:#475569; line-height:1.75; }
+.home-hero__panel {
+  display:grid; gap:14px;
+}
+.home-hero__stat {
+  padding:18px 18px 16px;
+  background:#fff;
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:22px;
+  box-shadow:0 14px 34px rgba(15,23,42,.05);
+}
+.home-hero__stat strong { display:block; font-size:1rem; margin-bottom:8px; }
+.home-hero__stat span { display:block; color:#64748b; line-height:1.65; }
+.posts-categories-bar {
+  display:flex; flex-wrap:wrap; gap:10px;
+  margin-bottom:14px;
+}
+.posts-categories-bar__chip {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 14px; border-radius:999px;
+  background:#fff; border:1px solid rgba(15,23,42,.08);
+  color:#334155; text-decoration:none; font-size:.92rem; font-weight:600;
+  box-shadow:0 8px 20px rgba(15,23,42,.04);
+}
+.posts-categories-bar__chip span { color:#5B7CFF; font-weight:700; }
+.posts-categories-bar__chip--skeleton { width:112px; height:40px; border-radius:999px; }
+.post-admin-actions[hidden], [data-admin-only][hidden] { display:none !important; }
+@media (max-width: 960px) {
+  .home-hero { grid-template-columns:1fr; }
+}

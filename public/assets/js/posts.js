@@ -127,22 +127,14 @@
   }
 
   function renderSidebar(sidebarData = {}) {
-    const counts = sidebarData.counts || {};
     const categories = Array.isArray(sidebarData.categories) ? sidebarData.categories : [];
     const popular = Array.isArray(sidebarData.popular) ? sidebarData.popular : [];
 
-    if (postsSummaryEl) {
-      postsSummaryEl.innerHTML = [
-        formatCountLabel(Number(counts.total || 0), safeStatus === 'draft' ? '초안 글' : '전체 글'),
-        formatCountLabel(Number(counts.published || 0), '발행'),
-        formatCountLabel(Number(counts.draft || 0), '초안')
-      ].join('');
-    }
-
-    if (postsCategoriesEl) {
-      postsCategoriesEl.innerHTML = categories.length
-        ? categories.map((item) => `<a class="badge posts-sidebar__chip" href="/posts/?category=${encodeURIComponent(item.name)}">${escapeHtml(item.name)} <span>${Number(item.count || 0)}</span></a>`).join('')
-        : '<span class="small">표시할 카테고리가 없습니다.</span>';
+    if (postsCategoriesBarEl) {
+      postsCategoriesBarEl.hidden = !categories.length;
+      postsCategoriesBarEl.innerHTML = categories.length
+        ? categories.map((item) => `<a class="posts-categories-bar__chip" href="/posts/?category=${encodeURIComponent(item.name)}">${escapeHtml(item.name)} <span>${Number(item.count || 0)}</span></a>`).join('')
+        : '';
     }
 
     if (postsPopularEl) {
@@ -172,9 +164,11 @@
       const updated = escapeHtml(String(it.updated_at || '').slice(0, 10));
       const cover = String(it.cover_image || '').trim();
       const itemStatus = String(it.status || 'published').trim().toLowerCase();
-      const statusBadge = itemStatus === 'draft'
-        ? '<span class="badge" style="background:rgba(245,158,11,.14);color:#92400e;border-color:rgba(245,158,11,.22)">초안</span>'
-        : '<span class="badge">발행</span>';
+      const statusBadge = isAdmin
+        ? (itemStatus === 'draft'
+            ? '<span class="badge" style="background:rgba(245,158,11,.14);color:#92400e;border-color:rgba(245,158,11,.22)">초안</span>'
+            : '<span class="badge">발행</span>')
+        : ''; 
       const postHref = itemStatus === 'published' ? `/post/${encodeURIComponent(slug)}` : `/edit.html?slug=${encodeURIComponent(slug)}`;
 
       return `
