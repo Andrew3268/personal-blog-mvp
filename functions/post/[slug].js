@@ -291,7 +291,6 @@ export async function onRequestGet({ params, env, request }) {
         <div class="row" style="justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
           <div class="row" style="gap:8px;flex-wrap:wrap">
             ${row.category ? `<a class="badge" href="${categoryLink}">${escapeHtml(String(row.category))}</a>` : ""}
-            <span class="badge">SSR + Cache</span>
           </div>
           <div class="row post-admin-actions" style="gap:8px;flex-wrap:wrap;align-items:center">
             <div class="small">
@@ -328,10 +327,6 @@ export async function onRequestGet({ params, env, request }) {
         <aside class="card post-side" aria-label="추가 콘텐츠">
           ${sidebarAdHtml}
           ${popularPostsHtml}
-          <section class="post-side__section post-side__extra" aria-label="추가 콘텐츠 영역">
-            <h2 class="h2">추가 콘텐츠 영역</h2>
-            <p class="small">나중에 다른 콘텐츠를 넣을 수 있도록 여유 공간을 확보했습니다.</p>
-          </section>
         </aside>
       </div>
     </article>

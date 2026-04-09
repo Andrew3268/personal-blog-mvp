@@ -654,8 +654,9 @@ body.has-preview-open{overflow:hidden}
 
 .topbar--index{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.86);backdrop-filter:blur(14px);border-bottom:1px solid rgba(15,23,42,.06)}
 .topbar__left{display:flex;align-items:center;gap:12px}
-.topbar-menu-btn{display:inline-flex;flex-direction:column;justify-content:center;gap:4px;width:42px;height:42px;border-radius:14px;border:1px solid rgba(15,23,42,.08);background:#fff;box-shadow:0 10px 30px rgba(15,23,42,.06)}
-.topbar-menu-btn span{display:block;width:18px;height:2px;background:#111827;border-radius:999px;margin:0 auto}
+.topbar-menu-btn{display:inline-flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;width:44px;height:44px;border-radius:16px;border:1px solid rgba(15,23,42,.08);background:rgba(255,255,255,.92);box-shadow:0 10px 26px rgba(15,23,42,.08);backdrop-filter:blur(10px);transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease}
+.topbar-menu-btn span{display:block;width:18px;height:2px;background:#111827;border-radius:999px}
+.topbar-menu-btn:hover{transform:translateY(-1px);box-shadow:0 14px 30px rgba(15,23,42,.12);border-color:rgba(91,124,255,.18)}
 .topbar-categories{border-bottom:1px solid rgba(15,23,42,.06);background:rgba(255,255,255,.98);box-shadow:0 18px 40px rgba(15,23,42,.06)}
 .topbar-categories__inner{padding:18px 20px 22px}
 .topbar-categories__head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
