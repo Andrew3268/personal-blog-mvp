@@ -1,6 +1,8 @@
-import { okJson } from "../../_utils.js";
+import { okJson, requireAdmin } from "../../_utils.js";
 
-export async function onRequestGet({ env, params }) {
+export async function onRequestGet({ env, params, request }) {
+  const admin = await requireAdmin(env, request);
+  if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
   const slug = decodeURIComponent(String(params.slug || ""));
   if (!slug) {
     return okJson({ message: "slug가 필요합니다." }, { status: 400 });
@@ -37,6 +39,8 @@ export async function onRequestGet({ env, params }) {
 }
 
 export async function onRequestPut({ env, params, request }) {
+  const admin = await requireAdmin(env, request);
+  if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
   const slug = decodeURIComponent(String(params.slug || ""));
   if (!slug) {
     return okJson({ message: "slug가 필요합니다." }, { status: 400 });
@@ -124,7 +128,9 @@ export async function onRequestPut({ env, params, request }) {
   return okJson({ ok: true, slug });
 }
 
-export async function onRequestDelete({ env, params }) {
+export async function onRequestDelete({ env, params, request }) {
+  const admin = await requireAdmin(env, request);
+  if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
   const slug = decodeURIComponent(String(params.slug || ""));
   if (!slug) {
     return okJson({ message: "slug가 필요합니다." }, { status: 400 });

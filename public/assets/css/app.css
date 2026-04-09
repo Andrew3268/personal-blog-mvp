@@ -585,3 +585,29 @@ body.has-preview-open{overflow:hidden}
 .breadcrumb.small li + li::before { content:">"; position:absolute; left:-16px; top:50%; transform:translateY(-50%); color:#94a3b8; font-weight:700; }
 @media (max-width: 900px) { .affiliate-item-grid { grid-template-columns:1fr; } }
 @media (max-width: 720px) { .preview-affiliate-card, .post-affiliate-card { grid-template-columns:110px minmax(0,1fr); gap:14px; padding:14px; border-radius:20px; } .preview-affiliate-card::before, .post-affiliate-card::before { top:10px; right:10px; font-size:11px; min-height:24px; } .preview-affiliate-card__media img, .post-affiliate-card__img, .preview-affiliate-card__placeholder, .post-affiliate-card__placeholder { min-height:110px; border-radius:14px; } .preview-affiliate-card__title, .post-affiliate-card__title { font-size:16px; padding-right:54px; } .preview-affiliate-card__sale, .post-affiliate-card__sale { font-size:18px; } .preview-affiliate-card__button, .post-affiliate-card__button { min-height:42px; width:100%; } }
+
+.admin-auth-page {
+  min-height: calc(100vh - 180px);
+  display: grid;
+  place-items: center;
+}
+
+.admin-auth-card {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.admin-auth-card__head {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

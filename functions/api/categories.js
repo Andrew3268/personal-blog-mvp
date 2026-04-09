@@ -1,4 +1,4 @@
-import { okJson } from "../_utils.js";
+import { okJson, requireAdmin } from "../_utils.js";
 
 const DEFAULT_CATEGORIES = [
   "생활 꿀팁",
@@ -57,6 +57,8 @@ export async function onRequestGet({ env }) {
 }
 
 export async function onRequestPost({ env, request }) {
+  const admin = await requireAdmin(env, request);
+  if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
   await ensureCategoriesTable(env.BLOG_DB);
   const body = await request.json().catch(() => null);
   const name = normalizeCategoryName(body?.name);
@@ -76,6 +78,8 @@ export async function onRequestPost({ env, request }) {
 }
 
 export async function onRequestPut({ env, request }) {
+  const admin = await requireAdmin(env, request);
+  if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
   await ensureCategoriesTable(env.BLOG_DB);
   const body = await request.json().catch(() => null);
   const currentName = normalizeCategoryName(body?.current_name);
@@ -112,6 +116,8 @@ export async function onRequestPut({ env, request }) {
 }
 
 export async function onRequestDelete({ env, request }) {
+  const admin = await requireAdmin(env, request);
+  if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
   await ensureCategoriesTable(env.BLOG_DB);
   const body = await request.json().catch(() => null);
   const name = normalizeCategoryName(body?.name);

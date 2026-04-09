@@ -1,4 +1,4 @@
-import { okJson } from "../_utils.js";
+import { okJson, getAdminSession, requireAdmin } from "../_utils.js";
 
 function clampInt(value, fallback, min, max) {
   const num = Number.parseInt(String(value || ""), 10);
@@ -15,8 +15,10 @@ export async function onRequestGet({ env, request }) {
   const perPage = clampInt(url.searchParams.get("per_page"), 8, 1, 24);
   const offset = (page - 1) * perPage;
 
+  const admin = await getAdminSession(env, request);
   const allowedStatuses = new Set(["published", "draft", "all"]);
-  const safeStatus = allowedStatuses.has(status) ? status : "published";
+  const requestedStatus = allowedStatuses.has(status) ? status : "published";
+  const safeStatus = admin ? requestedStatus : "published";
 
   const where = [];
   const binds = [];
@@ -132,6 +134,8 @@ export async function onRequestGet({ env, request }) {
 }
 
 export async function onRequestPost({ env, request }) {
+  const admin = await requireAdmin(env, request);
+  if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
   const body = await request.json().catch(() => null);
   if (!body) {
     return okJson({ message: "JSON이 필요합니다." }, { status: 400 });

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>관리자 로그인 | Wacky Blog</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__inner">
+      <a class="brand" href="/"><span class="brand__mark">W</span><span>Wacky Blog</span></a>
+      <nav class="nav" aria-label="주요 메뉴">
+        <a href="/" data-path="/">홈</a>
+        <a href="/about/" data-path="/about">소개</a>
+        <a href="/admin/" data-path="/admin">관리자</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container admin-auth-page">
+    <section class="card admin-auth-card">
+      <div class="admin-auth-card__head">
+        <span class="badge">관리자 전용</span>
+        <h1 class="h1" id="adminAuthTitle">관리자 로그인</h1>
+        <p class="p" id="adminAuthDesc">이 페이지에서는 관리자 계정만 로그인할 수 있습니다. 일반 회원가입은 제공하지 않습니다.</p>
+      </div>
+      <form id="adminAuthForm" class="admin-auth-form">
+        <div>
+          <div class="label-row"><label class="small" for="adminEmail">이메일</label></div>
+          <input class="input" id="adminEmail" type="email" autocomplete="username" required />
+        </div>
+        <div>
+          <div class="label-row"><label class="small" for="adminPassword">비밀번호</label></div>
+          <input class="input" id="adminPassword" type="password" autocomplete="current-password" minlength="8" required />
+        </div>
+        <button id="adminAuthSubmit" class="btn btn--brand" type="submit">로그인</button>
+        <div id="adminAuthStatus" class="small"></div>
+      </form>
+    </section>
+  </main>
+
+  <script src="/assets/js/nav.js" defer></script>
+  <script src="/assets/js/admin-login.js" defer></script>
+</body>
+</html>
