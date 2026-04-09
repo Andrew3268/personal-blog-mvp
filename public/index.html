@@ -3,37 +3,47 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Wacky Blog | 글 목록</title>
-  <meta name="description" content="등록된 블로그 글 목록" />
+  <title>Wacky Blog | 실용적인 생활 블로그</title>
+  <meta name="description" content="실용적인 생활 팁과 정리된 가이드를 빠르게 찾아볼 수 있는 블로그" />
   <link rel="stylesheet" href="/assets/css/app.css" />
   <link rel="stylesheet" href="/assets/css/components.css" />
 </head>
 <body>
-  <header class="topbar">
+  <header class="topbar topbar--index">
     <div class="topbar__inner">
-      <a class="brand" href="/"><span class="brand__mark">W</span><span>Wacky Blog</span></a>
+      <div class="topbar__left">
+        <button id="postsCategoriesToggle" class="topbar-menu-btn" type="button" aria-expanded="false" aria-controls="postsCategoriesMenu" aria-label="카테고리 메뉴 열기">
+          <span></span><span></span><span></span>
+        </button>
+        <a class="brand" href="/"><span class="brand__mark">W</span><span>Wacky Blog</span></a>
+      </div>
       <nav class="nav" aria-label="주요 메뉴">
         <a href="/" data-path="/">홈</a>
-        <a href="/posts/" data-path="/posts">글 목록</a>
         <a href="/about/" data-path="/about">소개</a>
-        <a href="/admin/" data-admin-link hidden>관리자</a>
+        <a href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
       </nav>
+    </div>
+    <div id="postsCategoriesMenu" class="topbar-categories" hidden>
+      <div class="topbar-categories__inner container">
+        <div class="topbar-categories__head">
+          <strong>카테고리</strong>
+          <button id="postsCategoriesClose" class="topbar-categories__close" type="button" aria-label="카테고리 메뉴 닫기">닫기</button>
+        </div>
+        <div id="postsCategoriesBar" class="topbar-categories__list"></div>
+      </div>
     </div>
   </header>
 
   <main class="container posts-page">
-    <section class="card posts-hero" style="display:flex;flex-direction:column;gap:10px">
-      <h1 id="postsPageTitle" class="h1">글 목록</h1>
-      <p id="postsPageDescription" class="p">목록은 <b>/api/posts</b>에서 불러오며, 실제 공개 페이지는 각 <b>/post/slug</b> 주소에서 SSR로 열립니다.</p>
-      <div class="row" style="flex-wrap:wrap">
-        <a class="btn btn--brand" href="/posts/">전체 글 보기</a>
-        <a class="btn" href="/about/">소개 보기</a>
-        <a class="btn" href="/admin/">관리자 로그인</a>
-        <a class="btn" href="/admin/dashboard.html" data-dashboard-link hidden>대시보드</a>
+    <section class="posts-home-hero" aria-labelledby="postsPageTitle">
+      <div class="posts-home-hero__content">
+        <p class="posts-home-hero__eyebrow">생활을 더 가볍게</p>
+        <h1 id="postsPageTitle" class="posts-home-hero__title">바로 써먹기 좋은 생활 팁과 정리된 가이드</h1>
+        <p id="postsPageDescription" class="posts-home-hero__desc">필요한 정보만 빠르게 찾고, 실제로 적용하기 쉬운 글만 모아볼 수 있습니다.</p>
       </div>
     </section>
 
-    <div class="posts-layout" style="margin-top:16px">
+    <div class="posts-layout posts-layout--clean" style="margin-top:20px">
       <section class="posts-main" aria-label="글 목록 영역">
         <div id="postsLoading" class="small">글 목록 불러오는 중…</div>
         <div id="postsError" class="small" hidden style="color:#b00020"></div>
@@ -45,24 +55,17 @@
         </div>
       </section>
 
-      <aside class="post-side posts-sidebar" aria-label="글 목록 사이드바">
-        <section class="post-side__section" aria-labelledby="posts-overview-title" data-dashboard-link data-admin-only hidden>
-          <h2 id="posts-overview-title" class="h2 posts-sidebar__dashboard-title">대시보드 바로가기</h2>
-          <div id="postsSummary" class="posts-sidebar__summary" style="margin-top:14px"></div>
-          <div id="postsCategories" class="posts-sidebar__chips" style="margin-top:16px"></div>
-        </section>
-
-        <section class="post-side__section" aria-labelledby="posts-ad-title">
-          <h2 id="posts-ad-title" class="h2">광고 영역</h2>
-          <div class="post-side__ad-slot post-side__ad-slot--placeholder" aria-label="향후 애드센스 광고 영역">
+      <aside class="post-side posts-sidebar posts-sidebar--simple" aria-label="글 목록 사이드바">
+        <div class="posts-sidebar__ad-shell" aria-label="향후 애드센스 광고 영역">
+          <div class="post-side__ad-slot post-side__ad-slot--placeholder">
             <span>애드센스 광고가 들어갈 자리</span>
           </div>
-        </section>
+        </div>
 
-        <section class="post-side__section" aria-labelledby="posts-popular-title">
+        <div class="posts-sidebar__popular-shell" aria-labelledby="posts-popular-title">
           <h2 id="posts-popular-title" class="h2">인기글</h2>
           <ul id="postsPopular" class="post-side__popular-list" style="margin-top:14px"></ul>
-        </section>
+        </div>
       </aside>
     </div>
   </main>

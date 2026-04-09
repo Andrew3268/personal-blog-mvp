@@ -132,7 +132,7 @@ export async function onRequestGet({ params, env, request }) {
 
       const breadcrumbItems = [
         { name: "홈", url: `${origin}/` },
-        { name: "글 목록", url: `${origin}/posts/` }
+        { name: "홈", url: `${origin}/` }
       ];
 
       if (row.category) {
@@ -280,7 +280,6 @@ export async function onRequestGet({ params, env, request }) {
   ${faqJsonLd ? jsonld(faqJsonLd) : ""}
 </head>
 <body>
-  <a href="#main-content" class="skip-link">본문 바로가기</a>
 
   ${topbar()}
 
@@ -300,8 +299,8 @@ export async function onRequestGet({ params, env, request }) {
               <span aria-hidden="true"> · </span>
               <time datetime="${escapeHtml(updatedIso || "")}">수정 ${escapeHtml(updatedDate)}</time>
             </div>
-            <a class="btn btn--sm" href="/edit.html?slug=${encodeURIComponent(slug)}">수정</a>
-            <button class="btn btn--sm btn--danger" type="button" id="deletePostBtn" data-slug="${encodeURIComponent(slug)}" data-title="${escapeHtml(titleText)}">삭제</button>
+            <a class="btn btn--sm" href="/edit.html?slug=${encodeURIComponent(slug)}" data-admin-only hidden>수정</a>
+            <button class="btn btn--sm btn--danger" type="button" id="deletePostBtn" data-admin-only hidden data-slug="${encodeURIComponent(slug)}" data-title="${escapeHtml(titleText)}">삭제</button>
           </div>
         </div>
 
@@ -808,10 +807,9 @@ function topbar() {
       </a>
       <nav class="nav" aria-label="주요 메뉴">
         <a href="/" data-path="/">홈</a>
-        <a href="/posts/" data-path="/posts">글 목록</a>
-        <a href="/posts/?status=draft">초안글 보기</a>
         <a href="/about/" data-path="/about">소개</a>
-        <a href="/add.html" data-path="/add.html">글 작성</a>
+        <a href="/add.html" data-path="/add.html" data-admin-only hidden>글 작성</a>
+        <a href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
       </nav>
     </div>
   </header>`;

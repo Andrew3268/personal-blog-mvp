@@ -8,6 +8,10 @@
   const pageDescEl = $('#postsPageDescription');
   const postsSummaryEl = $('#postsSummary');
   const postsCategoriesEl = $('#postsCategories');
+  const postsCategoriesBarEl = $('#postsCategoriesBar');
+  const postsCategoriesToggleEl = $('#postsCategoriesToggle');
+  const postsCategoriesMenuEl = $('#postsCategoriesMenu');
+  const postsCategoriesCloseEl = $('#postsCategoriesClose');
   const postsPopularEl = $('#postsPopular');
   const loadMoreWrap = $('#postsLoadMoreWrap');
   const loadMoreBtn = $('#postsLoadMoreBtn');
@@ -55,11 +59,11 @@
   }
 
   function getPageDescription() {
-    if (safeStatus === 'draft') return '상태가 <b>draft</b>인 글만 모아서 보여줍니다.';
-    if (safeStatus === 'all') return '발행글과 초안글을 모두 보여줍니다.';
-    if (category) return `<b>${escapeHtml(category)}</b> 카테고리 글만 모아 보여줍니다.`;
-    if (tag) return `<b>#${escapeHtml(tag)}</b> 태그가 포함된 글만 모아 보여줍니다.`;
-    return '목록은 페이지 단위로 빠르게 불러오고, <b>더보기</b>로 이어서 탐색할 수 있습니다.';
+    if (safeStatus === 'draft') return '관리 중인 초안 글만 빠르게 확인할 수 있습니다.';
+    if (safeStatus === 'all') return '발행글과 초안글을 모두 확인할 수 있습니다.';
+    if (category) return `<b>${escapeHtml(category)}</b> 카테고리의 글만 모아 보여드립니다.`;
+    if (tag) return `<b>#${escapeHtml(tag)}</b> 태그가 포함된 글만 모아 보여드립니다.`;
+    return '정리된 생활 팁과 가이드를 빠르게 둘러보고 필요한 글만 골라 읽어보세요.';
   }
 
   async function loadAdminState() {
@@ -103,15 +107,7 @@
   }
 
   function renderSidebarSkeleton() {
-    if (postsSummaryEl) {
-      postsSummaryEl.innerHTML = `
-        <div class="posts-summary-card posts-summary-card--skeleton"><span class="skeleton-box skeleton-box--summary-number"></span><span class="skeleton-box skeleton-box--summary-label"></span></div>
-        <div class="posts-summary-card posts-summary-card--skeleton"><span class="skeleton-box skeleton-box--summary-number"></span><span class="skeleton-box skeleton-box--summary-label"></span></div>
-        <div class="posts-summary-card posts-summary-card--skeleton"><span class="skeleton-box skeleton-box--summary-number"></span><span class="skeleton-box skeleton-box--summary-label"></span></div>
-      `;
-    }
-
-    if (postsCategoriesEl) postsCategoriesEl.innerHTML = Array.from({ length: 6 }).map(() => '<span class="posts-sidebar__chip posts-sidebar__chip--skeleton skeleton-box"></span>').join('');
+    if (postsCategoriesBarEl) postsCategoriesBarEl.innerHTML = Array.from({ length: 8 }).map(() => '<span class="topbar-categories__chip topbar-categories__chip--skeleton skeleton-box"></span>').join('');
     if (postsPopularEl) {
       postsPopularEl.innerHTML = Array.from({ length: 5 }).map((_, index) => `
         <li class="post-side__popular-link post-side__popular-link--skeleton" aria-hidden="true">
@@ -140,8 +136,12 @@
     }
 
     if (postsCategoriesEl) {
-      postsCategoriesEl.innerHTML = categories.length
-        ? categories.map((item) => `<a class="badge posts-sidebar__chip" href="/posts/?category=${encodeURIComponent(item.name)}">${escapeHtml(item.name)} <span>${Number(item.count || 0)}</span></a>`).join('')
+      postsCategoriesEl.innerHTML = '';
+    }
+
+    if (postsCategoriesBarEl) {
+      postsCategoriesBarEl.innerHTML = categories.length
+        ? categories.map((item) => `<a class="topbar-categories__chip" href="/posts/?category=${encodeURIComponent(item.name)}">${escapeHtml(item.name)} <span>${Number(item.count || 0)}</span></a>`).join('')
         : '<span class="small">표시할 카테고리가 없습니다.</span>';
     }
 
@@ -186,7 +186,7 @@
             <div class="post-meta post-meta--row">
               <div class="row" style="gap:8px;flex-wrap:wrap">
                 ${categoryHtml}
-                ${statusBadge}
+                ${isAdmin ? statusBadge : ''}
               </div>
               <div class="small">${updated}</div>
             </div>
@@ -280,6 +280,36 @@
   if (pageTitleEl) pageTitleEl.textContent = getPageTitle();
   if (pageDescEl) pageDescEl.innerHTML = getPageDescription();
 
+  function closeCategoriesMenu() {
+    if (!postsCategoriesMenuEl || !postsCategoriesToggleEl) return;
+    postsCategoriesMenuEl.hidden = true;
+    postsCategoriesToggleEl.setAttribute('aria-expanded', 'false');
+  }
+
+  function openCategoriesMenu() {
+    if (!postsCategoriesMenuEl || !postsCategoriesToggleEl) return;
+    postsCategoriesMenuEl.hidden = false;
+    postsCategoriesToggleEl.setAttribute('aria-expanded', 'true');
+  }
+
+  postsCategoriesToggleEl?.addEventListener('click', () => {
+    if (!postsCategoriesMenuEl) return;
+    if (postsCategoriesMenuEl.hidden) openCategoriesMenu();
+    else closeCategoriesMenu();
+  });
+
+  postsCategoriesCloseEl?.addEventListener('click', closeCategoriesMenu);
+
+  document.addEventListener('click', (event) => {
+    if (!postsCategoriesMenuEl || postsCategoriesMenuEl.hidden) return;
+    const inside = event.target.closest('#postsCategoriesMenu, #postsCategoriesToggle');
+    if (!inside) closeCategoriesMenu();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeCategoriesMenu();
+  });
+
   loadMoreBtn?.addEventListener('click', () => {
     if (!hasMore || isLoading) return;
     fetchPage(currentPage + 1, { append: true });
@@ -331,5 +361,7 @@
     window.location.href = href;
   });
 
-  fetchPage(initialPage, { append: false });
+  loadAdminState().finally(() => {
+    fetchPage(initialPage, { append: false });
+  });
 })();
