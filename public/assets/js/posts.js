@@ -8,6 +8,7 @@
   const pageDescEl = $('#postsPageDescription');
   const postsSummaryEl = $('#postsSummary');
   const postsCategoriesEl = $('#postsCategories');
+  const postsCategoriesBarEl = $('#postsCategoriesBar');
   const postsPopularEl = $('#postsPopular');
   const loadMoreWrap = $('#postsLoadMoreWrap');
   const loadMoreBtn = $('#postsLoadMoreBtn');
