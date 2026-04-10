@@ -26,6 +26,11 @@ async function initDashboard() {
     location.href = '/admin/';
     return;
   }
+  if (!emailEl || !totalEl || !publishedEl || !draftEl || !popularListEl || !recentListEl || !categoryChipsEl) {
+    console.error('대시보드 필수 요소를 찾을 수 없습니다.');
+    return;
+  }
+
   emailEl.textContent = sessionJson.admin?.email || '관리자';
 
   const postsRes = await fetch('/api/posts?status=all&page=1&per_page=5', { credentials: 'same-origin' });
