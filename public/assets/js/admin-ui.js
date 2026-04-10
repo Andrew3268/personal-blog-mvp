@@ -5,6 +5,67 @@
 
   window.__adminSessionPromise = statePromise;
 
+  function bindLogout(button) {
+    if (!button || button.dataset.logoutBound === 'true') return;
+    button.dataset.logoutBound = 'true';
+    button.addEventListener('click', async () => {
+      await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => null);
+      location.href = '/';
+    });
+  }
+
+  function syncLogoutButtons(isAdmin) {
+    const desktopNavs = document.querySelectorAll('.nav--utility.nav--right');
+    desktopNavs.forEach((nav) => {
+      const dashboardLink = nav.querySelector('[data-admin-link]');
+      let logoutBtn = nav.querySelector('.js-topbar-logout');
+
+      if (isAdmin) {
+        if (!logoutBtn) {
+          logoutBtn = document.createElement('button');
+          logoutBtn.type = 'button';
+          logoutBtn.className = 'nav__logout js-topbar-logout';
+          logoutBtn.textContent = '로그아웃';
+        }
+        bindLogout(logoutBtn);
+        logoutBtn.hidden = false;
+
+        if (dashboardLink && dashboardLink.parentNode === nav) {
+          dashboardLink.insertAdjacentElement('afterend', logoutBtn);
+        } else if (!nav.contains(logoutBtn)) {
+          nav.appendChild(logoutBtn);
+        }
+      } else if (logoutBtn) {
+        logoutBtn.remove();
+      }
+    });
+
+    const mobileNavs = document.querySelectorAll('.mobile-site-menu__nav');
+    mobileNavs.forEach((nav) => {
+      let logoutBtn = nav.querySelector('.js-mobile-logout');
+
+      if (isAdmin) {
+        if (!logoutBtn) {
+          logoutBtn = document.createElement('button');
+          logoutBtn.type = 'button';
+          logoutBtn.className = 'nav__logout js-mobile-logout';
+          logoutBtn.textContent = '로그아웃';
+        }
+        bindLogout(logoutBtn);
+        logoutBtn.hidden = false;
+
+        const dashboardLink = nav.querySelector('[data-admin-link]');
+        if (dashboardLink && dashboardLink.parentNode === nav) {
+          dashboardLink.insertAdjacentElement('afterend', logoutBtn);
+        } else if (!nav.contains(logoutBtn)) {
+          nav.appendChild(logoutBtn);
+        }
+      } else if (logoutBtn) {
+        logoutBtn.remove();
+      }
+    });
+  }
+
   function applyAdminUi(state) {
     const isAdmin = Boolean(state && state.authenticated);
     document.documentElement.dataset.adminAuthenticated = isAdmin ? 'true' : 'false';
@@ -13,7 +74,7 @@
       if (isAdmin) {
         el.hidden = false;
         el.setAttribute('href', '/admin/dashboard.html');
-        if (!el.textContent.trim()) el.textContent = '관리자';
+        if (!el.textContent.trim()) el.textContent = '대시보드';
       } else {
         el.hidden = true;
       }
@@ -65,6 +126,8 @@
         el.textContent = '';
       }
     });
+
+    syncLogoutButtons(isAdmin);
   }
 
   statePromise.then(applyAdminUi);
