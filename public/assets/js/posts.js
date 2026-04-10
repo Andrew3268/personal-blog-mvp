@@ -38,10 +38,8 @@
 
     const kickerEl = postsHomeHeroEl.querySelector('.posts-home-hero__kicker');
     const heroCategoryWrap = postsHomeHeroEl.querySelector('.posts-home-hero__category-wrap');
-    const topbarCategoryEl = document.querySelector('.topbar-categories--desktop');
     if (kickerEl) kickerEl.hidden = !isHomeDefault;
     if (heroCategoryWrap) heroCategoryWrap.hidden = !isHomeDefault;
-    if (topbarCategoryEl) topbarCategoryEl.hidden = isHomeDefault;
   }
   const loadMoreWrap = $('#postsLoadMoreWrap');
   const loadMoreBtn = $('#postsLoadMoreBtn');

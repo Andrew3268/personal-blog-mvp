@@ -9,16 +9,45 @@
   <link rel="stylesheet" href="/assets/css/components.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar__inner">
-      <a class="brand" href="/"><span class="brand__mark">W</span><span>Wacky Blog</span></a>
-      <nav class="nav" aria-label="주요 메뉴">
-        <a href="/" data-path="/">홈</a>
+  <header class="topbar topbar--editorial">
+    <div class="topbar__inner topbar__inner--editorial">
+      <button class="topbar-hamburger" type="button" aria-expanded="false" aria-controls="mobileSiteMenu" aria-label="메뉴 열기">
+        <span></span><span></span><span></span>
+      </button>
+
+      <div class="topbar-admin-status" data-admin-status hidden aria-live="polite">관리자 로그인 중</div>
+
+      <a class="brand brand--center" href="/" aria-label="Wacky Blog 홈">
+        <span class="brand__mark">W</span>
+        <span class="brand__text">Wacky Wiki</span>
+      </a>
+
+      <nav class="nav nav--utility nav--right" aria-label="오른쪽 메뉴">
         <a href="/about/" data-path="/about">소개</a>
-        <a href="/admin/" data-path="/admin" data-admin-link hidden>관리자</a>
+        <a href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
       </nav>
+
+      <div class="topbar-mobile-spacer" aria-hidden="true"></div>
     </div>
   </header>
+
+  <aside id="mobileSiteMenu" class="mobile-site-menu" hidden aria-hidden="true">
+    <div class="mobile-site-menu__panel">
+      <div class="mobile-site-menu__head">
+        <strong>메뉴</strong>
+        <button class="mobile-site-menu__close" type="button" aria-label="메뉴 닫기">닫기</button>
+      </div>
+      <nav class="mobile-site-menu__nav" aria-label="모바일 주요 메뉴">
+        <a href="/" data-path="/">홈</a>
+        <a href="/about/" data-path="/about">소개</a>
+        <a href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
+      </nav>
+      <div class="mobile-site-menu__section">
+        <div class="mobile-site-menu__title">카테고리</div>
+        <div id="mobileSiteCategoryBar" class="topbar-categories__list topbar-categories__list--mobile"></div>
+      </div>
+    </div>
+  </aside>
 
   <main class="container admin-auth-page">
     <section class="card admin-auth-card">

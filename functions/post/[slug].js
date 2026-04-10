@@ -809,15 +809,10 @@ function topbar() {
 
       <nav class="nav nav--utility nav--right" aria-label="오른쪽 메뉴">
         <a href="/about/" data-path="/about">소개</a>
-        <a href="/add.html" data-path="/add.html" data-admin-only hidden>글 작성</a>
         <a href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
       </nav>
 
       <div class="topbar-mobile-spacer" aria-hidden="true"></div>
-    </div>
-
-    <div class="topbar-categories topbar-categories--desktop" aria-label="카테고리 메뉴">
-      <div id="siteCategoryBar" class="topbar-categories__list topbar-categories__list--desktop container"></div>
     </div>
   </header>
 
@@ -830,7 +825,6 @@ function topbar() {
       <nav class="mobile-site-menu__nav" aria-label="모바일 주요 메뉴">
         <a href="/" data-path="/">홈</a>
         <a href="/about/" data-path="/about">소개</a>
-        <a href="/add.html" data-path="/add.html" data-admin-only hidden>글 작성</a>
         <a href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
       </nav>
       <div class="mobile-site-menu__section">
