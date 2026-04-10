@@ -794,20 +794,56 @@ function renderNotFound(slug) {
 }
 
 function topbar() {
-  return `<header class="topbar">
-    <div class="topbar__inner">
-      <a class="brand" href="/">
+  return `<header class="topbar topbar--editorial">
+    <div class="topbar__inner topbar__inner--editorial">
+      <button class="topbar-hamburger" type="button" aria-expanded="false" aria-controls="mobileSiteMenu" aria-label="메뉴 열기">
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="nav nav--utility nav--left" aria-label="왼쪽 메뉴">
+        <a href="/" data-path="/">홈</a>
+        <a href="/about/" data-path="/about">소개</a>
+      </nav>
+
+      <a class="brand brand--center" href="/" aria-label="Wacky Blog 홈">
         <span class="brand__mark">W</span>
-        <span>Wacky Blog</span>
+        <span class="brand__text">Wacky Blog</span>
       </a>
-      <nav class="nav" aria-label="주요 메뉴">
+
+      <nav class="nav nav--utility nav--right" aria-label="오른쪽 메뉴">
+        <a href="/about/" data-path="/about">블로그 소개</a>
+        <a href="/add.html" data-path="/add.html" data-admin-only hidden>글 작성</a>
+        <a href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
+      </nav>
+
+      <div class="topbar-mobile-spacer" aria-hidden="true"></div>
+    </div>
+
+    <div class="topbar-categories topbar-categories--desktop" aria-label="카테고리 메뉴">
+      <div class="topbar-categories__inner container">
+        <div id="siteCategoryBar" class="topbar-categories__list topbar-categories__list--desktop"></div>
+      </div>
+    </div>
+  </header>
+
+  <aside id="mobileSiteMenu" class="mobile-site-menu" hidden aria-hidden="true">
+    <div class="mobile-site-menu__panel">
+      <div class="mobile-site-menu__head">
+        <strong>메뉴</strong>
+        <button class="mobile-site-menu__close" type="button" aria-label="메뉴 닫기">닫기</button>
+      </div>
+      <nav class="mobile-site-menu__nav" aria-label="모바일 주요 메뉴">
         <a href="/" data-path="/">홈</a>
         <a href="/about/" data-path="/about">소개</a>
         <a href="/add.html" data-path="/add.html" data-admin-only hidden>글 작성</a>
         <a href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
       </nav>
+      <div class="mobile-site-menu__section">
+        <div class="mobile-site-menu__title">카테고리</div>
+        <div id="mobileSiteCategoryBar" class="topbar-categories__list topbar-categories__list--mobile"></div>
+      </div>
     </div>
-  </header>`;
+  </aside>`;
 }
 
 function footer(siteName, siteDescription) {

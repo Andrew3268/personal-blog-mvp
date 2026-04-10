@@ -652,21 +652,33 @@ body.has-preview-open{overflow:hidden}
 @media (max-width: 640px){.dashboard-stats{grid-template-columns:1fr}.dashboard-panel__head{align-items:flex-start;flex-direction:column}.dashboard-popular__item,.dashboard-recent__item{flex-direction:column}.dashboard-popular__views,.dashboard-recent__meta{white-space:normal}}
 
 
-.topbar--index{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.86);backdrop-filter:blur(14px);border-bottom:1px solid rgba(15,23,42,.06)}
-.topbar__left{display:flex;align-items:center;gap:12px}
-.topbar-menu-btn{display:inline-flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;width:44px;height:44px;border-radius:16px;border:1px solid rgba(15,23,42,.08);background:rgba(255,255,255,.92);box-shadow:0 10px 26px rgba(15,23,42,.08);backdrop-filter:blur(10px);transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease}
-.topbar-menu-btn span{display:block;width:18px;height:2px;background:#111827;border-radius:999px}
-.topbar-menu-btn:hover{transform:translateY(-1px);box-shadow:0 14px 30px rgba(15,23,42,.12);border-color:rgba(91,124,255,.18)}
-.topbar-categories{border-bottom:1px solid rgba(15,23,42,.06);background:rgba(255,255,255,.98);box-shadow:0 18px 40px rgba(15,23,42,.06)}
-.topbar-categories__inner{padding:18px 20px 22px}
-.topbar-categories__head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
-.topbar-categories__head strong{font-size:15px;font-weight:800;color:#111827}
-.topbar-categories__close{border:0;background:transparent;color:#6b7280;font-weight:700;padding:0}
-.topbar-categories__list{display:flex;flex-wrap:wrap;gap:10px}
-.topbar-categories__chip{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:#f8fafc;border:1px solid rgba(15,23,42,.08);color:#111827;font-weight:700;font-size:13px;transition:transform .18s ease, background-color .18s ease, border-color .18s ease}
-.topbar-categories__chip:hover{transform:translateY(-1px);background:#eef2ff;border-color:rgba(91,124,255,.28)}
-.topbar-categories__chip span{color:#64748b;font-size:12px}
-.topbar-categories__chip--skeleton{width:108px;height:40px;border-radius:999px}
+.topbar--editorial{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border-bottom:1px solid rgba(15,23,42,.06)}
+.topbar-categories{background:#fff}
+.topbar-categories--desktop{border-top:1px solid rgba(15,23,42,.05)}
+.topbar-categories__inner{padding:10px 20px}
+.topbar-categories__list{display:flex;flex-wrap:wrap;align-items:center;gap:18px}
+.topbar-categories__list--desktop{justify-content:center}
+.topbar-categories__chip{display:inline-flex;align-items:center;gap:6px;padding:2px 0;border-radius:0;background:transparent;border:0;color:#7c8594;font-size:12px;line-height:1.2;letter-spacing:.04em;text-transform:lowercase;font-weight:500;text-decoration:none;position:relative;transition:color .18s ease}
+.topbar-categories__chip:hover{transform:none;background:transparent;border-color:transparent;color:#111827}
+.topbar-categories__chip::after{content:'';position:absolute;left:0;right:0;bottom:-5px;height:1px;background:#111827;transform:scaleX(0);transform-origin:center;transition:transform .18s ease}
+.topbar-categories__chip:hover::after,.topbar-categories__chip[aria-current="true"]::after{transform:scaleX(1)}
+.topbar-categories__chip[aria-current="true"]{color:#111827}
+.topbar-categories__chip span{display:none}
+.topbar-categories__chip--skeleton{width:72px;height:14px;border-radius:999px;background:#e5e7eb}
+.mobile-site-menu{position:fixed;inset:0;z-index:70;background:rgba(15,23,42,.36);backdrop-filter:blur(6px)}
+.mobile-site-menu__panel{width:min(88vw,360px);height:100%;background:#fff;padding:22px 18px 24px;box-shadow:20px 0 50px rgba(15,23,42,.12);overflow:auto}
+.mobile-site-menu__head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.mobile-site-menu__head strong{font-size:15px;font-weight:800;color:#111827}
+.mobile-site-menu__close{border:0;background:transparent;color:#6b7280;font-weight:700;padding:0;cursor:pointer}
+.mobile-site-menu__nav{display:grid;gap:4px;margin-bottom:20px}
+.mobile-site-menu__nav a{display:block;padding:12px 0;border-bottom:1px solid #f1f5f9;color:#111827;text-decoration:none;font-weight:700}
+.mobile-site-menu__nav a[aria-current="page"]{color:#111827}
+.mobile-site-menu__section{display:grid;gap:12px}
+.mobile-site-menu__title{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#6b7280}
+.topbar-categories__list--mobile{display:grid;gap:10px}
+.topbar-categories__list--mobile .topbar-categories__chip{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f8fafc;color:#111827;text-transform:none;font-size:14px;font-weight:600}
+.topbar-categories__list--mobile .topbar-categories__chip::after{display:none}
+.topbar-categories__list--mobile .topbar-categories__chip span{display:inline;color:#94a3b8;font-size:12px}
 .posts-home-hero{position:relative;overflow:hidden;padding:34px 32px;border-radius:28px;background:linear-gradient(135deg,#f8fbff 0%,#eef4ff 44%,#ffffff 100%);border:1px solid rgba(91,124,255,.10);box-shadow:0 24px 50px rgba(91,124,255,.08)}
 .posts-home-hero__content{max-width:760px;display:flex;flex-direction:column;gap:12px}
 .posts-home-hero__eyebrow{margin:0;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#4f46e5}
@@ -676,4 +688,9 @@ body.has-preview-open{overflow:hidden}
 .posts-sidebar--simple{gap:18px}
 .posts-sidebar__ad-shell,.posts-sidebar__popular-shell{padding:18px;border:1px solid var(--border);border-radius:22px;background:#fff;box-shadow:0 18px 35px rgba(15,23,42,.04)}
 .posts-sidebar__popular-shell .h2{margin:0}
+@media (max-width:768px){
+  .topbar-categories--desktop{display:none}
+  .posts-home-hero{padding:26px 20px;border-radius:24px}
+  .posts-home-hero__desc{font-size:15px}
+}
 @media (max-width:768px){.posts-home-hero{padding:26px 20px;border-radius:24px}.posts-home-hero__desc{font-size:15px}.topbar-categories__inner{padding:16px 18px 20px}}
