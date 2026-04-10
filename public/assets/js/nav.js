@@ -31,6 +31,7 @@
 
   const desktopCategoryBar = document.getElementById('siteCategoryBar');
   const mobileCategoryBar = document.getElementById('mobileSiteCategoryBar');
+  const heroCategoryBar = document.getElementById('heroCategoryBar');
 
   function renderCategories(target, categories) {
     if (!target) return;
@@ -58,10 +59,11 @@
   }
 
   async function loadCategories() {
-    if (!desktopCategoryBar && !mobileCategoryBar) return;
+    if (!desktopCategoryBar && !mobileCategoryBar && !heroCategoryBar) return;
     const skeleton = Array.from({ length: 7 }).map(() => '<span class="topbar-categories__chip topbar-categories__chip--skeleton"></span>').join('');
     if (desktopCategoryBar) desktopCategoryBar.innerHTML = skeleton;
     if (mobileCategoryBar) mobileCategoryBar.innerHTML = skeleton;
+    if (heroCategoryBar) heroCategoryBar.innerHTML = skeleton;
 
     try {
       const apiUrl = new URL('/api/posts', window.location.origin);
@@ -73,9 +75,11 @@
       const categories = Array.isArray(json?.sidebar?.categories) ? json.sidebar.categories : [];
       renderCategories(desktopCategoryBar, categories);
       renderCategories(mobileCategoryBar, categories);
+      renderCategories(heroCategoryBar, categories);
     } catch (error) {
       if (desktopCategoryBar) desktopCategoryBar.innerHTML = '<span class="small">카테고리를 불러오지 못했습니다.</span>';
       if (mobileCategoryBar) mobileCategoryBar.innerHTML = '<span class="small">카테고리를 불러오지 못했습니다.</span>';
+      if (heroCategoryBar) heroCategoryBar.innerHTML = '<span class="small">카테고리를 불러오지 못했습니다.</span>';
     }
   }
 

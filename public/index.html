@@ -8,17 +8,14 @@
   <link rel="stylesheet" href="/assets/css/app.css" />
   <link rel="stylesheet" href="/assets/css/components.css" />
 </head>
-<body>
+<body class="page-home">
   <header class="topbar topbar--editorial">
     <div class="topbar__inner topbar__inner--editorial">
       <button class="topbar-hamburger" type="button" aria-expanded="false" aria-controls="mobileSiteMenu" aria-label="메뉴 열기">
         <span></span><span></span><span></span>
       </button>
 
-      <nav class="nav nav--utility nav--left" aria-label="왼쪽 메뉴">
-        <a href="/" data-path="/">홈</a>
-        <a href="/about/" data-path="/about">소개</a>
-      </nav>
+      <div class="topbar-admin-status" data-admin-status hidden aria-live="polite">관리자 로그인 중</div>
 
       <a class="brand brand--center" href="/" aria-label="Wacky Blog 홈">
         <span class="brand__mark">W</span>
@@ -59,15 +56,18 @@
   </aside>
 
   <main class="container posts-page">
-    <section class="posts-home-hero" aria-labelledby="postsPageTitle">
-      <div class="posts-home-hero__content">
-        <p class="posts-home-hero__eyebrow">생활을 더 가볍게 테스트</p>
-        <h1 id="postsPageTitle" class="posts-home-hero__title">바로 써먹기 좋은 생활 팁과 정리된 가이드</h1>
-        <p id="postsPageDescription" class="posts-home-hero__desc">필요한 정보만 빠르게 찾고, 실제로 적용하기 쉬운 글만 모아볼 수 있습니다.</p>
+    <section id="postsHomeHero" class="posts-home-hero posts-home-hero--index" aria-labelledby="postsPageTitle">
+      <div class="posts-home-hero__content posts-home-hero__content--editorial">
+        <p class="posts-home-hero__kicker">the</p>
+        <h1 id="postsPageTitle" class="posts-home-hero__title posts-home-hero__title--editorial">Wackywiki.</h1>
+        <p id="postsPageDescription" class="posts-home-hero__desc posts-home-hero__desc--editorial">정리된 생활 팁과 가이드를 빠르게 살펴보세요.</p>
+        <div class="posts-home-hero__category-wrap" aria-label="카테고리 바로가기">
+          <div id="heroCategoryBar" class="topbar-categories__list topbar-categories__list--hero"></div>
+        </div>
       </div>
     </section>
 
-    <div class="posts-layout posts-layout--clean" style="margin-top:20px">
+    <div class="posts-layout posts-layout--clean posts-layout--home" style="margin-top:20px">
       <section class="posts-main" aria-label="글 목록 영역">
         <div id="postsLoading" class="small">글 목록 불러오는 중…</div>
         <div id="postsError" class="small" hidden style="color:#b00020"></div>

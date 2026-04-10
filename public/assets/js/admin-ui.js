@@ -53,8 +53,9 @@
     });
 
     document.querySelectorAll('.brand').forEach((brand) => {
+      const isIndex = document.body.classList.contains('page-home');
       let badge = brand.querySelector('.topbar-admin-badge');
-      if (isAdmin) {
+      if (isAdmin && !isIndex) {
         if (!badge) {
           badge = document.createElement('small');
           badge.className = 'topbar-admin-badge';
@@ -66,9 +67,15 @@
       }
     });
 
+    document.querySelectorAll('[data-admin-status]').forEach((el) => {
+      el.hidden = !isAdmin;
+      el.textContent = isAdmin ? '관리자 로그인 중' : '';
+    });
+
     document.querySelectorAll('.nav').forEach((nav) => {
+      const isIndexLeftSlot = nav.classList.contains('nav--left') && document.body.classList.contains('page-home');
       let logoutBtn = nav.querySelector('.js-topbar-logout');
-      if (isAdmin) {
+      if (isAdmin && !isIndexLeftSlot) {
         if (!logoutBtn) {
           logoutBtn = document.createElement('button');
           logoutBtn.type = 'button';

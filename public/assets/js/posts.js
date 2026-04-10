@@ -13,6 +13,36 @@
   const postsCategoriesMenuEl = $('#postsCategoriesMenu');
   const postsCategoriesCloseEl = $('#postsCategoriesClose');
   const postsPopularEl = $('#postsPopular');
+
+  const postsHomeHeroEl = $('#postsHomeHero');
+
+  function setHomeHeroMode() {
+    if (!postsHomeHeroEl) return;
+    const isHomeDefault = !category && !tag && safeStatus === 'published';
+    postsHomeHeroEl.classList.toggle('posts-home-hero--index', isHomeDefault);
+    postsHomeHeroEl.classList.toggle('posts-home-hero--category', !isHomeDefault);
+
+    if (pageTitleEl) {
+      pageTitleEl.classList.toggle('posts-home-hero__title--editorial', isHomeDefault);
+      pageTitleEl.textContent = isHomeDefault ? 'Wackywiki.' : getPageTitle();
+    }
+
+    if (pageDescEl) {
+      pageDescEl.classList.toggle('posts-home-hero__desc--editorial', isHomeDefault);
+      if (isHomeDefault) {
+        pageDescEl.textContent = '정리된 생활 팁과 가이드를 빠르게 살펴보세요.';
+      } else {
+        pageDescEl.innerHTML = getPageDescription();
+      }
+    }
+
+    const kickerEl = postsHomeHeroEl.querySelector('.posts-home-hero__kicker');
+    const heroCategoryWrap = postsHomeHeroEl.querySelector('.posts-home-hero__category-wrap');
+    const topbarCategoryEl = document.querySelector('.topbar-categories--desktop');
+    if (kickerEl) kickerEl.hidden = !isHomeDefault;
+    if (heroCategoryWrap) heroCategoryWrap.hidden = !isHomeDefault;
+    if (topbarCategoryEl) topbarCategoryEl.hidden = isHomeDefault;
+  }
   const loadMoreWrap = $('#postsLoadMoreWrap');
   const loadMoreBtn = $('#postsLoadMoreBtn');
 
