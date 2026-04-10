@@ -74,7 +74,7 @@ img{max-width:100%;display:block}
 .posts-page{padding-top:20px}
 .posts-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;align-items:start}
 .posts-main{min-width:0}
-.posts-sidebar{min-height:auto;top:88px}
+.posts-sidebar{min-height:auto;top:24px}
 .posts-sidebar__summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .posts-summary-card{display:flex;flex-direction:column;gap:6px;padding:14px 12px;border-radius:18px;background:linear-gradient(180deg,#f8fbff,#fff);border:1px solid rgba(91,124,255,.12);text-align:center}
 .posts-summary-card strong{font-size:22px;line-height:1;font-weight:1000;color:#0f172a}
@@ -655,8 +655,8 @@ body.has-preview-open{overflow:hidden}
 .topbar--editorial{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border-bottom:1px solid rgba(15,23,42,.06)}
 .topbar-categories{background:#fff}
 .topbar-categories--desktop{border-top:1px solid rgba(15,23,42,.05)}
-.topbar-categories__inner{padding:10px 20px}
-.topbar-categories__list{display:flex;flex-wrap:wrap;align-items:center;gap:18px}
+.topbar-categories{padding:10px 0}
+.topbar-categories__list{display:flex;flex-wrap:wrap;align-items:center;gap:18px;padding-left:20px;padding-right:20px}
 .topbar-categories__list--desktop{justify-content:center}
 .topbar-categories__chip{display:inline-flex;align-items:center;gap:6px;padding:2px 0;border-radius:0;background:transparent;border:0;color:#7c8594;font-size:12px;line-height:1.2;letter-spacing:.04em;text-transform:lowercase;font-weight:500;text-decoration:none;position:relative;transition:color .18s ease}
 .topbar-categories__chip:hover{transform:none;background:transparent;border-color:transparent;color:#111827}
@@ -693,4 +693,4 @@ body.has-preview-open{overflow:hidden}
   .posts-home-hero{padding:26px 20px;border-radius:24px}
   .posts-home-hero__desc{font-size:15px}
 }
-@media (max-width:768px){.posts-home-hero{padding:26px 20px;border-radius:24px}.posts-home-hero__desc{font-size:15px}.topbar-categories__inner{padding:16px 18px 20px}}
+@media (max-width:768px){.posts-home-hero{padding:26px 20px;border-radius:24px}.posts-home-hero__desc{font-size:15px}.topbar-categories{padding:16px 0 20px}.topbar-categories__list{padding-left:18px;padding-right:18px}}

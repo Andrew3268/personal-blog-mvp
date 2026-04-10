@@ -24,7 +24,7 @@
 
     if (pageTitleEl) {
       pageTitleEl.classList.toggle('posts-home-hero__title--editorial', isHomeDefault);
-      pageTitleEl.textContent = isHomeDefault ? 'Wackywiki.' : getPageTitle();
+      pageTitleEl.textContent = isHomeDefault ? 'Wacky Wiki' : getPageTitle();
     }
 
     if (pageDescEl) {
@@ -85,7 +85,7 @@
     if (safeStatus === 'all') return '전체 글 목록';
     if (category) return `카테고리: ${category}`;
     if (tag) return `태그: #${tag}`;
-    return '글 목록';
+    return 'Wacky Wiki';
   }
 
   function getPageDescription() {

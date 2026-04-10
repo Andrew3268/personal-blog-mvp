@@ -800,18 +800,15 @@ function topbar() {
         <span></span><span></span><span></span>
       </button>
 
-      <nav class="nav nav--utility nav--left" aria-label="왼쪽 메뉴">
-        <a href="/" data-path="/">홈</a>
-        <a href="/about/" data-path="/about">소개</a>
-      </nav>
+      <div class="topbar-admin-status" data-admin-status hidden aria-live="polite">관리자 로그인 중</div>
 
       <a class="brand brand--center" href="/" aria-label="Wacky Blog 홈">
         <span class="brand__mark">W</span>
-        <span class="brand__text">Wacky Blog</span>
+        <span class="brand__text">Wacky Wiki</span>
       </a>
 
       <nav class="nav nav--utility nav--right" aria-label="오른쪽 메뉴">
-        <a href="/about/" data-path="/about">블로그 소개</a>
+        <a href="/about/" data-path="/about">소개</a>
         <a href="/add.html" data-path="/add.html" data-admin-only hidden>글 작성</a>
         <a href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
       </nav>
@@ -820,9 +817,7 @@ function topbar() {
     </div>
 
     <div class="topbar-categories topbar-categories--desktop" aria-label="카테고리 메뉴">
-      <div class="topbar-categories__inner container">
-        <div id="siteCategoryBar" class="topbar-categories__list topbar-categories__list--desktop"></div>
-      </div>
+      <div id="siteCategoryBar" class="topbar-categories__list topbar-categories__list--desktop container"></div>
     </div>
   </header>
 
