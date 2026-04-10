@@ -131,7 +131,6 @@ export async function onRequestGet({ params, env, request }) {
       const updatedIso = toIso(row.updated_at);
 
       const breadcrumbItems = [
-        { name: "홈", url: `${origin}/` },
         { name: "홈", url: `${origin}/` }
       ];
 
@@ -800,7 +799,9 @@ function topbar() {
         <span></span><span></span><span></span>
       </button>
 
-      <div class="topbar-admin-status" data-admin-status hidden aria-live="polite">관리자 로그인 중</div>
+      <div class="topbar-left-slot">
+        <div class="topbar-admin-status" data-admin-status hidden aria-live="polite">관리자 로그인 중</div>
+      </div>
 
       <a class="brand brand--center" href="/" aria-label="Wacky Blog 홈">
         <span class="brand__mark">W</span>

@@ -52,39 +52,19 @@
       el.hidden = isAdmin;
     });
 
-    document.querySelectorAll('.brand').forEach((brand) => {
-      const isIndex = document.body.classList.contains('page-home');
-      let badge = brand.querySelector('.topbar-admin-badge');
-      if (isAdmin && !isIndex) {
-        if (!badge) {
-          badge = document.createElement('small');
-          badge.className = 'topbar-admin-badge';
-          badge.textContent = '관리자 로그인 중';
-          brand.appendChild(badge);
-        }
-      } else if (badge) {
-        badge.remove();
+    document.querySelectorAll('[data-admin-status]').forEach((el) => {
+      const alwaysReserved = document.body.classList.contains('page-home');
+      if (isAdmin) {
+        el.hidden = false;
+        el.textContent = '관리자 로그인 중';
+      } else if (alwaysReserved) {
+        el.hidden = false;
+        el.textContent = '';
+      } else {
+        el.hidden = true;
+        el.textContent = '';
       }
     });
-
-    document.querySelectorAll('[data-admin-status]').forEach((el) => {
-      el.hidden = !isAdmin;
-      el.textContent = isAdmin ? '관리자 로그인 중' : '';
-    });
-
-    document.querySelectorAll('.nav').forEach((nav) => {
-      const isIndexLeftSlot = nav.classList.contains('nav--left') && document.body.classList.contains('page-home');
-      let logoutBtn = nav.querySelector('.js-topbar-logout');
-      if (isAdmin && !isIndexLeftSlot) {
-        if (!logoutBtn) {
-          logoutBtn = document.createElement('button');
-          logoutBtn.type = 'button';
-          logoutBtn.className = 'nav__logout js-topbar-logout';
-          logoutBtn.textContent = '로그아웃';
-          logoutBtn.addEventListener('click', async () => {
-            await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => null);
-            location.href = '/';
-          });
           nav.appendChild(logoutBtn);
         }
       } else if (logoutBtn) {
