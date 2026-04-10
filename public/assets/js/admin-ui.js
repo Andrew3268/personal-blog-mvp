@@ -65,12 +65,6 @@
         el.textContent = '';
       }
     });
-          nav.appendChild(logoutBtn);
-        }
-      } else if (logoutBtn) {
-        logoutBtn.remove();
-      }
-    });
   }
 
   statePromise.then(applyAdminUi);
