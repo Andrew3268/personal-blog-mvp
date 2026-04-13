@@ -116,7 +116,7 @@
 /* editor layout */
 .editor-layout{
   display:grid;
-  grid-template-columns:minmax(0, 1fr);
+  grid-template-columns:1fr;
   gap:24px;
   align-items:start;
 }
@@ -131,6 +131,10 @@
 }
 .editor-sidebar{
   min-width:0;
+  width:100%;
+}
+.editor-seo-card{
+  position:static;
 }
 .editor-seo-card #seoTabs{
   justify-content:flex-start;
@@ -139,19 +143,24 @@
   font-size:28px;
   line-height:1;
 }
-@media (min-width:1080px){
+@media (min-width:860px){
   .editor-layout{
-    grid-template-columns:minmax(0, 1fr) 320px;
-    gap:28px;
+    grid-template-columns:minmax(0, 1fr) 340px;
+    column-gap:28px;
+    row-gap:24px;
   }
   .editor-main{
+    grid-column:1;
+  }
+  .editor-main--continuation{
     grid-column:1;
   }
   .editor-sidebar{
     grid-column:2;
     grid-row:1 / span 2;
+    align-self:start;
     position:sticky;
     top:92px;
-    align-self:start;
   }
 }
+
