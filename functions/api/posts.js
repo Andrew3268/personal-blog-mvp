@@ -11,6 +11,7 @@ export async function onRequestGet({ env, request }) {
   const status = String(url.searchParams.get("status") || "published").trim().toLowerCase();
   const category = String(url.searchParams.get("category") || "").trim();
   const tag = String(url.searchParams.get("tag") || "").trim();
+  const q = String(url.searchParams.get("q") || "").trim();
   const page = clampInt(url.searchParams.get("page"), 1, 1, 9999);
   const perPage = clampInt(url.searchParams.get("per_page"), 8, 1, 24);
   const offset = (page - 1) * perPage;
@@ -37,6 +38,19 @@ export async function onRequestGet({ env, request }) {
     where.push("EXISTS (SELECT 1 FROM json_each(COALESCE(tags_json, '[]')) WHERE TRIM(json_each.value) = ?)");
     binds.push(tag);
   }
+
+  if (q) {
+    const like = `%${q}%`;
+    where.push(`(
+      title LIKE ?
+      OR COALESCE(summary, '') LIKE ?
+      OR COALESCE(meta_description, '') LIKE ?
+      OR COALESCE(category, '') LIKE ?
+      OR EXISTS (SELECT 1 FROM json_each(COALESCE(tags_json, '[]')) WHERE json_each.value LIKE ?)
+    )`);
+    binds.push(like, like, like, like, like);
+  }
+
 
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
 

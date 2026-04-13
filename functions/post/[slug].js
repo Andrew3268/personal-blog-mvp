@@ -282,6 +282,29 @@ export async function onRequestGet({ params, env, request }) {
 
   ${topbar()}
 
+  
+  <div class="search-overlay" id="siteSearchOverlay" hidden aria-hidden="true">
+    <div class="search-overlay__backdrop" data-search-close></div>
+    <div class="search-overlay__panel" role="dialog" aria-modal="true" aria-labelledby="siteSearchTitle">
+      <div class="search-overlay__head">
+        <div>
+          <div class="small">Search</div>
+          <h2 class="h2" id="siteSearchTitle">검색</h2>
+        </div>
+        <button class="search-overlay__close" type="button" aria-label="검색 닫기" data-search-close>닫기</button>
+      </div>
+      <form class="search-overlay__form" id="siteSearchForm">
+        <label class="search-overlay__field" for="siteSearchInput">
+          <span class="search-overlay__icon" aria-hidden="true">⌕</span>
+          <input class="search-overlay__input" id="siteSearchInput" name="q" type="search" placeholder="제목, 요약, 카테고리로 검색" autocomplete="off" />
+        </label>
+        <button class="btn btn--brand search-overlay__submit" type="submit">검색</button>
+      </form>
+      <div class="small">엔터를 누르거나 검색 버튼을 누르면 결과 페이지로 이동합니다.</div>
+    </div>
+  </div>
+
+
   <main id="main-content" class="container">
     ${breadcrumbHtml}
 
@@ -360,6 +383,7 @@ export async function onRequestGet({ params, env, request }) {
   ${adsenseRuntimeScript}
   <script src="/assets/js/admin-ui.js" defer></script>
   <script src="/assets/js/nav.js" defer></script>
+  <script src="/assets/js/search.js" defer></script>
 </body>
 </html>`;
 
@@ -810,6 +834,7 @@ function topbar() {
       </a>
 
       <nav class="nav nav--utility nav--right" aria-label="오른쪽 메뉴">
+        <button class="nav__search-btn" type="button" data-search-open aria-label="검색 열기">검색</button>
         <a href="/about/" data-path="/about">소개</a>
         <a href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
       </nav>
@@ -825,6 +850,7 @@ function topbar() {
         <button class="mobile-site-menu__close" type="button" aria-label="메뉴 닫기">닫기</button>
       </div>
       <nav class="mobile-site-menu__nav" aria-label="모바일 주요 메뉴">
+        <button class="nav__search-btn nav__search-btn--mobile" type="button" data-search-open>검색</button>
         <a href="/" data-path="/">홈</a>
         <a href="/about/" data-path="/about">소개</a>
         <a href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>

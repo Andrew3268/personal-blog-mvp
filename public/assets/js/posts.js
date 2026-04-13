@@ -18,7 +18,7 @@
 
   function setHomeHeroMode() {
     if (!postsHomeHeroEl) return;
-    const isHomeDefault = !category && !tag && safeStatus === 'published';
+    const isHomeDefault = !category && !tag && !q && safeStatus === 'published';
     postsHomeHeroEl.classList.toggle('posts-home-hero--index', isHomeDefault);
     postsHomeHeroEl.classList.toggle('posts-home-hero--category', !isHomeDefault);
 
@@ -66,6 +66,7 @@
     if (safeStatus) apiUrl.searchParams.set('status', safeStatus);
     if (category) apiUrl.searchParams.set('category', category);
     if (tag) apiUrl.searchParams.set('tag', tag);
+    if (q) apiUrl.searchParams.set('q', q);
     return apiUrl;
   }
 
@@ -74,6 +75,7 @@
     if (safeStatus && safeStatus !== 'published') nextUrl.searchParams.set('status', safeStatus);
     if (category) nextUrl.searchParams.set('category', category);
     if (tag) nextUrl.searchParams.set('tag', tag);
+    if (q) nextUrl.searchParams.set('q', q);
     if (page > 1) nextUrl.searchParams.set('page', String(page));
     return `${nextUrl.pathname}${nextUrl.search}`;
   }
@@ -83,6 +85,7 @@
     if (safeStatus === 'all') return '전체 글 목록';
     if (category) return `카테고리: ${category}`;
     if (tag) return `태그: #${tag}`;
+    if (q) return `검색 결과: ${q}`;
     return 'Wacky Wiki';
   }
 
@@ -91,6 +94,7 @@
     if (safeStatus === 'all') return '발행글과 초안글을 모두 확인할 수 있습니다.';
     if (category) return `<b>${escapeHtml(category)}</b> 카테고리의 글만 모아 보여드립니다.`;
     if (tag) return `<b>#${escapeHtml(tag)}</b> 태그가 포함된 글만 모아 보여드립니다.`;
+    if (q) return `<b>${escapeHtml(q)}</b> 검색어와 관련된 글만 모아 보여드립니다.`;
     return '정리된 생활 팁과 가이드를 빠르게 둘러보고 필요한 글만 골라 읽어보세요.';
   }
 
@@ -275,6 +279,7 @@
           if (safeStatus === 'draft') emptyEl.textContent = '등록된 초안 글이 없습니다.';
           else if (category) emptyEl.textContent = `'${category}' 카테고리 글이 없습니다.`;
           else if (tag) emptyEl.textContent = `'#${tag}' 태그 글이 없습니다.`;
+          else if (q) emptyEl.textContent = `'${q}' 검색 결과가 없습니다.`;
           else emptyEl.textContent = '등록된 글이 없습니다.';
         }
         updateLoadMore({ has_more: false, next_page: null });
