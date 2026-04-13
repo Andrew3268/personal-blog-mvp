@@ -1700,7 +1700,7 @@ $("addAffiliateItemBtn")?.addEventListener("click", () => { addAffiliateItemCard
 document.querySelectorAll("[data-affiliate-remove]").forEach((button) => {
   button.addEventListener("click", () => { removeAffiliateItemCard(Number(button.dataset.affiliateRemove || "0")); handleRealtimeChange(); });
 });
-$("saveBtn").addEventListener("click", save);
+if ($("saveBtn")) $("saveBtn").addEventListener("click", save);
 bindCategoryManagerEvents();
 $("enableToc")?.addEventListener("change", applyTocControls);
 $("includeTocH3")?.addEventListener("change", () => {
