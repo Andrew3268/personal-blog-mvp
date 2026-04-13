@@ -68,9 +68,13 @@
 
       <div id="saveStatus" class="small"></div>
 
+      <div class="editor-layout">
+        <div class="editor-main">
+          <div class="grid editor-form-grid" style="gap:18px;">
+
       
 
-      <div class="grid" style="gap:18px;">
+      
         <label>
           <div class="small">제목 <span id="titleCount"></span></div>
           <input class="input" id="title" placeholder="제목을 입력하세요" />
@@ -136,21 +140,27 @@
           </label>
         </div>
 
-        <div class="card" style="padding:18px;">
-          <div style="display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap;">
-            <div>
-              <div class="small">SEO 점검</div>
-              <div style="display:flex; gap:10px; align-items:center; margin-top:6px;">
-                <strong id="seoScore">0</strong>
-                <span id="seoGrade" class="badge">대기</span>
-              </div>
-            </div>
-            <div id="seoTabs" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
-          </div>
-          <div class="sep"></div>
-          <div id="seoChecklist" class="grid" style="gap:10px;"></div>
         </div>
 
+        <aside class="editor-sidebar">
+          <div class="card editor-seo-card" style="padding:18px;">
+            <div style="display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap;">
+              <div>
+                <div class="small">SEO 점검</div>
+                <div style="display:flex; gap:10px; align-items:center; margin-top:6px;">
+                  <strong id="seoScore">0</strong>
+                  <span id="seoGrade" class="badge">대기</span>
+                </div>
+              </div>
+              <div id="seoTabs" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+            </div>
+            <div class="sep"></div>
+            <div id="seoChecklist" class="grid" style="gap:10px;"></div>
+          </div>
+        </aside>
+
+        <div class="editor-main editor-main--continuation">
+          <div class="grid editor-form-grid" style="gap:18px;">
         <div class="card" style="padding:18px;">
           <div style="display:flex; gap:18px; flex-wrap:wrap;">
             <label class="row"><input type="checkbox" id="enableToc" /> 목차 사용</label>
@@ -342,6 +352,7 @@
               </div>
             </section>
         
+          </div>
           </div>
         </div>
       </div>
