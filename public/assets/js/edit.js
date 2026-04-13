@@ -365,7 +365,7 @@ function renderInlineImageFigure(data = {}, index = 1) {
   const caption = String(data.caption || "").trim();
   return `
     <figure class="preview-inline-image">
-      <img src="${escapeHtml(buildPreviewCfImageUrl(imageUrl, { width: 960, fit: \"scale-down\" }))}" alt="${escapeHtml(alt)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
+      <img src="${escapeHtml(buildPreviewCfImageUrl(imageUrl, { width: 960, fit: "scale-down" }))}" alt="${escapeHtml(alt)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
       ${caption ? `<figcaption>${escapeHtml(caption)}</figcaption>` : ""}
     </figure>
   `;
