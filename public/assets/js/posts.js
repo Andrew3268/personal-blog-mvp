@@ -50,6 +50,7 @@
   const status = String(url.searchParams.get('status') || 'published').trim().toLowerCase();
   const category = String(url.searchParams.get('category') || '').trim();
   const tag = String(url.searchParams.get('tag') || '').trim();
+  const q = String(url.searchParams.get('q') || '').trim();
   const initialPage = Math.max(1, Number.parseInt(url.searchParams.get('page') || '1', 10) || 1);
   const perPage = 8;
   const safeStatus = ['published', 'draft', 'all'].includes(status) ? status : 'published';

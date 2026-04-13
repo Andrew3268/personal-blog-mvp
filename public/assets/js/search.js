@@ -6,20 +6,42 @@
   const closeButtons = document.querySelectorAll('[data-search-close]');
   if (!overlay || !input || !form) return;
 
-  function setOpen(open) {
-    overlay.hidden = !open;
-    overlay.setAttribute('aria-hidden', open ? 'false' : 'true');
-    document.body.classList.toggle('has-search-open', open);
+  let lastTrigger = null;
+
+  function setOpen(open, trigger = null) {
     if (open) {
+      lastTrigger = trigger || document.activeElement;
+      overlay.hidden = false;
+      overlay.removeAttribute('inert');
+      overlay.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('has-search-open');
+
       const currentQ = String(new URL(location.href).searchParams.get('q') || '').trim();
       input.value = currentQ;
-      setTimeout(() => input.focus(), 10);
-      input.select();
+      setTimeout(() => {
+        input.focus();
+        input.select();
+      }, 10);
+      return;
+    }
+
+    const active = document.activeElement;
+    if (active && overlay.contains(active) && typeof active.blur === 'function') {
+      active.blur();
+    }
+
+    overlay.setAttribute('inert', '');
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.hidden = true;
+    document.body.classList.remove('has-search-open');
+
+    if (lastTrigger && typeof lastTrigger.focus === 'function') {
+      setTimeout(() => lastTrigger.focus(), 10);
     }
   }
 
   openButtons.forEach((button) => {
-    button.addEventListener('click', () => setOpen(true));
+    button.addEventListener('click', () => setOpen(true, button));
   });
 
   closeButtons.forEach((button) => {
@@ -34,7 +56,7 @@
     if (event.key === 'Escape') setOpen(false);
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
       event.preventDefault();
-      setOpen(true);
+      setOpen(true, document.activeElement);
     }
   });
 
