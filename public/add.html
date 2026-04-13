@@ -50,8 +50,304 @@
       </div>
     </div>
   </aside>
-    </div>
+
+  <main class="container">
+    <section class="card" style="display:flex; flex-direction:column; gap:20px;">
+      <div style="display:flex; justify-content:space-between; gap:16px; align-items:flex-start; flex-wrap:wrap;">
+        <div>
+          <div class="small seo-eyebrow">Editor</div>
+          <h1 class="h1">새 글 작성</h1>
+          <p class="p">새 글을 작성하고 SEO 상태를 함께 확인하세요.</p>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <button class="btn" id="previewOpenBtn" type="button" aria-expanded="false">미리보기</button>
+          
+          <button class="btn btn--brand" id="saveBtn" type="button">저장</button>
+        </div>
+      </div>
+
+      <div id="saveStatus" class="small"></div>
+
+      
+
+      <div class="grid" style="gap:18px;">
+        <label>
+          <div class="small">제목 <span id="titleCount"></span></div>
+          <input class="input" id="title" placeholder="제목을 입력하세요" />
+        </label>
+
+        <label>
+          <div class="small">슬러그 미리보기</div>
+          <input class="input" id="slugPreview" readonly />
+        </label>
+
+        <label>
+          <div class="small">메타 설명 <span id="metaDescriptionCount"></span></div>
+          <textarea class="input" id="meta_description" rows="3" placeholder="검색 결과에 노출될 설명"></textarea>
+        </label>
+
+        <label>
+          <div class="small">요약문 <span id="summaryCount"></span></div>
+          <textarea class="input" id="summary" rows="4" placeholder="본문 상단 요약"></textarea>
+        </label>
+
+        
+          <div class="grid grid--3">
+            <label>
+              <div class="small">카테고리</div>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <select class="input" id="category"></select>
+                <button class="btn" id="openCategoryModalBtn" type="button">관리</button>
+              </div>
+            </label>
+            <label>
+              <div class="small">상태</div>
+              <select class="input" id="status">
+                <option value="published">발행</option>
+                <option value="draft">초안</option>
+              </select>
+            </label>
+            <label>
+              <div class="small">태그</div>
+              <input class="input" id="tags" placeholder="예: 살림, 정리, 생활 팁" />
+            </label>
+          </div>
+    
+
+        <div class="grid grid--2">
+          <label>
+            <div class="small">대표 이미지 URL</div>
+            <input class="input" id="cover_image" placeholder="https://..." />
+          </label>
+          <label>
+            <div class="small">대표 이미지 ALT</div>
+            <input class="input" id="cover_image_alt" placeholder="대표 이미지 설명" />
+          </label>
+        </div>
+
+        <div class="grid grid--2">
+          <label>
+            <div class="small">포커스 키워드</div>
+            <input class="input" id="focusKeyword" placeholder="메인 키워드" />
+          </label>
+          <label>
+            <div class="small">롱테일 키워드</div>
+            <input class="input" id="longtailKeywords" placeholder="쉼표로 구분" />
+          </label>
+        </div>
+
+        <div class="card" style="padding:18px;">
+          <div style="display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap;">
+            <div>
+              <div class="small">SEO 점검</div>
+              <div style="display:flex; gap:10px; align-items:center; margin-top:6px;">
+                <strong id="seoScore">0</strong>
+                <span id="seoGrade" class="badge">대기</span>
+              </div>
+            </div>
+            <div id="seoTabs" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+          </div>
+          <div class="sep"></div>
+          <div id="seoChecklist" class="grid" style="gap:10px;"></div>
+        </div>
+
+        <div class="card" style="padding:18px;">
+          <div style="display:flex; gap:18px; flex-wrap:wrap;">
+            <label class="row"><input type="checkbox" id="enableToc" /> 목차 사용</label>
+            <label class="row"><input type="checkbox" id="includeTocH3" /> H3 포함</label>
+            <label class="row"><input type="checkbox" id="enable_sidebar_ad" checked /> 사이드바 광고</label>
+            <label class="row"><input type="checkbox" id="enable_inarticle_ads" checked /> 본문 광고</label>
+          </div>
+          <div id="tocStatus" class="small" style="margin-top:10px;"></div>
+        </div>
+
+        <label>
+          <div class="small">본문 Markdown <span id="contentCount"></span></div>
+          <textarea class="input editor-textarea" id="content_md" rows="20" placeholder="본문을 입력하세요"></textarea>
+        </label>
+
+        <label>
+          <div class="small">FAQ Markdown <span id="faqCount"></span></div>
+          <textarea class="input" id="faq_md" rows="8" placeholder="Q: 질문&#10;A: 답변"></textarea>
+        </label>
+
+        <div class="card" style="padding:18px;">
+          <div class="h2" style="margin-bottom:12px;">본문 이미지</div>
+          <div class="row" style="margin-bottom:10px;">
+            <label class="row"><input type="checkbox" id="enableInlineImage1" /> 이미지 1 사용</label>
+            <label class="row"><input type="checkbox" id="enableInlineImage2" /> 이미지 2 사용</label>
+          </div>
+
+          <div id="inlineImage1Fields" hidden class="grid" style="gap:12px; margin-bottom:16px;">
+            <div class="small">이미지 1</div>
+            <input class="input" id="inlineImage1Id" placeholder="이미지 URL" />
+            <input class="input" id="inlineImage1Alt" placeholder="ALT 텍스트" />
+            <input class="input" id="inlineImage1Caption" placeholder="캡션" />
+            <select class="input" id="inlineImage1Position">
+              <option value="1">H2 1개 뒤</option>
+              <option value="2">H2 2개 뒤</option>
+              <option value="3">H2 3개 뒤</option>
+              <option value="4">H2 4개 뒤</option>
+              <option value="5">H2 5개 뒤</option>
+            </select>
+          </div>
+
+          <div id="inlineImage2Fields" hidden class="grid" style="gap:12px;">
+            <div class="small">이미지 2</div>
+            <input class="input" id="inlineImage2Id" placeholder="이미지 URL" />
+            <input class="input" id="inlineImage2Alt" placeholder="ALT 텍스트" />
+            <input class="input" id="inlineImage2Caption" placeholder="캡션" />
+            <select class="input" id="inlineImage2Position">
+              <option value="1">H2 1개 뒤</option>
+              <option value="2">H2 2개 뒤</option>
+              <option value="3">H2 3개 뒤</option>
+              <option value="4">H2 4개 뒤</option>
+              <option value="5">H2 5개 뒤</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="card" style="padding:18px;">
+          <div style="display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap;">
+            <div class="h2">제휴 링크</div>
+            <div class="row">
+              <label class="row"><input type="checkbox" id="enableAffiliateLinks" /> 사용</label>
+              <button class="btn" id="addAffiliateItemBtn" type="button">항목 추가</button>
+            </div>
+          </div>
+
+          <div id="affiliateLinksFields" hidden class="grid" style="gap:12px; margin-top:12px;">
+            
+            <section class="card affiliate-item-card" id="affiliateItem1"  style="padding:16px;">
+              <div style="display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:10px;">
+                <strong>제휴 상품 1</strong>
+                <button class="btn" type="button" data-affiliate-remove="1">삭제</button>
+              </div>
+              <div class="grid grid--2">
+                <input class="input" id="affiliateImageUrl1" placeholder="이미지 URL" />
+                <input class="input" id="affiliateLinkUrl1" placeholder="제휴 링크 URL" />
+                <input class="input" id="affiliateProductName1" placeholder="상품명" />
+                <input class="input" id="affiliateButtonText1" placeholder="버튼 텍스트" value="상품 보기" />
+                <input class="input" id="affiliateCurrentPrice1" placeholder="현재가" />
+                <input class="input" id="affiliateSalePrice1" placeholder="할인가" />
+                <input class="input" id="affiliateDiscountRate1" placeholder="할인율" />
+                <select class="input" id="affiliatePosition1">
+                  <option value="1">H2 1개 뒤</option>
+                  <option value="1">H2 1개 뒤</option>
+                  <option value="2">H2 2개 뒤</option>
+                  <option value="3">H2 3개 뒤</option>
+                  <option value="4">H2 4개 뒤</option>
+                  <option value="5">H2 5개 뒤</option>
+                </select>
+              </div>
+            </section>
+        
+
+            <section class="card affiliate-item-card" id="affiliateItem2" hidden style="padding:16px;">
+              <div style="display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:10px;">
+                <strong>제휴 상품 2</strong>
+                <button class="btn" type="button" data-affiliate-remove="2">삭제</button>
+              </div>
+              <div class="grid grid--2">
+                <input class="input" id="affiliateImageUrl2" placeholder="이미지 URL" />
+                <input class="input" id="affiliateLinkUrl2" placeholder="제휴 링크 URL" />
+                <input class="input" id="affiliateProductName2" placeholder="상품명" />
+                <input class="input" id="affiliateButtonText2" placeholder="버튼 텍스트" value="상품 보기" />
+                <input class="input" id="affiliateCurrentPrice2" placeholder="현재가" />
+                <input class="input" id="affiliateSalePrice2" placeholder="할인가" />
+                <input class="input" id="affiliateDiscountRate2" placeholder="할인율" />
+                <select class="input" id="affiliatePosition2">
+                  <option value="2">H2 2개 뒤</option>
+                  <option value="1">H2 1개 뒤</option>
+                  <option value="2">H2 2개 뒤</option>
+                  <option value="3">H2 3개 뒤</option>
+                  <option value="4">H2 4개 뒤</option>
+                  <option value="5">H2 5개 뒤</option>
+                </select>
+              </div>
+            </section>
+        
+
+            <section class="card affiliate-item-card" id="affiliateItem3" hidden style="padding:16px;">
+              <div style="display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:10px;">
+                <strong>제휴 상품 3</strong>
+                <button class="btn" type="button" data-affiliate-remove="3">삭제</button>
+              </div>
+              <div class="grid grid--2">
+                <input class="input" id="affiliateImageUrl3" placeholder="이미지 URL" />
+                <input class="input" id="affiliateLinkUrl3" placeholder="제휴 링크 URL" />
+                <input class="input" id="affiliateProductName3" placeholder="상품명" />
+                <input class="input" id="affiliateButtonText3" placeholder="버튼 텍스트" value="상품 보기" />
+                <input class="input" id="affiliateCurrentPrice3" placeholder="현재가" />
+                <input class="input" id="affiliateSalePrice3" placeholder="할인가" />
+                <input class="input" id="affiliateDiscountRate3" placeholder="할인율" />
+                <select class="input" id="affiliatePosition3">
+                  <option value="3">H2 3개 뒤</option>
+                  <option value="1">H2 1개 뒤</option>
+                  <option value="2">H2 2개 뒤</option>
+                  <option value="3">H2 3개 뒤</option>
+                  <option value="4">H2 4개 뒤</option>
+                  <option value="5">H2 5개 뒤</option>
+                </select>
+              </div>
+            </section>
+        
+
+            <section class="card affiliate-item-card" id="affiliateItem4" hidden style="padding:16px;">
+              <div style="display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:10px;">
+                <strong>제휴 상품 4</strong>
+                <button class="btn" type="button" data-affiliate-remove="4">삭제</button>
+              </div>
+              <div class="grid grid--2">
+                <input class="input" id="affiliateImageUrl4" placeholder="이미지 URL" />
+                <input class="input" id="affiliateLinkUrl4" placeholder="제휴 링크 URL" />
+                <input class="input" id="affiliateProductName4" placeholder="상품명" />
+                <input class="input" id="affiliateButtonText4" placeholder="버튼 텍스트" value="상품 보기" />
+                <input class="input" id="affiliateCurrentPrice4" placeholder="현재가" />
+                <input class="input" id="affiliateSalePrice4" placeholder="할인가" />
+                <input class="input" id="affiliateDiscountRate4" placeholder="할인율" />
+                <select class="input" id="affiliatePosition4">
+                  <option value="4">H2 4개 뒤</option>
+                  <option value="1">H2 1개 뒤</option>
+                  <option value="2">H2 2개 뒤</option>
+                  <option value="3">H2 3개 뒤</option>
+                  <option value="4">H2 4개 뒤</option>
+                  <option value="5">H2 5개 뒤</option>
+                </select>
+              </div>
+            </section>
+        
+
+            <section class="card affiliate-item-card" id="affiliateItem5" hidden style="padding:16px;">
+              <div style="display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:10px;">
+                <strong>제휴 상품 5</strong>
+                <button class="btn" type="button" data-affiliate-remove="5">삭제</button>
+              </div>
+              <div class="grid grid--2">
+                <input class="input" id="affiliateImageUrl5" placeholder="이미지 URL" />
+                <input class="input" id="affiliateLinkUrl5" placeholder="제휴 링크 URL" />
+                <input class="input" id="affiliateProductName5" placeholder="상품명" />
+                <input class="input" id="affiliateButtonText5" placeholder="버튼 텍스트" value="상품 보기" />
+                <input class="input" id="affiliateCurrentPrice5" placeholder="현재가" />
+                <input class="input" id="affiliateSalePrice5" placeholder="할인가" />
+                <input class="input" id="affiliateDiscountRate5" placeholder="할인율" />
+                <select class="input" id="affiliatePosition5">
+                  <option value="5">H2 5개 뒤</option>
+                  <option value="1">H2 1개 뒤</option>
+                  <option value="2">H2 2개 뒤</option>
+                  <option value="3">H2 3개 뒤</option>
+                  <option value="4">H2 4개 뒤</option>
+                  <option value="5">H2 5개 뒤</option>
+                </select>
+              </div>
+            </section>
+        
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
+
 
   <div class="preview-backdrop" id="previewBackdrop" hidden></div>
   <aside class="preview-drawer" id="previewDrawer" aria-hidden="true">
