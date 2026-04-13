@@ -1638,7 +1638,7 @@ $("addAffiliateItemBtn")?.addEventListener("click", () => { addAffiliateItemCard
 document.querySelectorAll("[data-affiliate-remove]").forEach((button) => {
   button.addEventListener("click", () => { removeAffiliateItemCard(Number(button.dataset.affiliateRemove || "0")); handleRealtimeChange(); });
 });
-$("saveBtn").addEventListener("click", save);
+if ($("saveBtn")) $("saveBtn").addEventListener("click", save);
 bindCategoryManagerEvents();
 $("enableToc")?.addEventListener("change", applyTocControls);
 $("includeTocH3")?.addEventListener("change", () => {
@@ -1656,12 +1656,16 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") { closePreview(); closeCategoryModal(); }
 });
 
-syncInlineImageVisibility();
-syncAffiliateSectionVisibility();
-syncTocControlsFromContent();
-loadCategories();
-updateSlugPreview();
-updateAllCounts();
-renderSeoChecklist();
-renderPreview();
-setPreviewDevice("pc");
+if ($("title") && $("content_md")) {
+  syncInlineImageVisibility();
+  syncAffiliateSectionVisibility();
+  syncTocControlsFromContent();
+  loadCategories();
+  updateSlugPreview();
+  updateAllCounts();
+  renderSeoChecklist();
+  renderPreview();
+  setPreviewDevice("pc");
+} else {
+  console.warn("add.html 에디터 폼 요소가 누락되어 초기화를 건너뜁니다.");
+}

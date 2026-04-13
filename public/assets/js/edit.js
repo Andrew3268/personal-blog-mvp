@@ -1575,18 +1575,26 @@ function setPreviewDevice(device) {
 async function load() {
   const slug = qs("slug");
   const statusEl = $("saveStatus");
+  const requiredFields = ["slug", "title", "content_md", "tags", "category"];
+  const missingRequiredField = requiredFields.some((id) => !$(id));
 
-  if (!slug) {
-    statusEl.textContent = "slug 파라미터가 없습니다.";
+  if (missingRequiredField) {
+    console.warn("edit.html 에디터 폼 요소가 누락되어 load()를 중단합니다.");
+    if (statusEl) statusEl.textContent = "편집 폼 요소가 누락되어 불러오기를 중단했습니다.";
     return;
   }
 
-  statusEl.textContent = "불러오는 중…";
+  if (!slug) {
+    if (statusEl) statusEl.textContent = "slug 파라미터가 없습니다.";
+    return;
+  }
+
+  if (statusEl) statusEl.textContent = "불러오는 중…";
 
   const res = await fetch(`/api/posts/${encodeURIComponent(slug)}`);
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
-    statusEl.textContent = json?.message || "불러오기 실패";
+    if (statusEl) statusEl.textContent = json?.message || "불러오기 실패";
     return;
   }
 
@@ -1700,7 +1708,7 @@ $("addAffiliateItemBtn")?.addEventListener("click", () => { addAffiliateItemCard
 document.querySelectorAll("[data-affiliate-remove]").forEach((button) => {
   button.addEventListener("click", () => { removeAffiliateItemCard(Number(button.dataset.affiliateRemove || "0")); handleRealtimeChange(); });
 });
-if ($("saveBtn")) $("saveBtn").addEventListener("click", save);
+if ($("saveBtn")) if ($("saveBtn")) $("saveBtn").addEventListener("click", save);
 bindCategoryManagerEvents();
 $("enableToc")?.addEventListener("change", applyTocControls);
 $("includeTocH3")?.addEventListener("change", () => {
@@ -1718,4 +1726,8 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") { closePreview(); closeCategoryModal(); }
 });
 
-load();
+if ($("title") && $("content_md")) {
+  load();
+} else {
+  console.warn("edit.html 에디터 폼 요소가 누락되어 초기화를 건너뜁니다.");
+}
