@@ -1,83 +1,50 @@
-(function(){
-  const path = location.pathname.replace(/\/$/, "") || "/";
-  const currentCategory = String(new URL(location.href).searchParams.get('category') || '').trim();
-
-  document.querySelectorAll('a[data-path]').forEach((a) => {
-    const p = a.getAttribute('data-path');
-    if (p === path) a.setAttribute('aria-current', 'page');
-    else a.removeAttribute('aria-current');
-  });
-
-  const menuEl = document.getElementById('mobileSiteMenu');
+(function () {
+  const menu = document.getElementById('mobileSiteMenu');
   const openBtn = document.querySelector('.topbar-hamburger');
-  const closeBtn = document.querySelector('.mobile-site-menu__close');
+  const categoryBar = document.getElementById('mobileSiteCategoryBar');
 
-  function setMenuState(open) {
-    if (!menuEl || !openBtn) return;
-    menuEl.hidden = !open;
-    menuEl.setAttribute('aria-hidden', open ? 'false' : 'true');
+  if (!menu || !openBtn) return;
+
+  function setOpen(open) {
+    menu.hidden = !open;
+    menu.setAttribute('aria-hidden', open ? 'false' : 'true');
     openBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    document.body.style.overflow = open ? 'hidden' : '';
+    openBtn.classList.toggle('is-open', open);
+    document.body.classList.toggle('has-mobile-menu-open', open);
   }
 
-  openBtn?.addEventListener('click', () => setMenuState(true));
-  closeBtn?.addEventListener('click', () => setMenuState(false));
-  menuEl?.addEventListener('click', (event) => {
-    if (event.target === menuEl) setMenuState(false);
-  });
-  window.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') setMenuState(false);
+  openBtn.addEventListener('click', () => {
+    const isOpen = openBtn.getAttribute('aria-expanded') === 'true';
+    setOpen(!isOpen);
   });
 
-  const mobileCategoryBar = document.getElementById('mobileSiteCategoryBar');
-  const heroCategoryBar = document.getElementById('heroCategoryBar');
-
-  function renderCategories(target, categories) {
-    if (!target) return;
-    if (!Array.isArray(categories) || !categories.length) {
-      target.innerHTML = '<span class="small">카테고리가 없습니다.</span>';
+  menu.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.matches('[data-path]') || target.closest('[data-path]') || target.matches('[data-admin-link]') || target.closest('[data-admin-link]')) {
+      setOpen(false);
       return;
     }
-    target.innerHTML = categories.map((item) => {
-      const name = String(item.name || '').trim();
-      const count = Number(item.count || 0);
-      const isCurrent = currentCategory && currentCategory === name;
-      const href = `/?category=${encodeURIComponent(name)}`;
-      const currentAttr = isCurrent ? ' aria-current="true"' : '';
-      return `<a class="topbar-categories__chip" href="${href}"${currentAttr}>${escapeHtml(name)} <span>${count}</span></a>`;
-    }).join('');
+    if (target === menu || target.classList.contains('mobile-site-menu__panel')) return;
+  });
+
+  window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') setOpen(false);
+  });
+
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (menu.hidden) return;
+    if (target.closest('#mobileSiteMenu .mobile-site-menu__panel')) return;
+    if (target.closest('.topbar-hamburger')) return;
+  });
+
+  if (categoryBar && !categoryBar.dataset.boundCategoryClicks) {
+    categoryBar.dataset.boundCategoryClicks = 'true';
+    categoryBar.addEventListener('click', (event) => {
+      const link = event.target.closest('a');
+      if (link) setOpen(false);
+    });
   }
-
-  function escapeHtml(value) {
-    return String(value ?? '')
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#039;');
-  }
-
-  async function loadCategories() {
-    if (!mobileCategoryBar && !heroCategoryBar) return;
-    const skeleton = Array.from({ length: 7 }).map(() => '<span class="topbar-categories__chip topbar-categories__chip--skeleton"></span>').join('');
-    if (mobileCategoryBar) mobileCategoryBar.innerHTML = skeleton;
-    if (heroCategoryBar) heroCategoryBar.innerHTML = skeleton;
-
-    try {
-      const apiUrl = new URL('/api/posts', window.location.origin);
-      apiUrl.searchParams.set('page', '1');
-      apiUrl.searchParams.set('per_page', '1');
-      apiUrl.searchParams.set('status', 'published');
-      const res = await fetch(apiUrl.toString(), { headers: { accept: 'application/json' } });
-      const json = await res.json();
-      const categories = Array.isArray(json?.sidebar?.categories) ? json.sidebar.categories : [];
-      renderCategories(mobileCategoryBar, categories);
-      renderCategories(heroCategoryBar, categories);
-    } catch (error) {
-      if (mobileCategoryBar) mobileCategoryBar.innerHTML = '<span class="small">카테고리를 불러오지 못했습니다.</span>';
-      if (heroCategoryBar) heroCategoryBar.innerHTML = '<span class="small">카테고리를 불러오지 못했습니다.</span>';
-    }
-  }
-
-  loadCategories();
 })();

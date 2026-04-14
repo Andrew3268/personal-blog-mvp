@@ -847,13 +847,8 @@ function topbar() {
     <div class="mobile-site-menu__panel">
       <div class="mobile-site-menu__head">
         <strong>메뉴</strong>
-        <button class="mobile-site-menu__close" type="button" aria-label="메뉴 닫기">닫기</button>
       </div>
       <nav class="mobile-site-menu__nav" aria-label="모바일 주요 메뉴">
-        <button class="mobile-site-menu__icon-link nav__icon-btn nav__search-btn--mobile" type="button" data-search-open aria-label="검색">
-          <span class="nav__icon" aria-hidden="true">⌕</span>
-          <span>검색</span>
-        </button>
         <a class="mobile-site-menu__icon-link" href="/" data-path="/">
           <span class="nav__icon" aria-hidden="true">⌂</span>
           <span>홈</span>
