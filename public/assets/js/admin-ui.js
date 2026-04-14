@@ -24,8 +24,9 @@
         if (!logoutBtn) {
           logoutBtn = document.createElement('button');
           logoutBtn.type = 'button';
-          logoutBtn.className = 'nav__logout js-topbar-logout';
-          logoutBtn.textContent = '로그아웃';
+          logoutBtn.className = 'nav__icon-btn nav__logout js-topbar-logout';
+          logoutBtn.setAttribute('aria-label', '로그아웃');
+          logoutBtn.innerHTML = '<span class="nav__icon" aria-hidden="true">⎋</span>';
         }
         bindLogout(logoutBtn);
         logoutBtn.hidden = false;
@@ -48,8 +49,9 @@
         if (!logoutBtn) {
           logoutBtn = document.createElement('button');
           logoutBtn.type = 'button';
-          logoutBtn.className = 'nav__logout js-mobile-logout';
-          logoutBtn.textContent = '로그아웃';
+          logoutBtn.className = 'mobile-site-menu__icon-link nav__icon-btn nav__logout js-mobile-logout';
+          logoutBtn.setAttribute('aria-label', '로그아웃');
+          logoutBtn.innerHTML = '<span class="nav__icon" aria-hidden="true">⎋</span><span>로그아웃</span>';
         }
         bindLogout(logoutBtn);
         logoutBtn.hidden = false;
