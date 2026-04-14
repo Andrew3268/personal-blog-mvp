@@ -781,3 +781,39 @@ body.has-search-open{
   }
 }
 
+
+
+
+/* mobile menu close interaction fix */
+.topbar-hamburger{
+  z-index:140 !important;
+}
+.topbar-hamburger.is-open{
+  position:fixed;
+  top:18px;
+  left:20px;
+  z-index:140 !important;
+  background:transparent;
+}
+.topbar-hamburger.is-open:hover,
+.topbar-hamburger.is-open:focus-visible{
+  background:#f3f4f6;
+}
+.mobile-site-menu{
+  z-index:130;
+}
+.mobile-site-menu__panel{
+  padding-top:84px;
+}
+.mobile-site-menu__head{
+  display:none !important;
+}
+@media (max-width:768px){
+  .topbar-hamburger{
+    display:inline-flex;
+  }
+  .topbar-hamburger.is-open{
+    grid-column:auto;
+    justify-self:auto;
+  }
+}
