@@ -855,6 +855,11 @@ function topbar() {
 
   <aside id="mobileSiteMenu" class="mobile-site-menu" hidden aria-hidden="true">
     <div class="mobile-site-menu__panel">
+      <div class="mobile-site-menu__close-wrap">
+        <button class="mobile-site-menu__close-toggle topbar-hamburger is-open" type="button" aria-label="메뉴 닫기" data-mobile-menu-close>
+          <span></span><span></span><span></span>
+        </button>
+      </div>
       <nav class="mobile-site-menu__nav" aria-label="모바일 주요 메뉴">
         <a class="mobile-site-menu__icon-link" href="/" data-path="/">
           <span class="nav__icon" aria-hidden="true">⌂</span>

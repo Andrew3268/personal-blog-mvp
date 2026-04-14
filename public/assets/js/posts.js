@@ -13,6 +13,7 @@
   const postsCategoriesMenuEl = $('#postsCategoriesMenu');
   const postsCategoriesCloseEl = $('#postsCategoriesClose');
   const postsPopularEl = $('#postsPopular');
+  const mobileSiteCategoryBarEl = $('#mobileSiteCategoryBar');
 
   const postsHomeHeroEl = $('#postsHomeHero');
 
@@ -142,7 +143,9 @@
   }
 
   function renderSidebarSkeleton() {
-    if (postsCategoriesBarEl) postsCategoriesBarEl.innerHTML = Array.from({ length: 8 }).map(() => '<span class="topbar-categories__chip topbar-categories__chip--skeleton skeleton-box"></span>').join('');
+    const categorySkeleton = Array.from({ length: 8 }).map(() => '<span class="topbar-categories__chip topbar-categories__chip--skeleton skeleton-box"></span>').join('');
+    if (postsCategoriesBarEl) postsCategoriesBarEl.innerHTML = categorySkeleton;
+    if (mobileSiteCategoryBarEl) mobileSiteCategoryBarEl.innerHTML = categorySkeleton;
     if (postsPopularEl) {
       postsPopularEl.innerHTML = Array.from({ length: 5 }).map((_, index) => `
         <li class="post-side__popular-link post-side__popular-link--skeleton" aria-hidden="true">
@@ -174,10 +177,16 @@
       postsCategoriesEl.innerHTML = '';
     }
 
+    const categoriesHtml = categories.length
+      ? categories.map((item) => `<a class="topbar-categories__chip" href="/?category=${encodeURIComponent(item.name)}">${escapeHtml(item.name)} <span>${Number(item.count || 0)}</span></a>`).join('')
+      : '<span class="small">표시할 카테고리가 없습니다.</span>';
+
     if (postsCategoriesBarEl) {
-      postsCategoriesBarEl.innerHTML = categories.length
-        ? categories.map((item) => `<a class="topbar-categories__chip" href="/?category=${encodeURIComponent(item.name)}">${escapeHtml(item.name)} <span>${Number(item.count || 0)}</span></a>`).join('')
-        : '<span class="small">표시할 카테고리가 없습니다.</span>';
+      postsCategoriesBarEl.innerHTML = categoriesHtml;
+    }
+
+    if (mobileSiteCategoryBarEl) {
+      mobileSiteCategoryBarEl.innerHTML = categoriesHtml;
     }
 
     if (postsPopularEl) {
