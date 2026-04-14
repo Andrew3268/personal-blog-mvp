@@ -114,7 +114,15 @@
               <textarea class="input" id="summary" rows="4" placeholder="본문 상단 요약"></textarea>
             </label>
 
-            <div class="grid grid--3">
+            <label class="editor-status-field">
+              <div class="small">상태</div>
+              <select class="input" id="status">
+                <option value="published">발행</option>
+                <option value="draft">초안</option>
+              </select>
+            </label>
+
+            <div class="grid grid--2">
               <label>
                 <div class="small">카테고리</div>
                 <div style="display:flex; gap:8px; align-items:center;">
@@ -123,19 +131,12 @@
                 </div>
               </label>
               <label>
-                <div class="small">상태</div>
-                <select class="input" id="status">
-                  <option value="published">발행</option>
-                  <option value="draft">초안</option>
-                </select>
-              </label>
-              <label>
                 <div class="small">태그</div>
                 <input class="input" id="tags" placeholder="예: 살림, 정리, 생활 팁" />
               </label>
             </div>
 
-            <div class="grid grid--2">
+            <div class="grid editor-cover-fields">
               <label>
                 <div class="small">대표 이미지 URL</div>
                 <input class="input" id="cover_image" placeholder="https://..." />
@@ -143,17 +144,6 @@
               <label>
                 <div class="small">대표 이미지 ALT</div>
                 <input class="input" id="cover_image_alt" placeholder="대표 이미지 설명" />
-              </label>
-            </div>
-
-            <div class="grid grid--2">
-              <label>
-                <div class="small">포커스 키워드</div>
-                <input class="input" id="focusKeyword" placeholder="메인 키워드" />
-              </label>
-              <label>
-                <div class="small">롱테일 키워드</div>
-                <input class="input" id="longtailKeywords" placeholder="쉼표로 구분" />
               </label>
             </div>
 
@@ -350,6 +340,20 @@
         </div>
 
         <aside class="editor-sidebar">
+          <div class="card editor-keyword-card">
+            <div class="small">SEO 키워드</div>
+            <div class="grid editor-sidebar-fields" style="margin-top:12px;">
+              <label>
+                <div class="small">메인 키워드</div>
+                <input class="input" id="focusKeyword" placeholder="메인 키워드" />
+              </label>
+              <label>
+                <div class="small">롱테일 키워드</div>
+                <input class="input" id="longtailKeywords" placeholder="쉼표로 구분" />
+              </label>
+            </div>
+          </div>
+
           <div class="card editor-seo-card">
             <div class="editor-seo-card__head">
               <div>

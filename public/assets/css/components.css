@@ -526,3 +526,22 @@ body.has-search-open{
     display:none !important;
   }
 }
+
+
+
+.editor-status-field{
+  display:block;
+}
+.editor-cover-fields{
+  gap:14px;
+}
+.editor-keyword-card{
+  padding:18px;
+}
+.editor-sidebar{
+  display:grid;
+  gap:16px;
+}
+.editor-sidebar-fields{
+  gap:12px;
+}
