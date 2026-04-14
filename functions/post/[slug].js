@@ -1,6 +1,5 @@
 import { escapeHtml, jsonld, okHtml, edgeCache } from "../_utils.js";
 import { renderMarkdown, renderMarkdownBlocks, buildTocItemsFromBlocks, renderTocHtml, parseInlineImages, stripInlineImageTokens } from "../../lib/posts/renderer.js";
-import { buildImageAttrs, buildResponsiveImageSet, absolutizeImageUrl } from "../../lib/image-utils.js";
 
 export async function onRequestGet({ params, env, request }) {
   const slug = decodeURIComponent(String(params.slug || ""));
@@ -106,7 +105,7 @@ export async function onRequestGet({ params, env, request }) {
       const shouldShowSidebarAd = toBool(row.enable_sidebar_ad, true);
       const shouldShowInarticleAds = toBool(row.enable_inarticle_ads, true);
       const inArticleAds = buildInArticleAds(adConfig, 2);
-      const bodyHtml = buildArticleBodyHtml(row.content_md || "", inArticleAds, contentTextLength, env, origin);
+      const bodyHtml = buildArticleBodyHtml(row.content_md || "", inArticleAds, contentTextLength, env);
       const faqSectionHtml = renderFaqSection(faqItems);
       const relatedPostsHtml = renderRelatedPostsSection(relatedRows, row.category);
       const tagHighlightsHtml = renderTagHighlights(tags);
@@ -123,7 +122,7 @@ export async function onRequestGet({ params, env, request }) {
         titleText
       );
       const pageTitle = `${titleText} | ${siteName}`;
-      const ogImage = absolutizeImageUrl(row.cover_image || `${origin}/assets/images/og-default.svg`, origin);
+      const ogImage = row.cover_image || `${origin}/assets/images/og-default.svg`;
       const coverImageAltText = String(row.cover_image_alt || `${titleText} 대표 이미지`).trim();
 
       const publishedDate = formatDate(row.published_at);
@@ -219,28 +218,18 @@ export async function onRequestGet({ params, env, request }) {
           }
         : null;
 
-      const coverImageData = row.cover_image
-        ? buildImageAttrs(row.cover_image, {
-            widths: [640, 960, 1280, 1600],
-            sizes: "(min-width: 980px) 900px, 100vw",
-            fallbackWidth: 960,
-            fit: "cover",
-            quality: 85,
-            format: "auto",
-          }, origin)
-        : null;
-      const coverImagePreload = coverImageData
-        ? `<link rel="preload" as="image" href="${escapeHtml(coverImageData.src)}" imagesrcset="${escapeHtml(coverImageData.srcset)}" imagesizes="${escapeHtml(coverImageData.sizes)}" fetchpriority="high" />`
+      const coverImagePreload = row.cover_image
+        ? `<link rel="preload" as="image" href="${escapeHtml(row.cover_image)}" fetchpriority="high" />`
         : "";
       const categoryLink = row.category
         ? `/?category=${encodeURIComponent(String(row.category))}`
         : "/";
-      const coverImageHtml = coverImageData
+      const coverImageHtml = row.cover_image
         ? `
         <figure class="post-cover-wrap">
           <img
             class="post-cover"
-            ${coverImageData.attrs}
+            src="${escapeHtml(row.cover_image)}"
             alt="${escapeHtml(coverImageAltText)}"
             loading="eager"
             fetchpriority="high"
@@ -522,9 +511,9 @@ function buildInArticleAds(config, count) {
   return ads;
 }
 
-function buildArticleBodyHtml(contentMd, adHtmlList = [], contentTextLength = 0, env = {}, imageOrigin = "") {
+function buildArticleBodyHtml(contentMd, adHtmlList = [], contentTextLength = 0, env = {}) {
   const inlineImages = parseInlineImages(contentMd || "");
-  const blocks = renderMarkdownBlocks(contentMd || "", { inlineImages, imageOrigin });
+  const blocks = renderMarkdownBlocks(contentMd || "", { inlineImages });
   if (!blocks.length) return "";
 
   const tocBlock = blocks.find((block) => block.type === "toc");

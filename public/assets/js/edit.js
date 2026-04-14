@@ -365,7 +365,7 @@ function renderInlineImageFigure(data = {}, index = 1) {
   const caption = String(data.caption || "").trim();
   return `
     <figure class="preview-inline-image">
-      <img src="${escapeHtml(buildPreviewCfImageUrl(imageUrl, { width: 960, fit: "scale-down" }))}" alt="${escapeHtml(alt)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
+      <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(alt)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
       ${caption ? `<figcaption>${escapeHtml(caption)}</figcaption>` : ""}
     </figure>
   `;
@@ -822,28 +822,6 @@ function escapeHtml(value) {
 }
 
 
-function absolutizePreviewImageUrl(src) {
-  const value = String(src || "").trim();
-  if (!value) return "";
-  if (/^https?:\/\//i.test(value)) return value;
-  if (value.startsWith("//")) return `https:${value}`;
-  try {
-    return new URL(value, window.location.origin).toString();
-  } catch {
-    return value;
-  }
-}
-
-function buildPreviewCfImageUrl(src, options = {}) {
-  const absolute = absolutizePreviewImageUrl(src);
-  if (!absolute) return "";
-  const config = { format: "auto", quality: 85, ...options };
-  const params = Object.entries(config)
-    .filter(([, value]) => value !== null && value !== undefined && value !== "")
-    .map(([key, value]) => `${key}=${value}`)
-    .join(",");
-  return `/cdn-cgi/image/${params}/${absolute}`;
-}
 
 function stripMarkdown(md) {
   return String(md || "")

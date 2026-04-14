@@ -16,38 +16,6 @@
 
   const postsHomeHeroEl = $('#postsHomeHero');
 
-  function absolutizeImageUrl(src) {
-    const value = String(src || '').trim();
-    if (!value) return '';
-    if (/^https?:\/\//i.test(value)) return value;
-    if (value.startsWith('//')) return `https:${value}`;
-    try {
-      return new URL(value, window.location.origin).toString();
-    } catch {
-      return value;
-    }
-  }
-
-  function buildCfImageUrl(src, options = {}) {
-    const absolute = absolutizeImageUrl(src);
-    if (!absolute) return '';
-    const config = { format: 'auto', quality: 85, ...options };
-    const params = Object.entries(config)
-      .filter(([, value]) => value !== null && value !== undefined && value !== '')
-      .map(([key, value]) => `${key}=${value}`)
-      .join(',');
-    return `/cdn-cgi/image/${params}/${absolute}`;
-  }
-
-  function buildResponsiveImage(src, config = {}) {
-    const widths = (Array.isArray(config.widths) ? config.widths : [320, 480, 640]).filter(Boolean);
-    const unique = [...new Set(widths.map((value) => Math.max(1, parseInt(value, 10) || 0)).filter(Boolean))].sort((a, b) => a - b);
-    const sizes = String(config.sizes || '(min-width: 980px) 320px, 100vw');
-    const fallbackWidth = config.fallbackWidth || unique[Math.min(1, unique.length - 1)] || 480;
-    const srcUrl = buildCfImageUrl(src, { width: fallbackWidth, fit: config.fit || 'cover' });
-    const srcset = unique.map((width) => `${buildCfImageUrl(src, { width, fit: config.fit || 'cover' })} ${width}w`).join(', ');
-    return { src: srcUrl, srcset, sizes };
-  }
 
 
   function setHomeHeroMode() {
@@ -244,17 +212,10 @@
         : '<span class="badge">발행</span>';
       const postHref = itemStatus === 'published' ? `/post/${encodeURIComponent(slug)}` : `/edit.html?slug=${encodeURIComponent(slug)}`;
 
-      const coverImage = cover ? buildResponsiveImage(cover, {
-        widths: [320, 480, 640],
-        sizes: '(min-width: 980px) 320px, 100vw',
-        fallbackWidth: 480,
-        fit: 'cover',
-      }) : null;
-
       return `
         <article class="card post-card post-card--row js-post-card" data-href="${postHref}" tabindex="0" aria-label="${title} 글로 이동">
           <div class="post-card__thumb post-card__thumb--row">
-            ${coverImage ? `<img src="${escapeHtml(coverImage.src)}" srcset="${escapeHtml(coverImage.srcset)}" sizes="${escapeHtml(coverImage.sizes)}" alt="${title} 대표 이미지" loading="lazy" decoding="async" />` : '<div class="post-card__thumb-placeholder">대표 이미지 없음</div>'}
+            ${cover ? `<img src="${escapeHtml(cover)}" alt="${title} 대표 이미지" loading="lazy" decoding="async" />` : '<div class="post-card__thumb-placeholder">대표 이미지 없음</div>'}
           </div>
           <div class="post-card__body">
             <div class="post-meta post-meta--row">
