@@ -2,6 +2,7 @@
   const $ = (sel) => document.querySelector(sel);
   const listEl = $('#postsList');
   const loadingEl = $('#postsLoading');
+  if (loadingEl) loadingEl.textContent = '';
   const errorEl = $('#postsError');
   const emptyEl = $('#postsEmpty');
   const pageTitleEl = $('#postsPageTitle');
@@ -9,6 +10,7 @@
   const postsSummaryEl = $('#postsSummary');
   const postsCategoriesEl = $('#postsCategories');
   const postsCategoriesBarEl = $('#postsCategoriesBar');
+  const heroCategoryBarEl = $('#heroCategoryBar');
   const postsCategoriesToggleEl = $('#postsCategoriesToggle');
   const postsCategoriesMenuEl = $('#postsCategoriesMenu');
   const postsCategoriesCloseEl = $('#postsCategoriesClose');
@@ -145,6 +147,7 @@
   function renderSidebarSkeleton() {
     const categorySkeleton = Array.from({ length: 8 }).map(() => '<span class="topbar-categories__chip topbar-categories__chip--skeleton skeleton-box"></span>').join('');
     if (postsCategoriesBarEl) postsCategoriesBarEl.innerHTML = categorySkeleton;
+    if (heroCategoryBarEl) heroCategoryBarEl.innerHTML = categorySkeleton;
     if (mobileSiteCategoryBarEl) mobileSiteCategoryBarEl.innerHTML = categorySkeleton;
     if (postsPopularEl) {
       postsPopularEl.innerHTML = Array.from({ length: 5 }).map((_, index) => `
@@ -183,6 +186,10 @@
 
     if (postsCategoriesBarEl) {
       postsCategoriesBarEl.innerHTML = categoriesHtml;
+    }
+
+    if (heroCategoryBarEl) {
+      heroCategoryBarEl.innerHTML = categoriesHtml;
     }
 
     if (mobileSiteCategoryBarEl) {
@@ -237,7 +244,7 @@
             <div class="post-card__title">${title}</div>
             <div class="post-card__summary">${summary}</div>
             <div class="row post-admin-actions" style="flex-wrap:wrap">
-              ${itemStatus === 'published' ? `<a class="btn btn--brand" href="/post/${encodeURIComponent(slug)}">글 보기</a>` : ''}
+              ${itemStatus === 'published' ? `<a class="post-card__readmore" href="/post/${encodeURIComponent(slug)}">Read more <span aria-hidden="true">→</span></a>` : ''}
               ${isAdmin ? `<a class="btn" href="/edit.html?slug=${encodeURIComponent(slug)}">수정</a>` : ''}
               ${isAdmin ? `<button class="btn btn--danger js-delete-post" type="button" data-slug="${encodeURIComponent(slug)}" data-title="${escapeHtml(rawTitle)}">삭제</button>` : ''}
             </div>

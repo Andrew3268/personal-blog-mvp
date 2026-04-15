@@ -863,3 +863,48 @@ body.has-search-open{
 .mobile-site-menu .topbar-categories__list--mobile{
   display:flex !important;
 }
+
+
+
+/* index and header refinements */
+#postsLoading:empty{
+  display:none;
+}
+.post-card__readmore{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  color:#333;
+  font-size:14px;
+  font-weight:700;
+  text-decoration:none;
+  background:transparent;
+  border:0;
+  padding:0;
+}
+.post-card__readmore:hover,
+.post-card__readmore:focus-visible{
+  color:#111;
+  outline:none;
+}
+.post-card__readmore span{
+  display:inline-block;
+  transform:translateY(-1px);
+}
+.nav__icon-svg{
+  width:25px;
+  height:25px;
+  stroke:#000;
+}
+.nav__icon-btn{
+  color:#000;
+}
+.posts-home-hero__category-wrap{
+  display:block !important;
+}
+#heroCategoryBar{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:12px;
+}

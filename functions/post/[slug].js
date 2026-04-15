@@ -834,7 +834,7 @@ function topbar() {
       </a>
 
       <nav class="nav nav--utility nav--right" aria-label="오른쪽 메뉴">
-        <a href="/about/" data-path="/about">소개</a>
+        <a href="/about/" data-path="/about">About</a>
         <a href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
         <button class="nav__icon-btn nav__search-btn" type="button" data-search-open aria-label="검색 열기">
           <svg class="nav__icon-svg" viewBox="0 0 24 24" aria-hidden="true">
@@ -865,7 +865,7 @@ function topbar() {
           <span class="nav__icon" aria-hidden="true">⌂</span>
           <span>홈</span>
         </a>
-        <a class="mobile-site-menu__text-link" href="/about/" data-path="/about">소개</a>
+        <a class="mobile-site-menu__text-link" href="/about/" data-path="/about">About</a>
         <a class="mobile-site-menu__text-link" href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
       </nav>
       <div class="mobile-site-menu__section">
