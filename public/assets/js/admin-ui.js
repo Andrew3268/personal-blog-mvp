@@ -26,7 +26,7 @@
           logoutBtn.type = 'button';
           logoutBtn.className = 'nav__icon-btn nav__logout js-topbar-logout';
           logoutBtn.setAttribute('aria-label', '로그아웃');
-          logoutBtn.innerHTML = '<span class="nav__icon" aria-hidden="true">⎋</span>';
+          logoutBtn.innerHTML = '<svg class="nav__icon-svg nav__icon-svg--logout" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"></path><path d="M10 17l5-5-5-5"></path><path d="M15 12H4"></path></svg>';
         }
         bindLogout(logoutBtn);
         logoutBtn.hidden = false;
@@ -51,7 +51,7 @@
           logoutBtn.type = 'button';
           logoutBtn.className = 'mobile-site-menu__icon-link nav__icon-btn nav__logout js-mobile-logout';
           logoutBtn.setAttribute('aria-label', '로그아웃');
-          logoutBtn.innerHTML = '<span class="nav__icon" aria-hidden="true">⎋</span><span>로그아웃</span>';
+          logoutBtn.innerHTML = '<svg class="nav__icon-svg nav__icon-svg--logout" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"></path><path d="M10 17l5-5-5-5"></path><path d="M15 12H4"></path></svg><span>로그아웃</span>';
         }
         bindLogout(logoutBtn);
         logoutBtn.hidden = false;

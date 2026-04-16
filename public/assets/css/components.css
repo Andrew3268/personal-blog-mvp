@@ -908,3 +908,49 @@ body.has-search-open{
   justify-content:center;
   gap:12px;
 }
+
+
+
+/* refined icon styles */
+.post-card__readmore{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+.post-card__readmore-icon{
+  width:16px;
+  height:16px;
+  stroke:currentColor;
+  fill:none;
+  stroke-width:1.7;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.nav__icon-svg--logout{
+  width:21px;
+  height:21px;
+  stroke:#000;
+  fill:none;
+  stroke-width:1.85;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.btn--icon-only{
+  width:40px;
+  min-width:40px;
+  height:40px;
+  padding:0;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:12px;
+}
+.btn__icon-svg{
+  width:18px;
+  height:18px;
+  stroke:currentColor;
+  fill:none;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
