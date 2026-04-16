@@ -529,10 +529,51 @@ function removeAffiliateItemCard(no) {
   syncAffiliateSectionVisibility();
 }
 
+
+function parseLsiKeywordsToken(line = "") {
+  const match = String(line || "").trim().match(/^\[\[POST_LSI\s+keywords="([^"]*)"\]\]$/);
+  if (!match) return null;
+  const raw = String(match[1] || "").replace(/&quot;/g, '"').trim();
+  const keywords = raw
+    ? raw.split("||").map((item) => item.trim()).filter(Boolean)
+    : [];
+  return { keywords };
+}
+
+function stripLsiKeywordsTokenLines(md = "") {
+  return String(md || "")
+    .split("\n")
+    .filter((line) => !parseLsiKeywordsToken(line))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function buildLsiKeywordsToken(keywords = []) {
+  const items = Array.isArray(keywords)
+    ? keywords.map((item) => String(item || "").trim()).filter(Boolean)
+    : [];
+  if (!items.length) return "";
+  const safe = items.map((item) => item.replace(/"/g, "&quot;")).join("||");
+  return `[[POST_LSI keywords="${safe}"]]`;
+}
+
+function applyLsiKeywordsFromMarkdown(md = "") {
+  let lsiKeywords = [];
+  String(md || "").split("\n").forEach((line) => {
+    const token = parseLsiKeywordsToken(line);
+    if (!token) return;
+    lsiKeywords = token.keywords || [];
+  });
+  if ($("lsiKeywords")) $("lsiKeywords").value = Array.isArray(lsiKeywords) ? lsiKeywords.join(", ") : "";
+}
+
 function buildContentWithMetaTokens(md = "") {
-  const cleanMd = stripAffiliateTokenLines(stripInlineImageTokenLines(md));
+  const cleanMd = stripLsiKeywordsTokenLines(stripAffiliateTokenLines(stripInlineImageTokenLines(md)));
   const imageMeta = collectInlineImageFormData();
   const affiliateMeta = collectAffiliateFormData();
+  const lsiKeywords = parseKeywords($("lsiKeywords")?.value || "");
+  const lsiToken = buildLsiKeywordsToken(lsiKeywords);
   const imageTokens = [
     buildInlineImageToken("POST_IMAGE_1", imageMeta.image1),
     buildInlineImageToken("POST_IMAGE_2", imageMeta.image2)
@@ -540,7 +581,7 @@ function buildContentWithMetaTokens(md = "") {
   const affiliateTokens = affiliateMeta.enabled
     ? affiliateMeta.items.map((item, index) => buildAffiliateToken(index + 1, item)).filter(Boolean)
     : [];
-  return [...imageTokens, ...affiliateTokens, cleanMd].filter(Boolean).join("\n\n").trim();
+  return [lsiToken, ...imageTokens, ...affiliateTokens, cleanMd].filter(Boolean).join("\n\n").trim();
 }
 
 function renderAffiliatePreviewCard(data = {}, index = 1) {
@@ -1639,14 +1680,14 @@ async function load() {
   let longtailKeywords = [];
   try { longtailKeywords = JSON.parse(item.longtail_keywords_json || "[]"); } catch {}
   if ($("longtailKeywords")) $("longtailKeywords").value = Array.isArray(longtailKeywords) ? longtailKeywords.join(", ") : "";
-  if ($("lsiKeywords")) $("lsiKeywords").value = "";
   $("status").value = item.status || "published";
   if ($("enable_sidebar_ad")) $("enable_sidebar_ad").checked = !(String(item.enable_sidebar_ad ?? 1) === "0");
   if ($("enable_inarticle_ads")) $("enable_inarticle_ads").checked = !(String(item.enable_inarticle_ads ?? 1) === "0");
   const rawContentMd = item.content_md || "";
   applyInlineImageFormData(parseInlineImageMetaFromMarkdown(rawContentMd));
   applyAffiliateFormData(parseAffiliateMetaFromMarkdown(rawContentMd));
-  $("content_md").value = stripAffiliateTokenLines(stripInlineImageTokenLines(rawContentMd));
+  applyLsiKeywordsFromMarkdown(rawContentMd);
+  $("content_md").value = stripLsiKeywordsTokenLines(stripAffiliateTokenLines(stripInlineImageTokenLines(rawContentMd)));
   if ($("faq_md")) $("faq_md").value = item.faq_md || "";
 
   let tags = [];

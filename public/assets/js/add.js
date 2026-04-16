@@ -529,10 +529,51 @@ function removeAffiliateItemCard(no) {
   syncAffiliateSectionVisibility();
 }
 
+
+function parseLsiKeywordsToken(line = "") {
+  const match = String(line || "").trim().match(/^\[\[POST_LSI\s+keywords="([^"]*)"\]\]$/);
+  if (!match) return null;
+  const raw = String(match[1] || "").replace(/&quot;/g, '"').trim();
+  const keywords = raw
+    ? raw.split("||").map((item) => item.trim()).filter(Boolean)
+    : [];
+  return { keywords };
+}
+
+function stripLsiKeywordsTokenLines(md = "") {
+  return String(md || "")
+    .split("\n")
+    .filter((line) => !parseLsiKeywordsToken(line))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function buildLsiKeywordsToken(keywords = []) {
+  const items = Array.isArray(keywords)
+    ? keywords.map((item) => String(item || "").trim()).filter(Boolean)
+    : [];
+  if (!items.length) return "";
+  const safe = items.map((item) => item.replace(/"/g, "&quot;")).join("||");
+  return `[[POST_LSI keywords="${safe}"]]`;
+}
+
+function applyLsiKeywordsFromMarkdown(md = "") {
+  let lsiKeywords = [];
+  String(md || "").split("\n").forEach((line) => {
+    const token = parseLsiKeywordsToken(line);
+    if (!token) return;
+    lsiKeywords = token.keywords || [];
+  });
+  if ($("lsiKeywords")) $("lsiKeywords").value = Array.isArray(lsiKeywords) ? lsiKeywords.join(", ") : "";
+}
+
 function buildContentWithMetaTokens(md = "") {
-  const cleanMd = stripAffiliateTokenLines(stripInlineImageTokenLines(md));
+  const cleanMd = stripLsiKeywordsTokenLines(stripAffiliateTokenLines(stripInlineImageTokenLines(md)));
   const imageMeta = collectInlineImageFormData();
   const affiliateMeta = collectAffiliateFormData();
+  const lsiKeywords = parseKeywords($("lsiKeywords")?.value || "");
+  const lsiToken = buildLsiKeywordsToken(lsiKeywords);
   const imageTokens = [
     buildInlineImageToken("POST_IMAGE_1", imageMeta.image1),
     buildInlineImageToken("POST_IMAGE_2", imageMeta.image2)
@@ -540,7 +581,7 @@ function buildContentWithMetaTokens(md = "") {
   const affiliateTokens = affiliateMeta.enabled
     ? affiliateMeta.items.map((item, index) => buildAffiliateToken(index + 1, item)).filter(Boolean)
     : [];
-  return [...imageTokens, ...affiliateTokens, cleanMd].filter(Boolean).join("\n\n").trim();
+  return [lsiToken, ...imageTokens, ...affiliateTokens, cleanMd].filter(Boolean).join("\n\n").trim();
 }
 
 function renderAffiliatePreviewCard(data = {}, index = 1) {
