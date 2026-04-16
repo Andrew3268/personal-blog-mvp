@@ -992,6 +992,7 @@ function evaluateSeo() {
   const faqItems = parseFaqMarkdown(faqMd);
   const focusKeyword = $("focusKeyword")?.value.trim() || "";
   const longtailKeywords = parseKeywords($("longtailKeywords")?.value || "");
+  const lsiKeywords = parseKeywords($("lsiKeywords")?.value || "");
   const coverImage = $("cover_image")?.value.trim() || "";
   const coverImageAlt = $("cover_image_alt")?.value.trim() || "";
 
@@ -1020,6 +1021,10 @@ function evaluateSeo() {
   const longtailResult = evaluateLongtailKeywords(
     [plainContent],
     longtailKeywords
+  );
+  const lsiResult = evaluateLongtailKeywords(
+    [plainContent],
+    lsiKeywords
   );
   const stuffingResult = evaluateStuffing(focusKeyword, plainContent);
 
@@ -1211,6 +1216,26 @@ function evaluateSeo() {
       detail: longtailResult.count === longtailResult.total
         ? `${longtailResult.total}개 모두 본문에 포함되었습니다.`
         : `총 ${longtailResult.total}개 중 ${longtailResult.count}개 포함 · 미포함: ${longtailResult.missing.join(", ")}`
+    });
+  }
+
+  if (!lsiKeywords.length) {
+    checks.push({
+      key: "lsiKeywords",
+      group: "keywords",
+      label: "LSI 키워드 설정",
+      status: "warn",
+      detail: "LSI 키워드를 콤마로 입력하면 본문 포함 개수를 함께 점검합니다."
+    });
+  } else {
+    checks.push({
+      key: "lsiCoverage",
+      group: "keywords",
+      label: "LSI 키워드 본문 포함 개수",
+      status: lsiResult.count === lsiResult.total ? "good" : lsiResult.count >= 1 ? "warn" : "bad",
+      detail: lsiResult.count === lsiResult.total
+        ? `총 ${lsiResult.total}개 중 ${lsiResult.count}개 포함되었습니다.`
+        : `총 ${lsiResult.total}개 중 ${lsiResult.count}개 포함 · 미포함: ${lsiResult.missing.join(", ")}`
     });
   }
 
@@ -1627,7 +1652,7 @@ function handleRealtimeChange() {
   renderPreview();
 }
 
-["title", "meta_description", "summary", "content_md", "faq_md", "focusKeyword", "longtailKeywords", "cover_image", "cover_image_alt", "tags", "category", "inlineImage1Id", "inlineImage1Alt", "inlineImage1Caption", "inlineImage1Position", "inlineImage2Id", "inlineImage2Alt", "inlineImage2Caption", "inlineImage2Position", "affiliateImageUrl1", "affiliateLinkUrl1", "affiliateProductName1", "affiliateCurrentPrice1", "affiliateSalePrice1", "affiliateDiscountRate1", "affiliateButtonText1", "affiliatePosition1", "affiliateImageUrl2", "affiliateLinkUrl2", "affiliateProductName2", "affiliateCurrentPrice2", "affiliateSalePrice2", "affiliateDiscountRate2", "affiliateButtonText2", "affiliatePosition2", "affiliateImageUrl3", "affiliateLinkUrl3", "affiliateProductName3", "affiliateCurrentPrice3", "affiliateSalePrice3", "affiliateDiscountRate3", "affiliateButtonText3", "affiliatePosition3", "affiliateImageUrl4", "affiliateLinkUrl4", "affiliateProductName4", "affiliateCurrentPrice4", "affiliateSalePrice4", "affiliateDiscountRate4", "affiliateButtonText4", "affiliatePosition4", "affiliateImageUrl5", "affiliateLinkUrl5", "affiliateProductName5", "affiliateCurrentPrice5", "affiliateSalePrice5", "affiliateDiscountRate5", "affiliateButtonText5", "affiliatePosition5"].forEach((id) => {
+["title", "meta_description", "summary", "content_md", "faq_md", "focusKeyword", "longtailKeywords", "lsiKeywords", "cover_image", "cover_image_alt", "tags", "category", "inlineImage1Id", "inlineImage1Alt", "inlineImage1Caption", "inlineImage1Position", "inlineImage2Id", "inlineImage2Alt", "inlineImage2Caption", "inlineImage2Position", "affiliateImageUrl1", "affiliateLinkUrl1", "affiliateProductName1", "affiliateCurrentPrice1", "affiliateSalePrice1", "affiliateDiscountRate1", "affiliateButtonText1", "affiliatePosition1", "affiliateImageUrl2", "affiliateLinkUrl2", "affiliateProductName2", "affiliateCurrentPrice2", "affiliateSalePrice2", "affiliateDiscountRate2", "affiliateButtonText2", "affiliatePosition2", "affiliateImageUrl3", "affiliateLinkUrl3", "affiliateProductName3", "affiliateCurrentPrice3", "affiliateSalePrice3", "affiliateDiscountRate3", "affiliateButtonText3", "affiliatePosition3", "affiliateImageUrl4", "affiliateLinkUrl4", "affiliateProductName4", "affiliateCurrentPrice4", "affiliateSalePrice4", "affiliateDiscountRate4", "affiliateButtonText4", "affiliatePosition4", "affiliateImageUrl5", "affiliateLinkUrl5", "affiliateProductName5", "affiliateCurrentPrice5", "affiliateSalePrice5", "affiliateDiscountRate5", "affiliateButtonText5", "affiliatePosition5"].forEach((id) => {
   const el = $(id);
   if (el) el.addEventListener("input", handleRealtimeChange);
   if (el && el.tagName === "SELECT") el.addEventListener("change", handleRealtimeChange);

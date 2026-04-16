@@ -954,3 +954,9 @@ body.has-search-open{
   stroke-linecap:round;
   stroke-linejoin:round;
 }
+
+
+
+.editor-sidebar-fields{
+  gap:12px;
+}
