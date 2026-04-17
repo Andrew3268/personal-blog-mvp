@@ -960,3 +960,87 @@ body.has-search-open{
 .editor-sidebar-fields{
   gap:12px;
 }
+
+
+/* Wackywiki-0417-V2 mobile menu cleanup */
+.mobile-site-menu__panel{
+  display:flex;
+  flex-direction:column;
+}
+.mobile-site-menu__nav,
+.mobile-site-menu__section--categories,
+.mobile-site-menu__section--admin{
+  width:100%;
+  max-width:420px;
+  margin:0 auto;
+}
+.mobile-site-menu__nav{
+  gap:10px;
+  margin-bottom:14px;
+}
+.mobile-site-menu__text-link,
+.mobile-site-menu__text-link--button,
+.mobile-site-menu .topbar-categories__chip{
+  border:0;
+  background:transparent;
+  color:#111827;
+  font:inherit;
+  text-decoration:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  min-height:52px;
+  padding:0 10px;
+  border-radius:18px;
+  font-size:24px;
+  font-weight:800;
+  letter-spacing:-.02em;
+  text-align:center;
+  transition:background .18s ease, transform .18s ease, color .18s ease;
+}
+.mobile-site-menu__text-link--button{
+  cursor:pointer;
+}
+.mobile-site-menu__text-link:hover,
+.mobile-site-menu__text-link:focus-visible,
+.mobile-site-menu__text-link--button:hover,
+.mobile-site-menu__text-link--button:focus-visible,
+.mobile-site-menu .topbar-categories__chip:hover,
+.mobile-site-menu .topbar-categories__chip:focus-visible{
+  background:#f8fafc;
+  color:#111827;
+  outline:none;
+  transform:translateY(-1px);
+}
+.mobile-site-menu__section--categories{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:10px;
+}
+.mobile-site-menu__section--admin{
+  margin-top:auto;
+  padding-top:18px;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:10px;
+}
+.mobile-site-menu .topbar-categories__list--mobile{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:flex-start;
+  gap:10px;
+  width:100%;
+  padding:0;
+}
+.mobile-site-menu .topbar-categories__chip{
+  min-height:52px;
+  padding:0 10px;
+  border-radius:18px;
+}
+.mobile-site-menu .topbar-categories__chip::after{
+  content:none !important;
+}

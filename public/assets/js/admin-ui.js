@@ -41,29 +41,31 @@
       }
     });
 
-    const mobileNavs = document.querySelectorAll('.mobile-site-menu__nav');
-    mobileNavs.forEach((nav) => {
-      let logoutBtn = nav.querySelector('.js-mobile-logout');
+    const mobileSections = document.querySelectorAll('[data-mobile-admin-section]');
+    mobileSections.forEach((section) => {
+      const dashboardLink = section.querySelector('[data-admin-link]');
+      let logoutBtn = section.querySelector('.js-mobile-logout');
 
       if (isAdmin) {
+        section.hidden = false;
         if (!logoutBtn) {
           logoutBtn = document.createElement('button');
           logoutBtn.type = 'button';
-          logoutBtn.className = 'mobile-site-menu__icon-link nav__icon-btn nav__logout js-mobile-logout';
+          logoutBtn.className = 'mobile-site-menu__text-link mobile-site-menu__text-link--button js-mobile-logout';
           logoutBtn.setAttribute('aria-label', '로그아웃');
-          logoutBtn.innerHTML = '<svg class="nav__icon-svg nav__icon-svg--logout" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"></path><path d="M10 17l5-5-5-5"></path><path d="M15 12H4"></path></svg><span>로그아웃</span>';
+          logoutBtn.textContent = '로그아웃';
         }
         bindLogout(logoutBtn);
         logoutBtn.hidden = false;
 
-        const dashboardLink = nav.querySelector('[data-admin-link]');
-        if (dashboardLink && dashboardLink.parentNode === nav) {
+        if (dashboardLink && dashboardLink.parentNode === section) {
           dashboardLink.insertAdjacentElement('afterend', logoutBtn);
-        } else if (!nav.contains(logoutBtn)) {
-          nav.appendChild(logoutBtn);
+        } else if (!section.contains(logoutBtn)) {
+          section.appendChild(logoutBtn);
         }
-      } else if (logoutBtn) {
-        logoutBtn.remove();
+      } else {
+        section.hidden = true;
+        if (logoutBtn) logoutBtn.remove();
       }
     });
   }
