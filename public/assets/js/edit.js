@@ -1030,7 +1030,7 @@ function evaluateSeo() {
   const slug = $("slugPreview").value.trim();
   const metaDescription = $("meta_description").value.trim();
   const summary = $("summary").value.trim();
-  const contentMd = $("content_md").value || "";
+  const contentMd = stripLsiKeywordsTokenLines($("content_md").value || "");
   const inlineImages = collectInlineImageFormData();
   const affiliateMeta = collectAffiliateFormData();
   const contentLengthWithoutSpaces = countTextWithoutSpaces(contentMd);
@@ -1553,7 +1553,7 @@ function renderPreview() {
   const metaDescription = $("meta_description").value.trim();
   const coverImage = $("cover_image").value.trim();
   const coverImageAlt = $("cover_image_alt")?.value.trim() || "";
-  const contentMd = $("content_md").value || "";
+  const contentMd = stripLsiKeywordsTokenLines($("content_md").value || "");
   const inlineImages = collectInlineImageFormData();
   const affiliateMeta = collectAffiliateFormData();
   const contentLengthWithoutSpaces = countTextWithoutSpaces(contentMd);
