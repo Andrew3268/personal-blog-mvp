@@ -824,9 +824,7 @@ function topbar() {
         <span></span><span></span><span></span>
       </button>
 
-      <div class="topbar-left-slot">
-        <div class="topbar-admin-status" data-admin-status hidden aria-live="polite">관리자 로그인 중</div>
-      </div>
+      <div class="topbar-left-slot"><div class="topbar-admin-status" data-admin-status hidden aria-live="polite">관리자 로그인 중</div></div>
 
       <a class="brand brand--center" href="/" aria-label="Wacky Blog 홈">
         <span class="brand__mark">W</span>
@@ -861,16 +859,14 @@ function topbar() {
         </button>
       </div>
       <nav class="mobile-site-menu__nav" aria-label="모바일 주요 메뉴">
-        <a class="mobile-site-menu__icon-link" href="/" data-path="/">
-          <span class="nav__icon" aria-hidden="true">⌂</span>
-          <span>홈</span>
-        </a>
+        <a class="mobile-site-menu__text-link" href="/" data-path="/">홈</a>
         <a class="mobile-site-menu__text-link" href="/about/" data-path="/about">About</a>
-        <a class="mobile-site-menu__text-link" href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
       </nav>
-      <div class="mobile-site-menu__section">
-        <div class="mobile-site-menu__title">카테고리</div>
+      <div class="mobile-site-menu__section mobile-site-menu__section--categories">
         <div id="mobileSiteCategoryBar" class="topbar-categories__list topbar-categories__list--mobile"></div>
+      </div>
+      <div class="mobile-site-menu__section mobile-site-menu__section--admin" data-mobile-admin-section hidden>
+        <a class="mobile-site-menu__text-link" href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
       </div>
     </div>
   </aside>`;
