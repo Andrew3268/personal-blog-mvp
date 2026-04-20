@@ -78,7 +78,7 @@ export async function onRequestGet({ params, env, request }) {
 
       const siteName = "Wacky Blog";
       const siteDescription = "실용적인 생활 정보와 정리된 가이드를 제공하는 블로그";
-      const authorName = "Steve Lee";
+      const authorName = "Nerd Verse";
       const faqItems = parseFaqMarkdown(row.faq_md || "");
       const relatedRows = row.category
         ? (await env.BLOG_DB.prepare(`
@@ -129,6 +129,19 @@ export async function onRequestGet({ params, env, request }) {
       const updatedDate = formatDate(row.updated_at);
       const publishedIso = toIso(row.published_at);
       const updatedIso = toIso(row.updated_at);
+      const authorCardHtml = `
+        <div class="post-author-card" aria-label="작성자 정보">
+          <div class="post-author-card__avatar" aria-hidden="true">NV</div>
+          <div class="post-author-card__body">
+            <div class="post-author-card__name">${escapeHtml(authorName)}</div>
+            <div class="post-author-card__meta">
+              <time datetime="${escapeHtml(publishedIso || "")}">발행 ${escapeHtml(publishedDate)}</time>
+              <span aria-hidden="true"> · </span>
+              <time datetime="${escapeHtml(updatedIso || "")}">수정 ${escapeHtml(updatedDate)}</time>
+            </div>
+          </div>
+        </div>
+      `;
 
       const breadcrumbItems = [
         { name: "홈", url: `${origin}/` }
@@ -329,6 +342,8 @@ export async function onRequestGet({ params, env, request }) {
 
         ${row.summary ? `<p class="p post-summary" itemprop="description">${escapeHtml(String(row.summary))}</p>` : ""}
 
+        ${authorCardHtml}
+
         ${coverImageHtml}
 
         <meta itemprop="author" content="${escapeHtml(authorName)}" />
@@ -496,9 +511,7 @@ function renderAdUnit({ config, slot, label, kind }) {
 
 function renderSidebarAd(config) {
   return `
-    <section class="post-side__section post-side__ad" aria-label="광고 영역">
-      <h2 class="h2">광고 영역</h2>
-      <p class="small">사이드바 고정 광고 영역입니다.</p>
+    <section class="post-side__section post-side__ad" aria-label="사이드바 광고">
       ${renderAdUnit({ config, slot: config.sidebarSlot, label: "사이드바 광고", kind: "sidebar" })}
     </section>
   `;
@@ -619,7 +632,7 @@ function renderPopularPosts(items) {
     <section class="post-side__section post-side__popular" aria-labelledby="post-popular-title">
       <div class="row post-section-header post-section-header--compact">
         <h2 id="post-popular-title" class="h2">인기글</h2>
-        <span class="small">조회순</span>
+        
       </div>
       <ul class="post-side__popular-list">
         ${items.map((item, index) => `
@@ -693,25 +706,30 @@ function renderRelatedPostsSection(items, category) {
   if (!Array.isArray(items) || !items.length) return "";
   const categoryText = String(category || "").trim();
   const headingText = categoryText ? `${categoryText} 관련글 더보기` : "관련글 더보기";
+  const categoryActionHtml = categoryText
+    ? `<div class="post-related__action"><a class="btn" href="/?category=${encodeURIComponent(categoryText)}">카테고리 전체 보기</a></div>`
+    : "";
   return `
     <section class="post-related post-section-divider post-section-divider--related" aria-labelledby="post-related-title">
-      <div class="row post-section-header post-section-header--related">
-        <div>
-          <h2 id="post-related-title" class="h2 post-section-title">${escapeHtml(headingText)}</h2>
-          <p class="small post-related__desc">같은 카테고리의 최신 글 5개를 보여드립니다.</p>
+      <div class="post-related__layout">
+        <div class="row post-section-header post-section-header--related">
+          <div>
+            <h2 id="post-related-title" class="h2 post-section-title">${escapeHtml(headingText)}</h2>
+            <p class="small post-related__desc">같은 카테고리의 최신 글 5개를 보여드립니다.</p>
+          </div>
         </div>
-        ${categoryText ? `<a class="btn" href="/?category=${encodeURIComponent(categoryText)}">카테고리 전체 보기</a>` : ""}
+        ${categoryActionHtml}
+        <ul class="list-reset post-related__list">
+          ${items.map((item, index) => `
+            <li>
+              <a href="/post/${encodeURIComponent(String(item.slug || ""))}" class="post-related-link">
+                <span aria-hidden="true" class="post-related-link__index">${index + 1}.</span>
+                <span>${escapeHtml(String(item.title || "(제목 없음)"))}</span>
+              </a>
+            </li>
+          `).join("")}
+        </ul>
       </div>
-      <ul class="list-reset post-related__list">
-        ${items.map((item, index) => `
-          <li>
-            <a href="/post/${encodeURIComponent(String(item.slug || ""))}" class="post-related-link">
-              <span aria-hidden="true" class="post-related-link__index">${index + 1}.</span>
-              <span>${escapeHtml(String(item.title || "(제목 없음)"))}</span>
-            </a>
-          </li>
-        `).join("")}
-      </ul>
     </section>
   `;
 }
