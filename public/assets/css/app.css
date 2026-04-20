@@ -19,7 +19,7 @@ img{max-width:100%;display:block}
 .container{max-width:var(--container);margin:0 auto;padding:18px 16px 56px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius2);box-shadow:var(--shadow);padding:22px}
 .grid{display:grid;gap:16px}
-h1 { font-size: 3.5rem; } h2 { font-size: 2.25rem; } h3 { font-size: 1.5rem; }/* 데스크탑 (기본) */
+h1 { font-size: 3rem; } h2 { font-size: 2rem; } h3 { font-size: 1.5rem; }/* 데스크탑 (기본) */
 @media (max-width: 1023px) { h1 { font-size: 2.75rem; } h2 { font-size: 1.875rem; } h3 { font-size: 1.375rem; } }/* 태블릿 (1023px 이하) */
 @media (max-width: 767px) { h1 { font-size: 2rem; } h2 { font-size: 1.5rem; } h3 { font-size: 1.125rem; } .card{border:none;padding:10px;box-shadow:none;}}/* 모바일 (767px 이하) */
 @media (min-width:860px){.grid--2{grid-template-columns:1.1fr .9fr}.grid--3{grid-template-columns:repeat(3,1fr)}}
@@ -468,3 +468,33 @@ body.has-preview-open{overflow:hidden}
   .post-body table { font-size: 13px; }
   .post-body table th, .post-body table td { padding: 12px 14px; }
 }
+
+.posts-layout--home-top{margin-top:20px}
+.posts-error{color:#b00020}
+.posts-popular-list{margin-top:14px}
+.posts-loading-text{display:none}
+.row--chips{gap:8px;flex-wrap:wrap}
+.row--top-gap{margin-top:14px}
+.row--top-gap-lg{margin-top:14px}
+.post-admin-actions--wrap{flex-wrap:wrap}
+.post-admin-actions--meta{gap:8px;flex-wrap:wrap;align-items:center}
+.badge--draft{background:rgba(245,158,11,.14);color:#92400e;border-color:rgba(245,158,11,.22)}
+.adsbygoogle--block{display:block}
+.breadcrumb--post{margin:16px 0 20px}
+.post-hero__meta-row{justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.post-section-divider{border-top:1px solid var(--border)}
+.post-section-divider--tags{margin-top:32px;padding-top:24px}
+.post-section-divider--faq,.post-section-divider--related{margin-top:36px;padding-top:28px}
+.post-section-header{justify-content:space-between;align-items:flex-end;flex-wrap:wrap}
+.post-section-header--compact{gap:10px}
+.post-section-header--related{gap:12px}
+.post-section-title{margin:0}
+.post-related__desc{margin:8px 0 0}
+.post-related__list{display:grid;gap:10px;margin-top:16px}
+.post-related-link{display:inline-flex;gap:8px;align-items:flex-start;text-decoration:none;line-height:1.55}
+.post-related-link__index{color:var(--brand);font-weight:800;min-width:1.5em}
+.post-faq__list{display:grid;gap:14px;margin-top:14px}
+.post-faq__question{margin:0 0 10px}
+.table-cell--left{text-align:left}
+.table-cell--center{text-align:center}
+.table-cell--right{text-align:right}

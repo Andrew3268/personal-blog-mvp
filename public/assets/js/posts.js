@@ -2,7 +2,6 @@
   const $ = (sel) => document.querySelector(sel);
   const listEl = $('#postsList');
   const loadingEl = $('#postsLoading');
-  if (loadingEl) loadingEl.textContent = '';
   const errorEl = $('#postsError');
   const emptyEl = $('#postsEmpty');
   const pageTitleEl = $('#postsPageTitle');
@@ -117,7 +116,7 @@
         <div class="post-card__thumb post-card__thumb--row skeleton-box skeleton-box--media"></div>
         <div class="post-card__body">
           <div class="post-meta post-meta--row">
-            <div class="row" style="gap:8px;flex-wrap:wrap">
+            <div class="row row--chips">
               <span class="skeleton-box skeleton-box--chip"></span>
               <span class="skeleton-box skeleton-box--chip skeleton-box--chip-short"></span>
             </div>
@@ -128,7 +127,7 @@
             <span class="skeleton-box skeleton-box--text"></span>
             <span class="skeleton-box skeleton-box--text skeleton-box--text-short"></span>
           </div>
-          <div class="row post-admin-actions" style="flex-wrap:wrap">
+          <div class="row post-admin-actions post-admin-actions--wrap">
             <span class="skeleton-box skeleton-box--button"></span>
             <span class="skeleton-box skeleton-box--button skeleton-box--button-muted"></span>
           </div>
@@ -224,7 +223,7 @@
       const cover = String(it.cover_image || '').trim();
       const itemStatus = String(it.status || 'published').trim().toLowerCase();
       const statusBadge = itemStatus === 'draft'
-        ? '<span class="badge" style="background:rgba(245,158,11,.14);color:#92400e;border-color:rgba(245,158,11,.22)">초안</span>'
+        ? '<span class="badge badge--draft">초안</span>'
         : '<span class="badge">발행</span>';
       const postHref = itemStatus === 'published' ? `/post/${encodeURIComponent(slug)}` : `/edit.html?slug=${encodeURIComponent(slug)}`;
 
@@ -235,7 +234,7 @@
           </div>
           <div class="post-card__body">
             <div class="post-meta post-meta--row">
-              <div class="row" style="gap:8px;flex-wrap:wrap">
+              <div class="row row--chips">
                 ${categoryHtml}
                 ${isAdmin ? statusBadge : ''}
               </div>
@@ -243,7 +242,7 @@
             </div>
             <div class="post-card__title">${title}</div>
             <div class="post-card__summary">${summary}</div>
-            <div class="row post-admin-actions" style="flex-wrap:wrap">
+            <div class="row post-admin-actions post-admin-actions--wrap">
               ${itemStatus === 'published' ? `<a class="post-card__readmore" href="/post/${encodeURIComponent(slug)}">Read more <svg class="post-card__readmore-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h11"></path><path d="M13 7l5 5-5 5"></path></svg></a>` : ''}
               ${isAdmin ? `<a class="btn" href="/edit.html?slug=${encodeURIComponent(slug)}">수정</a>` : ''}
               ${isAdmin ? `<button class="btn btn--danger js-delete-post" type="button" data-slug="${encodeURIComponent(slug)}" data-title="${escapeHtml(rawTitle)}">삭제</button>` : ''}

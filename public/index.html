@@ -68,17 +68,81 @@
         <h1 id="postsPageTitle" class="posts-home-hero__title posts-home-hero__title--editorial">Wacky Wiki</h1>
         <p id="postsPageDescription" class="posts-home-hero__desc posts-home-hero__desc--editorial">정리된 생활 팁과 가이드를 빠르게 살펴보세요.</p>
         <div class="posts-home-hero__category-wrap" aria-label="카테고리 바로가기">
-          <div id="heroCategoryBar" class="topbar-categories__list topbar-categories__list--hero"></div>
+          <div id="heroCategoryBar" class="topbar-categories__list topbar-categories__list--hero"><span class="topbar-categories__chip topbar-categories__chip--skeleton skeleton-box"></span><span class="topbar-categories__chip topbar-categories__chip--skeleton skeleton-box"></span><span class="topbar-categories__chip topbar-categories__chip--skeleton skeleton-box"></span><span class="topbar-categories__chip topbar-categories__chip--skeleton skeleton-box"></span></div>
         </div>
       </div>
     </section>
 
-    <div class="posts-layout posts-layout--clean posts-layout--home" style="margin-top:20px">
+    <div class="posts-layout posts-layout--clean posts-layout--home posts-layout--home-top">
       <section class="posts-main" aria-label="글 목록 영역">
-        <div id="postsLoading" class="small">글 목록 불러오는 중…</div>
-        <div id="postsError" class="small" hidden style="color:#b00020"></div>
+        <div id="postsLoading" class="small posts-loading-text" aria-hidden="true"></div>
+        <div id="postsError" class="small posts-error" hidden></div>
         <div id="postsEmpty" class="small" hidden>등록된 글이 없습니다.</div>
-        <div id="postsList" class="grid post-list-grid post-list-grid--rows"></div>
+        <div id="postsList" class="grid post-list-grid post-list-grid--rows">
+          <article class="card post-card post-card--row post-card--skeleton" aria-hidden="true">
+            <div class="post-card__thumb post-card__thumb--row skeleton-box skeleton-box--media"></div>
+            <div class="post-card__body">
+              <div class="post-meta post-meta--row">
+                <div class="row row--chips">
+                  <span class="skeleton-box skeleton-box--chip"></span>
+                  <span class="skeleton-box skeleton-box--chip skeleton-box--chip-short"></span>
+                </div>
+                <span class="skeleton-box skeleton-box--date"></span>
+              </div>
+              <div class="skeleton-stack">
+                <span class="skeleton-box skeleton-box--title"></span>
+                <span class="skeleton-box skeleton-box--text"></span>
+                <span class="skeleton-box skeleton-box--text skeleton-box--text-short"></span>
+              </div>
+              <div class="row post-admin-actions post-admin-actions--wrap">
+                <span class="skeleton-box skeleton-box--button"></span>
+                <span class="skeleton-box skeleton-box--button skeleton-box--button-muted"></span>
+              </div>
+            </div>
+          </article>
+          <article class="card post-card post-card--row post-card--skeleton" aria-hidden="true">
+            <div class="post-card__thumb post-card__thumb--row skeleton-box skeleton-box--media"></div>
+            <div class="post-card__body">
+              <div class="post-meta post-meta--row">
+                <div class="row row--chips">
+                  <span class="skeleton-box skeleton-box--chip"></span>
+                  <span class="skeleton-box skeleton-box--chip skeleton-box--chip-short"></span>
+                </div>
+                <span class="skeleton-box skeleton-box--date"></span>
+              </div>
+              <div class="skeleton-stack">
+                <span class="skeleton-box skeleton-box--title"></span>
+                <span class="skeleton-box skeleton-box--text"></span>
+                <span class="skeleton-box skeleton-box--text skeleton-box--text-short"></span>
+              </div>
+              <div class="row post-admin-actions post-admin-actions--wrap">
+                <span class="skeleton-box skeleton-box--button"></span>
+                <span class="skeleton-box skeleton-box--button skeleton-box--button-muted"></span>
+              </div>
+            </div>
+          </article>
+          <article class="card post-card post-card--row post-card--skeleton" aria-hidden="true">
+            <div class="post-card__thumb post-card__thumb--row skeleton-box skeleton-box--media"></div>
+            <div class="post-card__body">
+              <div class="post-meta post-meta--row">
+                <div class="row row--chips">
+                  <span class="skeleton-box skeleton-box--chip"></span>
+                  <span class="skeleton-box skeleton-box--chip skeleton-box--chip-short"></span>
+                </div>
+                <span class="skeleton-box skeleton-box--date"></span>
+              </div>
+              <div class="skeleton-stack">
+                <span class="skeleton-box skeleton-box--title"></span>
+                <span class="skeleton-box skeleton-box--text"></span>
+                <span class="skeleton-box skeleton-box--text skeleton-box--text-short"></span>
+              </div>
+              <div class="row post-admin-actions post-admin-actions--wrap">
+                <span class="skeleton-box skeleton-box--button"></span>
+                <span class="skeleton-box skeleton-box--button skeleton-box--button-muted"></span>
+              </div>
+            </div>
+          </article>
+        </div>
 
         <div id="postsLoadMoreWrap" class="posts-load-more" hidden>
           <button id="postsLoadMoreBtn" class="btn btn--brand posts-load-more__btn" type="button">더보기</button>
@@ -94,7 +158,7 @@
 
         <div class="posts-sidebar__popular-shell" aria-labelledby="posts-popular-title">
           <h2 id="posts-popular-title" class="h2">인기글</h2>
-          <ul id="postsPopular" class="post-side__popular-list" style="margin-top:14px"></ul>
+          <ul id="postsPopular" class="post-side__popular-list posts-popular-list"><li class="post-side__popular-link post-side__popular-link--skeleton" aria-hidden="true"><span class="post-side__popular-rank post-side__popular-rank--skeleton">1</span><span class="skeleton-box skeleton-box--popular"></span></li><li class="post-side__popular-link post-side__popular-link--skeleton" aria-hidden="true"><span class="post-side__popular-rank post-side__popular-rank--skeleton">2</span><span class="skeleton-box skeleton-box--popular"></span></li><li class="post-side__popular-link post-side__popular-link--skeleton" aria-hidden="true"><span class="post-side__popular-rank post-side__popular-rank--skeleton">3</span><span class="skeleton-box skeleton-box--popular"></span></li></ul>
         </div>
       </aside>
     </div>

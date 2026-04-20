@@ -310,11 +310,11 @@ export async function onRequestGet({ params, env, request }) {
 
     <article class="post-shell" itemscope itemtype="https://schema.org/BlogPosting">
       <header class="card post-hero">
-        <div class="row" style="justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
-          <div class="row" style="gap:8px;flex-wrap:wrap">
+        <div class="row post-hero__meta-row">
+          <div class="row row--chips">
             ${row.category ? `<a class="badge" href="${categoryLink}">${escapeHtml(String(row.category))}</a>` : ""}
           </div>
-          <div class="row post-admin-actions" style="gap:8px;flex-wrap:wrap;align-items:center">
+          <div class="row post-admin-actions post-admin-actions--meta">
             <div class="small">
               <time datetime="${escapeHtml(publishedIso || "")}">발행 ${escapeHtml(publishedDate)}</time>
               <span aria-hidden="true"> · </span>
@@ -434,7 +434,7 @@ function renderAdsenseRuntimeScript(config, shouldLoad) {
       if (!client || !adSlot) return;
 
       slot.dataset.adLoaded = 'true';
-      slot.innerHTML = '<ins class="adsbygoogle" style="display:block" data-ad-client="' + client + '" data-ad-slot="' + adSlot + '" data-ad-format="auto" data-full-width-responsive="true"></ins>';
+      slot.innerHTML = '<ins class="adsbygoogle adsbygoogle--block" data-ad-client="' + client + '" data-ad-slot="' + adSlot + '" data-ad-format="auto" data-full-width-responsive="true"></ins>';
 
       try {
         (window.adsbygoogle = window.adsbygoogle || []).push({});
@@ -604,9 +604,9 @@ function renderTagHighlights(tags) {
   const cleanTags = tags.map((tag) => String(tag || "").trim()).filter(Boolean);
   if (!cleanTags.length) return "";
   return `
-    <section class="post-tags-highlight" aria-labelledby="post-tags-highlight-title" style="margin-top:32px;padding-top:24px;border-top:1px solid var(--border)">
+    <section class="post-tags-highlight post-section-divider post-section-divider--tags" aria-labelledby="post-tags-highlight-title">
       <h2 id="post-tags-highlight-title" class="h2">핵심 키워드</h2>
-      <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:14px">
+      <div class="row row--chips row--top-gap">
         ${cleanTags.map((tag) => `<span class="tag-chip tag-chip--static">#${escapeHtml(tag)}</span>`).join("")}
       </div>
     </section>
@@ -617,7 +617,7 @@ function renderPopularPosts(items) {
   if (!Array.isArray(items) || !items.length) return "";
   return `
     <section class="post-side__section post-side__popular" aria-labelledby="post-popular-title">
-      <div class="row" style="justify-content:space-between;align-items:flex-end;gap:10px">
+      <div class="row post-section-header post-section-header--compact">
         <h2 id="post-popular-title" class="h2">인기글</h2>
         <span class="small">조회순</span>
       </div>
@@ -673,12 +673,12 @@ function parseFaqMarkdown(raw) {
 function renderFaqSection(items) {
   if (!items.length) return "";
   return `
-    <section class="post-faq" aria-labelledby="post-faq-title" style="margin-top:36px;padding-top:28px;border-top:1px solid var(--border)">
+    <section class="post-faq post-section-divider post-section-divider--faq" aria-labelledby="post-faq-title">
       <h2 id="post-faq-title" class="h2">자주 묻는 질문</h2>
-      <div style="display:grid;gap:14px;margin-top:14px">
+      <div class="post-faq__list">
         ${items.map((item) => `
           <article class="card" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
-            <h3 class="h3" itemprop="name" style="margin:0 0 10px">Q. ${escapeHtml(item.question)}</h3>
+            <h3 class="h3 post-faq__question" itemprop="name">Q. ${escapeHtml(item.question)}</h3>
             <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
               <div itemprop="text">${renderMarkdown(item.answerMd || "")}</div>
             </div>
@@ -694,19 +694,19 @@ function renderRelatedPostsSection(items, category) {
   const categoryText = String(category || "").trim();
   const headingText = categoryText ? `${categoryText} 관련글 더보기` : "관련글 더보기";
   return `
-    <section class="post-related" aria-labelledby="post-related-title" style="margin-top:36px;padding-top:28px;border-top:1px solid var(--border)">
-      <div class="row" style="justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap">
+    <section class="post-related post-section-divider post-section-divider--related" aria-labelledby="post-related-title">
+      <div class="row post-section-header post-section-header--related">
         <div>
-          <h2 id="post-related-title" class="h2" style="margin:0">${escapeHtml(headingText)}</h2>
-          <p class="small" style="margin:8px 0 0">같은 카테고리의 최신 글 5개를 보여드립니다.</p>
+          <h2 id="post-related-title" class="h2 post-section-title">${escapeHtml(headingText)}</h2>
+          <p class="small post-related__desc">같은 카테고리의 최신 글 5개를 보여드립니다.</p>
         </div>
         ${categoryText ? `<a class="btn" href="/?category=${encodeURIComponent(categoryText)}">카테고리 전체 보기</a>` : ""}
       </div>
-      <ul class="list-reset" style="display:grid;gap:10px;margin-top:16px">
+      <ul class="list-reset post-related__list">
         ${items.map((item, index) => `
           <li>
-            <a href="/post/${encodeURIComponent(String(item.slug || ""))}" class="post-related-link" style="display:inline-flex;gap:8px;align-items:flex-start;text-decoration:none;line-height:1.55">
-              <span aria-hidden="true" style="color:var(--brand);font-weight:800;min-width:1.5em">${index + 1}.</span>
+            <a href="/post/${encodeURIComponent(String(item.slug || ""))}" class="post-related-link">
+              <span aria-hidden="true" class="post-related-link__index">${index + 1}.</span>
               <span>${escapeHtml(String(item.title || "(제목 없음)"))}</span>
             </a>
           </li>
@@ -784,7 +784,7 @@ function renderBreadcrumbs(items) {
     .join("");
 
   return `
-  <nav class="breadcrumb small" aria-label="브레드크럼" style="margin:16px 0 20px">
+  <nav class="breadcrumb small breadcrumb--post" aria-label="브레드크럼">
     <ol class="list-reset">
       ${list}
     </ol>
@@ -807,7 +807,7 @@ function renderNotFound(slug) {
     <section class="card">
       <h1 class="h1">글을 찾을 수 없습니다</h1>
       <p class="p">요청한 slug: ${escapeHtml(slug)}</p>
-      <div class="row" style="margin-top:14px">
+      <div class="row row--top-gap-lg">
         <a class="btn btn--brand" href="/">블로그 홈</a>
         <a class="btn" href="/">홈</a>
       </div>
