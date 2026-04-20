@@ -323,21 +323,6 @@ export async function onRequestGet({ params, env, request }) {
 
     <article class="post-shell" itemscope itemtype="https://schema.org/BlogPosting">
       <header class="card post-hero">
-        <div class="row post-hero__meta-row">
-          <div class="row row--chips">
-            ${row.category ? `<a class="badge" href="${categoryLink}">${escapeHtml(String(row.category))}</a>` : ""}
-          </div>
-          <div class="row post-admin-actions post-admin-actions--meta">
-            <div class="small">
-              <time datetime="${escapeHtml(publishedIso || "")}">발행 ${escapeHtml(publishedDate)}</time>
-              <span aria-hidden="true"> · </span>
-              <time datetime="${escapeHtml(updatedIso || "")}">수정 ${escapeHtml(updatedDate)}</time>
-            </div>
-            <a class="btn btn--sm" href="/edit.html?slug=${encodeURIComponent(slug)}" data-admin-only hidden>수정</a>
-            <button class="btn btn--sm btn--danger" type="button" id="deletePostBtn" data-admin-only hidden data-slug="${encodeURIComponent(slug)}" data-title="${escapeHtml(titleText)}">삭제</button>
-          </div>
-        </div>
-
         <h1 class="h1 post-title" itemprop="headline">${escapeHtml(titleText)}</h1>
 
         ${row.summary ? `<p class="p post-summary" itemprop="description">${escapeHtml(String(row.summary))}</p>` : ""}
@@ -707,7 +692,7 @@ function renderRelatedPostsSection(items, category) {
   const categoryText = String(category || "").trim();
   const headingText = categoryText ? `${categoryText} 관련글 더보기` : "관련글 더보기";
   const categoryActionHtml = categoryText
-    ? `<div class="post-related__action"><a class="btn" href="/?category=${encodeURIComponent(categoryText)}">카테고리 전체 보기</a></div>`
+    ? `<div class="post-related__action"><a class="btn post-related__more-btn" href="/?category=${encodeURIComponent(categoryText)}">카테고리 전체 보기</a></div>`
     : "";
   return `
     <section class="post-related post-section-divider post-section-divider--related" aria-labelledby="post-related-title">
@@ -715,7 +700,6 @@ function renderRelatedPostsSection(items, category) {
         <div class="row post-section-header post-section-header--related">
           <div>
             <h2 id="post-related-title" class="h2 post-section-title">${escapeHtml(headingText)}</h2>
-            <p class="small post-related__desc">같은 카테고리의 최신 글 5개를 보여드립니다.</p>
           </div>
         </div>
         ${categoryActionHtml}
