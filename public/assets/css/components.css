@@ -1627,3 +1627,123 @@ body.has-search-open{
     height: 34px;
   }
 }
+
+
+
+/* 0422-V19: header dropdown search, not modal */
+:root {
+  --search-header-offset: 64px;
+  --search-push-offset: 0px;
+}
+
+.search-overlay {
+  position: absolute !important;
+  left: 0;
+  right: 0;
+  top: var(--search-header-offset);
+  bottom: auto !important;
+  z-index: 55;
+  pointer-events: none;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.search-overlay__backdrop {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.search-overlay__panel {
+  position: relative !important;
+  top: 0 !important;
+  left: 0;
+  right: 0;
+  width: 100%;
+  padding: 10px 0 0 !important;
+  transform: translateY(-10px);
+  opacity: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  transition: transform .18s ease, opacity .18s ease;
+}
+
+.search-overlay.is-open {
+  pointer-events: auto;
+}
+
+.search-overlay.is-open .search-overlay__panel {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.search-overlay__inner {
+  width: min(1320px, calc(100% - 24px));
+  margin: 0 auto;
+}
+
+.search-overlay__bar {
+  min-height: 66px;
+  border: 1px solid #e6e7eb;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+body.search-open-inline .container.posts-page,
+body.search-open-inline main.container,
+body.search-open-inline main {
+  transition: margin-top .18s ease;
+}
+
+body.search-open-inline .container.posts-page {
+  margin-top: var(--search-push-offset);
+}
+
+body.search-open-inline main.container:not(.posts-page) {
+  margin-top: var(--search-push-offset);
+}
+
+body.search-open-inline main:not(.container) {
+  margin-top: var(--search-push-offset);
+}
+
+/* ensure no global blur/dim remains */
+body.search-open,
+body.search-open-inline {
+  overflow-x: hidden;
+}
+
+body.search-open::before,
+body.search-open-inline::before {
+  display: none !important;
+}
+
+@media (max-width: 1024px) {
+  .search-overlay {
+    top: var(--search-header-offset);
+  }
+
+  .search-overlay__inner {
+    width: calc(100% - 20px);
+  }
+
+  .search-overlay__panel {
+    padding-top: 8px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .search-overlay__inner {
+    width: calc(100% - 12px);
+  }
+
+  .search-overlay__panel {
+    padding-top: 8px !important;
+  }
+}
