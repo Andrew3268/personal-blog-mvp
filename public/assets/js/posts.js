@@ -1,15 +1,12 @@
 
 function getPostsHeroActiveKey() {
-  const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  const path = window.location.pathname.replace(/\/+$/, '') || '/';
   const params = new URLSearchParams(window.location.search);
-  const category = params.get("category");
+  const category = (params.get('category') || '').trim();
 
-  if (path === "/" || path === "/index.html" || path === "/posts" || path === "/posts/") {
-    return category || "all";
-  }
-
-  if (path.includes("/about")) return "about";
-  return category || "all";
+  if (path.includes('/about')) return 'about';
+  if (category) return category;
+  return 'all';
 }
 
 
@@ -18,10 +15,16 @@ async function loadSiteCategories() {
     const res = await fetch('/api/categories', { headers: { Accept: 'application/json' } });
     if (!res.ok) throw new Error('Failed to load categories');
     const data = await res.json().catch(() => ({}));
-    const items = Array.isArray(data?.items) ? data.items : [];
-    return items.map((item) => ({
-      name: String(item?.name || '').trim()
-    })).filter((item) => item.name);
+    const rawItems = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
+    return rawItems
+      .map((item) => {
+        if (typeof item === 'string') return { name: item.trim(), count: 0 };
+        return {
+          name: String(item?.name || '').trim(),
+          count: Number(item?.count || 0)
+        };
+      })
+      .filter((item) => item.name);
   } catch (_) {
     return [];
   }
@@ -35,28 +38,56 @@ function mergeCategoryCounts(baseCategories = [], countedCategories = []) {
     ])
   );
 
-  return (Array.isArray(baseCategories) ? baseCategories : []).map((item) => {
+  const merged = [];
+  const seen = new Set();
+
+  (Array.isArray(baseCategories) ? baseCategories : []).forEach((item) => {
     const name = String(item?.name || '').trim();
-    return {
+    if (!name || seen.has(name)) return;
+    seen.add(name);
+    merged.push({
       name,
-      count: countMap.get(name) || 0
-    };
-  }).filter((item) => item.name);
+      count: countMap.has(name) ? countMap.get(name) : Number(item?.count || 0)
+    });
+  });
+
+  (Array.isArray(countedCategories) ? countedCategories : []).forEach((item) => {
+    const name = String(item?.name || '').trim();
+    if (!name || seen.has(name)) return;
+    seen.add(name);
+    merged.push({
+      name,
+      count: Number(item?.count || 0)
+    });
+  });
+
+  return merged;
 }
 
 function buildPostsHeroNav(categories = []) {
   const activeKey = getPostsHeroActiveKey();
+  const unique = [];
+  const seen = new Set();
+
+  (Array.isArray(categories) ? categories : []).forEach((cat) => {
+    const name = String(cat?.name || '').trim();
+    if (!name || seen.has(name)) return;
+    seen.add(name);
+    unique.push({ name, count: Number(cat?.count || 0) });
+  });
+
   const items = [
-    `<a class="posts-home-hero__category-link ${activeKey === "all" ? "is-active" : ""}" href="/">전체</a>`,
-    ...categories.map((cat) => {
-      const safeName = String(cat.name || "").trim();
+    `<a class="posts-home-hero__category-link ${activeKey === 'all' ? 'is-active' : ''}" href="/">전체</a>`,
+    ...unique.map((cat) => {
+      const safeName = cat.name;
       const isActive = activeKey === safeName;
       const href = `/?category=${encodeURIComponent(safeName)}`;
-      return `<a class="posts-home-hero__category-link ${isActive ? "is-active" : ""}" href="${href}">${safeName}</a>`;
+      return `<a class="posts-home-hero__category-link ${isActive ? 'is-active' : ''}" href="${href}">${escapeHtml(safeName)}</a>`;
     }),
-    `<a class="posts-home-hero__about-link ${activeKey === "about" ? "is-active" : ""}" href="/about/">About</a>`
+    `<a class="posts-home-hero__about-link ${activeKey === 'about' ? 'is-active' : ''}" href="/about/">About</a>`
   ];
-  return items.join("");
+
+  return items.join('');
 }
 
 (function () {
@@ -242,8 +273,13 @@ function buildPostsHeroNav(categories = []) {
     }
 
     const navCategories = siteCategories.length ? mergeCategoryCounts(siteCategories, categories) : categories;
+    const navCategories = mergeCategoryCounts(siteCategories, categories);
+
     const categoryLinksHtml = navCategories.length
-      ? navCategories.map((item) => `<a class="topbar-categories__chip" href="/?category=${encodeURIComponent(item.name)}">${escapeHtml(item.name)} <span>${Number(item.count || 0)}</span></a>`).join('')
+      ? navCategories.map((item) => {
+          const name = String(item.name || '').trim();
+          return `<a class="topbar-categories__chip" href="/?category=${encodeURIComponent(name)}">${escapeHtml(name)} <span>${Number(item.count || 0)}</span></a>`;
+        }).join('')
       : '<span class="small">표시할 카테고리가 없습니다.</span>';
 
     const categoriesHtml = `<a class="topbar-categories__chip topbar-categories__chip--utility" href="/">전체</a>${categoryLinksHtml}<a class="topbar-categories__chip topbar-categories__chip--utility" href="/about/">About</a>`;
@@ -253,7 +289,7 @@ function buildPostsHeroNav(categories = []) {
     }
 
     if (heroCategoryBarEl) {
-      heroCategoryBarEl.innerHTML = buildPostsHeroNav(navCategories || []);
+      heroCategoryBarEl.innerHTML = buildPostsHeroNav(navCategories);
     }
 
     if (mobileSiteCategoryBarEl) {

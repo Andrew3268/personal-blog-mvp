@@ -1,4 +1,3 @@
-
 (function () {
   const heroBar = document.getElementById('heroCategoryBar');
   if (!heroBar) return;
@@ -12,25 +11,23 @@
       .replaceAll("'", '&#039;');
   }
 
-  function buildNav(categories) {
-    const links = [
-      '<a class="posts-home-hero__category-link" href="/">전체</a>',
-      ...categories.map((item) => {
-        const name = String(item?.name || '').trim();
-        return `<a class="posts-home-hero__category-link" href="/?category=${encodeURIComponent(name)}">${escapeHtml(name)}</a>`;
-      }),
-      '<a class="posts-home-hero__about-link is-active" href="/about/">About</a>'
-    ];
-    heroBar.innerHTML = links.join('');
-  }
-
   fetch('/api/categories', { headers: { Accept: 'application/json' } })
     .then((res) => res.ok ? res.json() : Promise.reject(new Error('load failed')))
     .then((data) => {
-      const items = Array.isArray(data?.items) ? data.items : [];
-      buildNav(items);
+      const rawItems = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
+      const categories = rawItems
+        .map((item) => typeof item === 'string' ? { name: item.trim() } : { name: String(item?.name || '').trim() })
+        .filter((item) => item.name);
+
+      const links = [
+        '<a class="posts-home-hero__category-link" href="/">전체</a>',
+        ...categories.map((item) => `<a class="posts-home-hero__category-link" href="/?category=${encodeURIComponent(item.name)}">${escapeHtml(item.name)}</a>`),
+        '<a class="posts-home-hero__about-link is-active" href="/about/">About</a>'
+      ];
+
+      heroBar.innerHTML = links.join('');
     })
     .catch(() => {
-      buildNav([]);
+      heroBar.innerHTML = '<a class="posts-home-hero__category-link" href="/">전체</a><a class="posts-home-hero__about-link is-active" href="/about/">About</a>';
     });
 })();
