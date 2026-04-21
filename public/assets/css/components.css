@@ -1253,3 +1253,63 @@ body.has-search-open{
     border-radius:18px;
   }
 }
+
+
+/* Wackywiki-0422-V7 mobile search close animation */
+@media (max-width:768px){
+  .search-overlay__close{
+    position:fixed;
+    top:14px;
+    right:16px;
+    z-index:140;
+    width:44px;
+    height:44px;
+    border:0;
+    border-radius:999px;
+    background:transparent;
+    box-shadow:none;
+    font-size:0;
+    color:transparent;
+    display:inline-flex !important;
+    align-items:center;
+    justify-content:center;
+    opacity:1;
+  }
+  .search-overlay__close::before,
+  .search-overlay__close::after{
+    content:"";
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:18px;
+    height:1.75px;
+    border-radius:999px;
+    background:#111827;
+    transform-origin:center;
+    opacity:0;
+    transition:opacity .22s ease, transform .22s ease, background-color .18s ease;
+  }
+  body.has-search-open .search-overlay__close::before{
+    opacity:1;
+    transform:translate(-50%,-50%) rotate(45deg);
+  }
+  body.has-search-open .search-overlay__close::after{
+    opacity:1;
+    transform:translate(-50%,-50%) rotate(-45deg);
+  }
+  .search-overlay__close:hover,
+  .search-overlay__close:focus-visible{
+    background:transparent;
+    border-color:transparent;
+    transform:none;
+  }
+  .search-overlay__close:hover::before,
+  .search-overlay__close:hover::after,
+  .search-overlay__close:focus-visible::before,
+  .search-overlay__close:focus-visible::after{
+    background:#000;
+  }
+  .search-overlay__panel{
+    padding-top:76px;
+  }
+}
