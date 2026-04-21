@@ -6,7 +6,7 @@
 .brand__mark{width:34px;height:34px;border-radius:999px;display:grid;place-items:center;background:#111827;color:#fff;font-size:14px;letter-spacing:.02em;box-shadow:none}
 .brand__text{font-size:16px;line-height:1;font-weight:900;letter-spacing:.04em}
 .nav{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.nav a{padding:6px 0;border-radius:0;border:0;color:#6b7280;font-size:12px;letter-spacing:.04em;text-transform:lowercase;font-weight:600;text-decoration:none;position:relative}
+.nav a{padding:0;border-radius:0;border:0;color:#000;font-size:17px;letter-spacing:.04em;text-transform:lowercase;font-weight:600;text-decoration:none;position:relative}
 .nav a[aria-current="page"]{color:#111827;background:transparent;box-shadow:none}
 .nav a[aria-current="page"]::after,.nav a:hover::after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:1px;background:#111827}
 .topbar-admin-status{justify-self:start;font-size:12px;font-weight:700;letter-spacing:.04em;color:#6b7280;text-transform:none;white-space:nowrap}
@@ -873,10 +873,12 @@ body.has-search-open{
 .post-card__readmore{
   display:inline-flex;
   align-items:center;
+  justify-content:center;
   gap:8px;
   color:#333;
   font-size:14px;
   font-weight:700;
+  line-height:1;
   text-decoration:none;
   background:transparent;
   border:0;
@@ -915,11 +917,15 @@ body.has-search-open{
 .post-card__readmore{
   display:inline-flex;
   align-items:center;
+  justify-content:center;
   gap:8px;
+  line-height:1;
 }
 .post-card__readmore-icon{
   width:16px;
   height:16px;
+  display:block;
+  flex:0 0 auto;
   stroke:currentColor;
   fill:none;
   stroke-width:1.7;

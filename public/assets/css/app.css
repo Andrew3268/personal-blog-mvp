@@ -59,7 +59,7 @@ h1 { font-size: 3rem; } h2 { font-size: 2rem; } h3 { font-size: 1.5rem; }/* Îç∞Ï
 .post-meta{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
 .post-meta--row{padding-top:2px}
 .post-card__title{font-size:28px;line-height:1.25;font-weight:1000;letter-spacing:-.4px}
-.post-card__summary{font-size:15px;line-height:1.8;color:var(--muted)}
+.post-card__summary{font-size:15px;line-height:1.8;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;word-break:break-word}
 .post-shell{display:flex;flex-direction:column;gap:16px}
 .post-hero{display:flex;flex-direction:column;gap:14px}
 .post-title{max-width:900px}
