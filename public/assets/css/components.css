@@ -1747,3 +1747,100 @@ body.search-open-inline::before {
     padding-top: 8px !important;
   }
 }
+
+
+
+/* 0422-V20: search width 1200px and same behavior on desktop/tablet/mobile */
+.search-overlay__inner {
+  width: min(1200px, calc(100% - 24px)) !important;
+  max-width: 1200px !important;
+}
+
+.search-overlay__panel {
+  width: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+}
+
+.topbar-mobile-search.is-open,
+.nav__search-btn.is-open,
+[data-search-open].is-open {
+  transform: none !important;
+}
+
+.topbar-mobile-search.is-open .nav__icon-svg,
+.nav__search-btn.is-open .nav__icon-svg,
+[data-search-open].is-open .nav__icon-svg {
+  transform: none !important;
+}
+
+.topbar-mobile-search.is-open span,
+.topbar-mobile-search.is-open::before,
+.topbar-mobile-search.is-open::after,
+.nav__search-btn.is-open span,
+.nav__search-btn.is-open::before,
+.nav__search-btn.is-open::after,
+[data-search-open].is-open span,
+[data-search-open].is-open::before,
+[data-search-open].is-open::after {
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+@media (max-width: 1024px) {
+  .search-overlay {
+    position: absolute !important;
+    inset: auto 0 auto 0 !important;
+    top: var(--search-header-offset) !important;
+    bottom: auto !important;
+    background: transparent !important;
+  }
+
+  .search-overlay__backdrop {
+    display: none !important;
+    background: transparent !important;
+    opacity: 0 !important;
+  }
+
+  .search-overlay__inner {
+    width: min(1200px, calc(100% - 20px)) !important;
+    max-width: 1200px !important;
+  }
+
+  .search-overlay__panel {
+    position: relative !important;
+    top: 0 !important;
+    padding-top: 8px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .search-overlay {
+    position: absolute !important;
+    inset: auto 0 auto 0 !important;
+    top: var(--search-header-offset) !important;
+    bottom: auto !important;
+    background: transparent !important;
+  }
+
+  .search-overlay__backdrop {
+    display: none !important;
+    background: transparent !important;
+    opacity: 0 !important;
+  }
+
+  .search-overlay__inner {
+    width: min(1200px, calc(100% - 12px)) !important;
+    max-width: 1200px !important;
+  }
+
+  .search-overlay__panel {
+    position: relative !important;
+    top: 0 !important;
+    padding-top: 8px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+}

@@ -13,7 +13,7 @@
   function setSearchButtonsExpanded(isOpen) {
     openButtons.forEach((button) => {
       button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-      button.classList.toggle('is-open', isOpen);
+      button.classList.remove('is-open');
     });
   }
 
