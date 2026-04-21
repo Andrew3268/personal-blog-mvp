@@ -76,15 +76,11 @@
     <div class="search-overlay__backdrop" data-search-close></div>
     <div class="search-overlay__panel" role="dialog" aria-modal="true" aria-labelledby="siteSearchTitle">
       <div class="search-overlay__head">
-        <div>
-          <div class="small">Search</div>
-          <h2 class="h2" id="siteSearchTitle">검색</h2>
-        </div>
-        <button class="search-overlay__close" type="button" aria-label="검색 닫기" data-search-close>닫기</button>
+        <h2 class="h2" id="siteSearchTitle">검색</h2>
+        <button class="search-overlay__close" type="button" aria-label="검색 닫기" data-search-close>×</button>
       </div>
       <form id="siteSearchForm" class="search-overlay__form">
-        <label class="search-overlay__label" for="siteSearchInput">검색어</label>
-        <div class="search-overlay__input-wrap">
+<div class="search-overlay__input-wrap">
           <input id="siteSearchInput" class="search-overlay__input" type="search" placeholder="검색어를 입력하세요" autocomplete="off" />
           <button class="btn btn--brand" type="submit">검색</button>
         </div>
