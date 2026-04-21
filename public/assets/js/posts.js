@@ -179,9 +179,11 @@
       postsCategoriesEl.innerHTML = '';
     }
 
-    const categoriesHtml = categories.length
+    const categoryLinksHtml = categories.length
       ? categories.map((item) => `<a class="topbar-categories__chip" href="/?category=${encodeURIComponent(item.name)}">${escapeHtml(item.name)} <span>${Number(item.count || 0)}</span></a>`).join('')
       : '<span class="small">표시할 카테고리가 없습니다.</span>';
+
+    const categoriesHtml = `<a class="topbar-categories__chip topbar-categories__chip--utility" href="/">전체</a>${categoryLinksHtml}<a class="topbar-categories__chip topbar-categories__chip--utility" href="/about/">About</a>`;
 
     if (postsCategoriesBarEl) {
       postsCategoriesBarEl.innerHTML = categoriesHtml;
