@@ -70,19 +70,30 @@
   <script src="/assets/js/nav.js" defer></script>
   <script src="/assets/js/search.js" defer></script>
 
-  <div class="search-overlay" id="siteSearchOverlay" hidden aria-hidden="true">
+    <div class="search-overlay" id="siteSearchOverlay" hidden aria-hidden="true">
     <div class="search-overlay__backdrop" data-search-close></div>
     <div class="search-overlay__panel" role="dialog" aria-modal="true" aria-labelledby="siteSearchTitle">
-      <div class="search-overlay__head">
-        <h2 class="h2" id="siteSearchTitle">검색</h2>
-        <button class="search-overlay__close" type="button" aria-label="검색 닫기" data-search-close>×</button>
+      <div class="search-overlay__inner">
+        <form class="search-overlay__bar" action="/" method="get" role="search">
+          <span class="search-overlay__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="6.5"></circle>
+              <path d="M16 16L21 21"></path>
+            </svg>
+          </span>
+          <input
+            class="search-overlay__input"
+            type="search"
+            name="q"
+            placeholder="Type in your search"
+            autocomplete="off"
+            aria-label="검색어 입력"
+          />
+          <button class="search-overlay__close-inline" type="button" data-search-close aria-label="검색 닫기">
+            <span></span><span></span>
+          </button>
+        </form>
       </div>
-      <form id="siteSearchForm" class="search-overlay__form">
-<div class="search-overlay__input-wrap">
-          <input id="siteSearchInput" class="search-overlay__input" type="search" placeholder="검색어를 입력하세요" autocomplete="off" />
-          <button class="btn btn--brand" type="submit">검색</button>
-        </div>
-      </form>
     </div>
   </div>
 </body>
