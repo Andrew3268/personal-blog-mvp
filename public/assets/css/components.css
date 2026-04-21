@@ -1400,3 +1400,12 @@ body.has-search-open{
   }
   #heroCategoryBar::-webkit-scrollbar{display:none}
 }
+
+
+/* 0422-V11: desktop-only postsHomeHero */
+@media (max-width:768px){
+  .posts-home-hero,
+  .postsHomeHero{
+    display:none !important;
+  }
+}

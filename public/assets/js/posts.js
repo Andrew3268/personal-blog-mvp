@@ -12,6 +12,38 @@ function getPostsHeroActiveKey() {
   return category || "all";
 }
 
+
+async function loadSiteCategories() {
+  try {
+    const res = await fetch('/api/categories', { headers: { Accept: 'application/json' } });
+    if (!res.ok) throw new Error('Failed to load categories');
+    const data = await res.json().catch(() => ({}));
+    const items = Array.isArray(data?.items) ? data.items : [];
+    return items.map((item) => ({
+      name: String(item?.name || '').trim()
+    })).filter((item) => item.name);
+  } catch (_) {
+    return [];
+  }
+}
+
+function mergeCategoryCounts(baseCategories = [], countedCategories = []) {
+  const countMap = new Map(
+    (Array.isArray(countedCategories) ? countedCategories : []).map((item) => [
+      String(item?.name || '').trim(),
+      Number(item?.count || 0)
+    ])
+  );
+
+  return (Array.isArray(baseCategories) ? baseCategories : []).map((item) => {
+    const name = String(item?.name || '').trim();
+    return {
+      name,
+      count: countMap.get(name) || 0
+    };
+  }).filter((item) => item.name);
+}
+
 function buildPostsHeroNav(categories = []) {
   const activeKey = getPostsHeroActiveKey();
   const items = [
@@ -92,6 +124,7 @@ function buildPostsHeroNav(categories = []) {
   let hasMore = false;
   let isLoading = false;
   let isAdmin = false;
+  let siteCategories = [];
 
   function buildApiUrl(page) {
     const apiUrl = new URL('/api/posts', window.location.origin);
@@ -208,8 +241,9 @@ function buildPostsHeroNav(categories = []) {
       postsCategoriesEl.innerHTML = '';
     }
 
-    const categoryLinksHtml = categories.length
-      ? categories.map((item) => `<a class="topbar-categories__chip" href="/?category=${encodeURIComponent(item.name)}">${escapeHtml(item.name)} <span>${Number(item.count || 0)}</span></a>`).join('')
+    const navCategories = siteCategories.length ? mergeCategoryCounts(siteCategories, categories) : categories;
+    const categoryLinksHtml = navCategories.length
+      ? navCategories.map((item) => `<a class="topbar-categories__chip" href="/?category=${encodeURIComponent(item.name)}">${escapeHtml(item.name)} <span>${Number(item.count || 0)}</span></a>`).join('')
       : '<span class="small">표시할 카테고리가 없습니다.</span>';
 
     const categoriesHtml = `<a class="topbar-categories__chip topbar-categories__chip--utility" href="/">전체</a>${categoryLinksHtml}<a class="topbar-categories__chip topbar-categories__chip--utility" href="/about/">About</a>`;
@@ -219,7 +253,7 @@ function buildPostsHeroNav(categories = []) {
     }
 
     if (heroCategoryBarEl) {
-      heroCategoryBarEl.innerHTML = buildPostsHeroNav(categories || []);
+      heroCategoryBarEl.innerHTML = buildPostsHeroNav(navCategories || []);
     }
 
     if (mobileSiteCategoryBarEl) {
