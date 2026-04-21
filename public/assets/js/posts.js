@@ -1,3 +1,32 @@
+
+function getPostsHeroActiveKey() {
+  const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  const params = new URLSearchParams(window.location.search);
+  const category = params.get("category");
+
+  if (path === "/" || path === "/index.html" || path === "/posts" || path === "/posts/") {
+    return category || "all";
+  }
+
+  if (path.includes("/about")) return "about";
+  return category || "all";
+}
+
+function buildPostsHeroNav(categories = []) {
+  const activeKey = getPostsHeroActiveKey();
+  const items = [
+    `<a class="posts-home-hero__category-link ${activeKey === "all" ? "is-active" : ""}" href="/">전체</a>`,
+    ...categories.map((cat) => {
+      const safeName = String(cat.name || "").trim();
+      const isActive = activeKey === safeName;
+      const href = `/?category=${encodeURIComponent(safeName)}`;
+      return `<a class="posts-home-hero__category-link ${isActive ? "is-active" : ""}" href="${href}">${safeName}</a>`;
+    }),
+    `<a class="posts-home-hero__about-link ${activeKey === "about" ? "is-active" : ""}" href="/about/">About</a>`
+  ];
+  return items.join("");
+}
+
 (function () {
   const $ = (sel) => document.querySelector(sel);
   const listEl = $('#postsList');
