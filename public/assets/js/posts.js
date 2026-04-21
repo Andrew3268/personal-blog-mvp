@@ -272,8 +272,8 @@ function buildPostsHeroNav(categories = []) {
       postsCategoriesEl.innerHTML = '';
     }
 
-    const navCategories = siteCategories.length ? mergeCategoryCounts(siteCategories, categories) : categories;
-    let navCategories = mergeCategoryCounts(siteCategories, categories);
+    const navCategories = mergeCategoryCounts(siteCategories, categories);
+    
 
     const categoryLinksHtml = navCategories.length
       ? navCategories.map((item) => {
