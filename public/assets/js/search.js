@@ -8,7 +8,9 @@
   const closeButtons = overlay.querySelectorAll('[data-search-close]');
   const mobileMenu = document.getElementById('mobileSiteMenu');
   const header = document.querySelector('.topbar.topbar--editorial');
-  const pageMain = document.querySelector('.container.posts-page') || document.querySelector('main.container') || document.querySelector('main');
+  const desktopMain = document.querySelector('.container.posts-page');
+  const genericMain = document.querySelector('main.container') || document.querySelector('main');
+  const pageMain = desktopMain || genericMain;
 
   function setSearchButtonsExpanded(isOpen) {
     openButtons.forEach((button) => {
@@ -17,29 +19,42 @@
     });
   }
 
-  function setOffsets() {
-    const headerHeight = header ? header.offsetHeight : 64;
+  function getHeaderHeight() {
+    return header ? Math.round(header.getBoundingClientRect().height) : 64;
+  }
+
+  function getPanelHeight() {
+    const panel = overlay.querySelector('.search-overlay__panel');
+    if (!panel) return 0;
+    const rect = panel.getBoundingClientRect();
+    return Math.ceil(rect.height || 0);
+  }
+
+  function applyOffsets(isOpen) {
+    const headerHeight = getHeaderHeight();
     document.documentElement.style.setProperty('--search-header-offset', `${headerHeight}px`);
+
+    const push = isOpen ? Math.max(0, getPanelHeight() + 8) : 0;
+    document.documentElement.style.setProperty('--search-push-offset', `${push}px`);
+
     if (pageMain) {
-      const panelHeight = overlay.classList.contains('is-open')
-        ? (overlay.querySelector('.search-overlay__panel')?.offsetHeight || 88)
-        : 0;
-      document.documentElement.style.setProperty('--search-push-offset', `${panelHeight + 8}px`);
+      pageMain.style.marginTop = isOpen ? `var(--search-push-offset)` : '';
     }
   }
 
   function openSearch() {
     if (mobileMenu && !mobileMenu.hidden) return;
+
     overlay.hidden = false;
     overlay.setAttribute('aria-hidden', 'false');
-    setOffsets();
+    document.body.classList.add('search-open-inline');
+    setSearchButtonsExpanded(true);
+
     requestAnimationFrame(() => {
       overlay.classList.add('is-open');
-      document.body.classList.add('search-open-inline');
-      setSearchButtonsExpanded(true);
-      setOffsets();
+      applyOffsets(true);
       input?.focus();
-      input?.select?.();
+      if (input && typeof input.select === 'function') input.select();
     });
   }
 
@@ -49,6 +64,8 @@
     document.body.classList.remove('search-open-inline');
     setSearchButtonsExpanded(false);
     document.documentElement.style.setProperty('--search-push-offset', '0px');
+    if (pageMain) pageMain.style.marginTop = '';
+
     window.setTimeout(() => {
       if (!overlay.classList.contains('is-open')) {
         overlay.hidden = true;
@@ -76,11 +93,22 @@
   });
 
   document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && !overlay.hidden) {
-      closeSearch();
+    if (event.key === 'Escape' && !overlay.hidden) closeSearch();
+  });
+
+  window.addEventListener('resize', () => {
+    if (!overlay.hidden && overlay.classList.contains('is-open')) {
+      applyOffsets(true);
+    } else {
+      applyOffsets(false);
     }
   });
 
-  window.addEventListener('resize', setOffsets);
-  window.addEventListener('orientationchange', setOffsets);
+  window.addEventListener('orientationchange', () => {
+    if (!overlay.hidden && overlay.classList.contains('is-open')) {
+      applyOffsets(true);
+    } else {
+      applyOffsets(false);
+    }
+  });
 })();
