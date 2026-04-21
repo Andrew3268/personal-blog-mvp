@@ -1109,3 +1109,75 @@ body.has-search-open{
 .mobile-site-menu .topbar-categories__chip::after{
   content:none !important;
 }
+
+
+/* Wackywiki-0422-V3 mobile menu header + top alignment */
+.mobile-site-menu__panel{
+  justify-content:flex-start;
+  padding-top:92px;
+}
+.mobile-site-menu__topbar{
+  position:absolute;
+  top:14px;
+  left:18px;
+  right:18px;
+  display:grid;
+  grid-template-columns:44px minmax(0,1fr) 44px;
+  align-items:center;
+  gap:12px;
+  z-index:3;
+}
+.mobile-site-menu__close-wrap{
+  position:static;
+  top:auto;
+  left:auto;
+  z-index:auto;
+}
+.mobile-site-menu__brand{
+  min-width:0;
+  justify-self:center;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  text-decoration:none;
+}
+.mobile-site-menu__brand .brand__text{
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.mobile-site-menu__search-btn{
+  width:44px;
+  min-width:44px;
+  height:44px;
+  justify-self:end;
+  border-radius:999px;
+}
+.mobile-site-menu__search-btn .nav__icon-svg{
+  width:22px;
+  height:22px;
+}
+.mobile-site-menu__nav,
+.mobile-site-menu__section--categories,
+.mobile-site-menu__section--admin{
+  margin:0;
+  max-width:none;
+}
+.mobile-site-menu__nav{
+  margin-bottom:14px;
+}
+.mobile-site-menu__section--categories,
+.mobile-site-menu__section--admin{
+  align-items:stretch;
+}
+.mobile-site-menu__section--admin{
+  margin-top:14px;
+  padding-top:0;
+}
+@media (max-width:768px){
+  .mobile-site-menu__panel{
+    padding-top:88px;
+  }
+}
