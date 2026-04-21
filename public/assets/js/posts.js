@@ -523,7 +523,15 @@ function buildPostsHeroNav(categories = []) {
     window.location.href = href;
   });
 
-  loadAdminState().finally(() => {
+  loadAdminState().finally(async () => {
+    try {
+      siteCategories = await loadSiteCategories();
+      if (heroCategoryBarEl && siteCategories.length) {
+        heroCategoryBarEl.innerHTML = buildPostsHeroNav(siteCategories);
+      }
+    } catch (_) {
+      siteCategories = [];
+    }
     fetchPage(initialPage, { append: false });
   });
 })();
