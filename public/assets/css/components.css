@@ -883,15 +883,17 @@ body.has-search-open{
   background:transparent;
   border:0;
   padding:0;
+  vertical-align:middle;
 }
 .post-card__readmore:hover,
 .post-card__readmore:focus-visible{
   color:#111;
   outline:none;
 }
-.post-card__readmore span{
-  display:inline-block;
-  transform:translateY(-1px);
+.post-card__readmore-text{
+  display:inline-flex;
+  align-items:center;
+  line-height:1;
 }
 .nav__icon-svg{
   width:25px;
@@ -919,18 +921,19 @@ body.has-search-open{
   align-items:center;
   justify-content:center;
   gap:8px;
-  line-height:1;
 }
 .post-card__readmore-icon{
   width:16px;
   height:16px;
   display:block;
-  flex:0 0 auto;
+  flex:0 0 16px;
   stroke:currentColor;
   fill:none;
   stroke-width:1.7;
   stroke-linecap:round;
   stroke-linejoin:round;
+  vertical-align:middle;
+  transform:translateY(0);
 }
 .nav__icon-svg--logout{
   width:21px;
