@@ -1218,16 +1218,30 @@ body.has-search-open{
     border-radius:0;
     box-shadow:none;
     background:#fff;
-    padding:84px 20px 24px;
+    padding:18px 20px 24px;
     gap:18px;
     justify-content:start;
     align-content:start;
   }
   .search-overlay__head{
-    align-items:flex-start;
+    align-items:center;
+    justify-content:flex-end;
+    min-height:44px;
+  }
+  .search-overlay__head .h2{
+    display:none;
   }
   .search-overlay__close{
-    display:none;
+    display:inline-flex;
+    width:44px;
+    height:44px;
+    margin-left:auto;
+    border-color:rgba(226,232,240,.95);
+    background:#fff;
+    color:#0f172a;
+    font-size:28px;
+    font-weight:500;
+    line-height:1;
   }
   .search-overlay__form{
     grid-template-columns:1fr;
