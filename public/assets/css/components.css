@@ -1181,3 +1181,78 @@ body.has-search-open{
     padding-top:88px;
   }
 }
+
+
+/* Wackywiki-0422-V4 mobile header/search cleanup */
+.brand__mark{display:none !important;}
+
+.topbar-mobile-search{
+  position:relative;
+}
+.topbar-mobile-search .nav__icon-svg{
+  transition:opacity .18s ease, transform .18s ease;
+}
+.topbar-mobile-search::before,
+.topbar-mobile-search::after{
+  content:"";
+  position:absolute;
+  width:18px;
+  height:2px;
+  border-radius:999px;
+  background:#111827;
+  left:50%;
+  top:50%;
+  opacity:0;
+  transform-origin:center;
+  transition:opacity .18s ease, transform .18s ease;
+}
+.topbar-mobile-search.is-open::before{
+  opacity:1;
+  transform:translate(-50%,-50%) rotate(45deg);
+}
+.topbar-mobile-search.is-open::after{
+  opacity:1;
+  transform:translate(-50%,-50%) rotate(-45deg);
+}
+.topbar-mobile-search.is-open .nav__icon-svg{
+  opacity:0;
+  transform:scale(.9);
+}
+
+@media (max-width:768px){
+  .search-overlay{
+    align-items:stretch;
+    padding:0;
+    background:#fff;
+  }
+  .search-overlay__backdrop{
+    display:none;
+  }
+  .search-overlay__panel{
+    width:100%;
+    min-height:100dvh;
+    border:0;
+    border-radius:0;
+    box-shadow:none;
+    background:#fff;
+    padding:84px 20px 24px;
+    gap:18px;
+    justify-content:start;
+    align-content:start;
+  }
+  .search-overlay__head{
+    align-items:flex-start;
+  }
+  .search-overlay__close{
+    display:none;
+  }
+  .search-overlay__form{
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+  .search-overlay__field,
+  .search-overlay__submit{
+    min-height:56px;
+    border-radius:18px;
+  }
+}

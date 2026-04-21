@@ -8,6 +8,15 @@
 
   let lastTrigger = null;
 
+  function syncSearchButtons(open, trigger = null) {
+    openButtons.forEach((button) => {
+      const isActive = open && trigger === button;
+      button.classList.toggle('is-open', isActive);
+      button.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+      button.setAttribute('aria-label', isActive ? '검색 닫기' : '검색 열기');
+    });
+  }
+
   function setOpen(open, trigger = null) {
     if (open) {
       lastTrigger = trigger || document.activeElement;
@@ -15,6 +24,10 @@
       overlay.removeAttribute('inert');
       overlay.setAttribute('aria-hidden', 'false');
       document.body.classList.add('has-search-open');
+      if (document.body.classList.contains('has-mobile-menu-open')) {
+        document.body.classList.remove('has-mobile-menu-open');
+      }
+      syncSearchButtons(true, trigger);
 
       const currentQ = String(new URL(location.href).searchParams.get('q') || '').trim();
       input.value = currentQ;
@@ -34,6 +47,7 @@
     overlay.setAttribute('aria-hidden', 'true');
     overlay.hidden = true;
     document.body.classList.remove('has-search-open');
+    syncSearchButtons(false);
 
     if (lastTrigger && typeof lastTrigger.focus === 'function') {
       setTimeout(() => lastTrigger.focus(), 10);
@@ -41,7 +55,15 @@
   }
 
   openButtons.forEach((button) => {
-    button.addEventListener('click', () => setOpen(true, button));
+    button.addEventListener('click', () => {
+      const isSameTrigger = lastTrigger === button;
+      const isOpen = !overlay.hidden && overlay.getAttribute('aria-hidden') === 'false';
+      if (isOpen && isSameTrigger) {
+        setOpen(false);
+      } else {
+        setOpen(true, button);
+      }
+    });
   });
 
   closeButtons.forEach((button) => {

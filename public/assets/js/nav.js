@@ -9,35 +9,6 @@
   let isOpen = false;
   let closeTimer = null;
 
-  function ensureMenuTopbar() {
-    if (panel.querySelector('.mobile-site-menu__topbar')) return;
-
-    const topbar = document.createElement('div');
-    topbar.className = 'mobile-site-menu__topbar';
-
-    const closeWrap = panel.querySelector('.mobile-site-menu__close-wrap');
-    if (closeWrap) topbar.appendChild(closeWrap);
-
-    const brandSource = document.querySelector('.brand.brand--center');
-    if (brandSource) {
-      const brandClone = brandSource.cloneNode(true);
-      brandClone.classList.add('mobile-site-menu__brand');
-      topbar.appendChild(brandClone);
-    }
-
-    const searchSource = document.querySelector('.topbar-mobile-search, .nav__search-btn');
-    if (searchSource) {
-      const searchClone = searchSource.cloneNode(true);
-      searchClone.classList.add('mobile-site-menu__search-btn');
-      searchClone.classList.remove('topbar-mobile-search');
-      topbar.appendChild(searchClone);
-    }
-
-    panel.insertBefore(topbar, panel.firstChild);
-  }
-
-  ensureMenuTopbar();
-
   function syncButtons(open) {
     openBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
     openBtn.classList.toggle('is-open', open);
