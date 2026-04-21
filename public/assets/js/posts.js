@@ -72,7 +72,7 @@ function buildPostsHeroNav(categories = []) {
     const kickerEl = postsHomeHeroEl.querySelector('.posts-home-hero__kicker');
     const heroCategoryWrap = postsHomeHeroEl.querySelector('.posts-home-hero__category-wrap');
     if (kickerEl) kickerEl.hidden = !isHomeDefault;
-    if (heroCategoryWrap) heroCategoryWrap.hidden = !isHomeDefault;
+    if (heroCategoryWrap) heroCategoryWrap.hidden = false;
   }
   const loadMoreWrap = $('#postsLoadMoreWrap');
   const loadMoreBtn = $('#postsLoadMoreBtn');
@@ -219,7 +219,7 @@ function buildPostsHeroNav(categories = []) {
     }
 
     if (heroCategoryBarEl) {
-      heroCategoryBarEl.innerHTML = categoriesHtml;
+      heroCategoryBarEl.innerHTML = buildPostsHeroNav(categories || []);
     }
 
     if (mobileSiteCategoryBarEl) {
