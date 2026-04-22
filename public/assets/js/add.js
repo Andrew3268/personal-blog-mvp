@@ -1257,7 +1257,7 @@ function evaluateSeo() {
       {
         key: "keywordDensityStuffing",
         group: "keywords",
-        label: "메인 키워드 - 언급/스터핑 체크",
+        label: "메인 키워드 밀도 및 키워드 스터핑",
         status: keywordCount >= 3 && keywordCount <= 12
           ? stuffingResult.status
           : (keywordCount >= 1 ? (stuffingResult.status === "bad" ? "bad" : "warn") : "bad"),
@@ -1334,6 +1334,36 @@ function getSeoStatusLabel(status) {
   return status === "good" ? "통과" : status === "warn" ? "보완" : "부족";
 }
 
+function getSeoDetailItems(item) {
+  const detail = String(item?.detail || "").trim();
+  const statusLabel = getSeoStatusLabel(item?.status);
+  const label = String(item?.label || "");
+
+  if (!detail) return [`결과: ${statusLabel}`];
+
+  if (label === "메인 키워드 밀도 및 키워드 스터핑") {
+    const parts = detail.split("·").map((part) => part.trim()).filter(Boolean);
+    return [`상태: ${statusLabel}`, ...parts];
+  }
+
+  if (label === "메인 키워드 제외 스터핑 키워드") {
+    const parts = detail.split("·").map((part) => part.trim()).filter(Boolean);
+    return [`상태: ${statusLabel}`, ...parts];
+  }
+
+  if (label === "롱테일 키워드 본문 포함 여부" || label === "LSI 키워드 본문 포함 개수") {
+    const parts = detail.split("·").map((part) => part.trim()).filter(Boolean);
+    return [`상태: ${statusLabel}`, ...parts];
+  }
+
+  return [detail];
+}
+
+function renderSeoDetailList(item) {
+  const rows = getSeoDetailItems(item);
+  return `<ul class="seo-check__summary-list">${rows.map((row) => `<li>${escapeHtml(row)}</li>`).join("")}</ul>`;
+}
+
 function renderSeoKeywordChecklist(items) {
   const keywordGroups = [];
   const standaloneItems = [];
@@ -1381,7 +1411,7 @@ function renderSeoKeywordChecklist(items) {
         <strong>${item.label}</strong>
         <span class="seo-pill seo-pill--${item.status}">${getSeoStatusLabel(item.status)}</span>
       </div>
-      <div class="seo-check__summary">${item.detail}</div>
+      <div class="seo-check__summary">${renderSeoDetailList(item)}</div>
     </div>
   `).join("");
 

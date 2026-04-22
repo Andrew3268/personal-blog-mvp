@@ -266,7 +266,7 @@ body.has-preview-open{overflow:hidden}
 @media (max-width:768px){.toc-toolbar{align-items:flex-start}.toc-toolbar .input{min-width:150px;width:100%}.toc-toolbar__controls{width:100%}.post-toc__summary{padding:16px}.post-toc__body{padding:15px;}.post-toc__summary-meta::after{min-width:58px;padding:7px 10px;font-size:12px}.post-body h2,.post-body h3{scroll-margin-top:25px}}
 
 
-.editor-status-field { width: min(30%, 240px); }
+.editor-status-field { width: 100%; max-width: 240px; }
 .editor-meta-grid { align-items: end; gap: 18px; }
 .editor-field-group { display: flex; flex-direction: column; justify-content: flex-end; }
 .form-card .notice { margin-top: 2px; }
@@ -290,6 +290,7 @@ body.has-preview-open{overflow:hidden}
 
 @media (max-width: 768px) {
   .editor-status-field { width: 100%; max-width: none; }
+  .editor-top-controls{grid-template-columns:1fr;gap:12px}
   .editor-meta-grid { gap: 16px; }
   .label-row--between { flex-wrap: wrap; align-items: flex-start; }
   .modal-sheet { width: calc(100vw - 20px); border-radius: 20px; }
@@ -521,3 +522,10 @@ body.has-preview-open{overflow:hidden}
 .post-related__list{grid-area:list}
 @media (max-width:768px){.breadcrumb--post{margin:0 12px !important}}
 @media (max-width:720px){.post-author-card{padding-top:15px}.post-author-card__name{font-size:18px}.post-author-card__meta{font-size:13px}.post-related__layout{grid-template-columns:1fr;grid-template-areas:"header" "list" "action";gap:14px}.post-related__action{justify-content:stretch}.post-related__more-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;padding:0 16px;border-radius:16px;border:1px solid rgba(15,23,42,.08);background:#fff;color:#0f172a;font-weight:800;box-shadow:0 10px 24px rgba(15,23,42,.06)}.post-related__more-btn::after{content:"→";font-size:15px;line-height:1;transform:translateY(-1px)}.post-related__more-btn:hover{transform:translateY(-1px);box-shadow:0 14px 28px rgba(15,23,42,.1)}.post-related__more-btn:active{transform:none;box-shadow:0 8px 18px rgba(15,23,42,.08)}}
+
+.editor-top-controls{display:grid;grid-template-columns:minmax(180px,240px) minmax(240px,1fr);gap:16px;align-items:end}
+.editor-category-field{width:100%}
+.editor-category-control{display:flex;gap:8px;align-items:center}
+.editor-category-control .input{flex:1}
+.seo-check__summary-list{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.seo-check__summary-list li{color:#334155;line-height:1.5}
