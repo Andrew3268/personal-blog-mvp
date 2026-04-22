@@ -962,6 +962,50 @@ function evaluateStuffing(keyword, contentText) {
   };
 }
 
+function evaluateOtherKeywordStuffing(focusKeyword, contentText) {
+  const normalizedFocus = normalizeText(focusKeyword || "");
+  const source = String(contentText || "");
+  const clean = source
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`[^`]*`/g, " ")
+    .replace(/https?:\/\/\S+/g, " ")
+    .replace(/[0-9]/g, " ");
+
+  const rawWords = clean.match(/[가-힣a-zA-Z]{2,}/g) || [];
+  const stopwords = new Set([
+    "그리고","하지만","또한","에서","으로","이것","그것","우리","정말","바로","가장","사용","방법","정리","체크","포함","관련","본문","제목","요약문","메타","디스크립션","키워드","내용","경우","이후","정도","하나","여기","때문","부분","조금","지금","이번","대한","위해","통해","먼저","다음","아래","위의","또는","대한","있는","하는","하면","했다","합니다","하세요","좋습니다","입니다"
+  ]);
+  const counts = new Map();
+
+  rawWords.forEach((word) => {
+    const normalized = normalizeText(word);
+    if (!normalized || normalized.length < 2) return;
+    if (stopwords.has(word)) return;
+    if (normalizedFocus && (normalized === normalizedFocus || normalized.includes(normalizedFocus) || normalizedFocus.includes(normalized))) return;
+    counts.set(word, (counts.get(word) || 0) + 1);
+  });
+
+  const suspicious = Array.from(counts.entries())
+    .map(([keyword, count]) => ({ keyword, count }))
+    .filter((item) => item.count >= 8)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3);
+
+  if (!suspicious.length) {
+    return {
+      status: "good",
+      detail: "메인 키워드 제외 반복 키워드 과다 사용은 발견되지 않았습니다."
+    };
+  }
+
+  const worst = suspicious[0];
+  const status = worst.count >= 12 ? "bad" : "warn";
+  return {
+    status,
+    detail: `반복 가능 키워드: ${suspicious.map((item) => `${item.keyword} ${item.count}회`).join(" · ")}`
+  };
+}
+
 function getImageSeoData(contentMd, coverImage, coverImageAlt, focusKeyword) {
   const bodyImages = getImages(contentMd);
   const bodyImagesWithoutAlt = bodyImages.filter((img) => !img.alt).length;
@@ -1074,6 +1118,7 @@ function evaluateSeo() {
     lsiKeywords
   );
   const stuffingResult = evaluateStuffing(focusKeyword, plainContent);
+  const otherStuffingResult = evaluateOtherKeywordStuffing(focusKeyword, plainContent);
 
   const checks = [
     {
@@ -1130,20 +1175,6 @@ function evaluateSeo() {
       detail: `현재 ${h3List.length}개 · 세부 구조 정리에 도움`
     },
     {
-      key: "internalLinks",
-      group: "structure",
-      label: "내부 링크",
-      status: internalLinks >= 1 ? "good" : "warn",
-      detail: `현재 ${internalLinks}개 · 관련 글 링크 1개 이상 권장`
-    },
-    {
-      key: "externalLinks",
-      group: "structure",
-      label: "외부 링크",
-      status: externalLinks >= 1 ? "good" : "warn",
-      detail: `현재 ${externalLinks}개 · 근거 링크가 있으면 신뢰도에 도움`
-    },
-    {
       key: "faqCount",
       group: "media",
       label: "FAQ 입력 여부",
@@ -1171,11 +1202,11 @@ function evaluateSeo() {
         detail: "메인 키워드를 입력해야 핵심 SEO 점검이 활성화됩니다."
       },
       {
-        key: "keywordStuffing",
+        key: "otherKeywordStuffing",
         group: "keywords",
-        label: "키워드 스터핑 체크",
-        status: stuffingResult.status,
-        detail: stuffingResult.detail
+        label: "메인 키워드 제외 스터핑 키워드",
+        status: otherStuffingResult.status,
+        detail: otherStuffingResult.detail
       }
     );
   } else {
@@ -1223,13 +1254,6 @@ function evaluateSeo() {
         detail: keywordInH2 ? "H2 소제목에 키워드가 반영되어 있습니다." : "H2 소제목 중 하나에 키워드를 포함하면 좋습니다."
       },
       {
-        key: "keywordDensity",
-        group: "keywords",
-        label: "메인 키워드 언급 횟수",
-        status: keywordCount >= 3 && keywordCount <= 12 ? "good" : keywordCount >= 1 ? "warn" : "bad",
-        detail: `본문 내 ${keywordCount}회 언급 · 권장 3~12회`
-      },
-      {
         key: "keywordHeadingCoverage",
         group: "structure",
         label: "H2/H3 메인 키워드 포함 수",
@@ -1237,11 +1261,20 @@ function evaluateSeo() {
         detail: `H2 ${h2List.length}개 중 ${h2KeywordCount}개 · H3 ${h3List.length}개 중 ${h3KeywordCount}개에 메인 키워드가 포함되어 있습니다.`
       },
       {
-        key: "keywordStuffing",
+        key: "keywordDensityStuffing",
         group: "keywords",
-        label: "키워드 스터핑 체크",
-        status: stuffingResult.status,
-        detail: stuffingResult.detail
+        label: "메인 키워드 - 언급/스터핑 체크",
+        status: keywordCount >= 3 && keywordCount <= 12
+          ? stuffingResult.status
+          : (keywordCount >= 1 ? (stuffingResult.status === "bad" ? "bad" : "warn") : "bad"),
+        detail: `${keywordCount}회 언급 · ${stuffingResult.detail.replace(/^본문 내\s*/, "")}`
+      },
+      {
+        key: "otherKeywordStuffing",
+        group: "keywords",
+        label: "메인 키워드 제외 스터핑 키워드",
+        status: otherStuffingResult.status,
+        detail: otherStuffingResult.detail
       }
     );
   }
