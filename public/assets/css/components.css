@@ -1845,7 +1845,7 @@ body.search-open-inline::before {
 
 
 
-/* 0422-V21 final search override */
+/* 0422-V22 final search override */
 :root {
   --search-header-offset: 64px;
   --search-push-offset: 0px;
@@ -1887,10 +1887,10 @@ body.search-open-inline::before {
   top: 0 !important;
   left: 0 !important;
   right: 0 !important;
-  width: 100% !important;
-  max-width: none !important;
-  padding: 10px 0 0 !important;
-  margin: 0 !important;
+  width: min(1200px, calc(100% - 24px)) !important;
+  max-width: 1200px !important;
+  padding: 8px 0 0 !important;
+  margin: 0 auto !important;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -1909,22 +1909,48 @@ body.search-open-inline::before {
 }
 
 .search-overlay__inner {
-  width: min(1200px, calc(100% - 24px)) !important;
-  max-width: 1200px !important;
+  width: 100% !important;
+  max-width: none !important;
   margin: 0 auto !important;
 }
 
+.search-overlay__head,
+.search-overlay__head .h2,
+#siteSearchTitle,
+.search-overlay__title,
+.search-overlay__hint,
+.search-overlay__submit,
+.search-overlay__close,
+.search-overlay__header {
+  display: none !important;
+}
+
+.search-overlay__form,
 .search-overlay__bar {
   display: flex !important;
   align-items: center !important;
   gap: 14px !important;
   min-height: 66px !important;
+  width: 100% !important;
   margin: 0 !important;
   padding: 0 18px 0 20px !important;
   border: 1px solid #e6e7eb !important;
   border-radius: 999px !important;
   background: #ffffff !important;
   box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.06) !important;
+}
+
+.search-overlay__field {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .search-overlay__icon {
@@ -1935,6 +1961,8 @@ body.search-open-inline::before {
   justify-content: center !important;
   color: #465165 !important;
   flex: 0 0 auto !important;
+  font-size: 28px !important;
+  line-height: 1 !important;
 }
 
 .search-overlay__icon svg {
@@ -1997,21 +2025,12 @@ body.search-open-inline::before {
   transform: translate(-50%, -50%) rotate(-45deg) !important;
 }
 
-.search-overlay__close,
-.search-overlay__header,
-.search-overlay__title,
-.search-overlay__hint,
-.search-overlay__submit {
-  display: none !important;
-}
-
 body.search-open-inline .container.posts-page,
 body.search-open-inline main.container,
 body.search-open-inline main {
   transition: margin-top .18s ease !important;
 }
 
-/* search open button must stay magnifier on all breakpoints */
 [data-search-open],
 .topbar-mobile-search,
 .nav__search-btn {
@@ -2050,7 +2069,7 @@ body.search-open-inline main {
   .search-overlay {
     position: absolute !important;
     top: var(--search-header-offset) !important;
-      background: transparent !important;
+    background: transparent !important;
   }
 
   .search-overlay__backdrop {
@@ -2060,28 +2079,23 @@ body.search-open-inline main {
   }
 
   .search-overlay__panel {
-    position: relative !important;
-    top: 0 !important;
-    width: 100% !important;
+    width: calc(100% - 24px) !important;
+    max-width: 1200px !important;
     padding-top: 8px !important;
     background: transparent !important;
     box-shadow: none !important;
   }
 
-  .search-overlay__inner {
-    width: min(1200px, calc(100% - 20px)) !important;
-    max-width: 1200px !important;
-  }
-
+  .search-overlay__form,
   .search-overlay__bar {
-    min-height: 62px !important;
-    padding: 0 14px 0 16px !important;
-    gap: 12px !important;
+    min-height: 66px !important;
+    padding: 0 18px 0 20px !important;
+    gap: 14px !important;
   }
 
   .search-overlay__input {
-    height: 60px !important;
-    font-size: 1rem !important;
+    height: 64px !important;
+    font-size: 1.05rem !important;
   }
 }
 
@@ -2089,7 +2103,7 @@ body.search-open-inline main {
   .search-overlay {
     position: absolute !important;
     top: var(--search-header-offset) !important;
-      background: transparent !important;
+    background: transparent !important;
   }
 
   .search-overlay__backdrop {
@@ -2099,28 +2113,26 @@ body.search-open-inline main {
   }
 
   .search-overlay__panel {
-    position: relative !important;
-    top: 0 !important;
-    width: 100% !important;
+    width: calc(100% - 24px) !important;
+    max-width: 1200px !important;
     padding-top: 8px !important;
     background: transparent !important;
     box-shadow: none !important;
   }
 
-  .search-overlay__inner {
-    width: min(1200px, calc(100% - 12px)) !important;
-    max-width: 1200px !important;
+  .search-overlay__form,
+  .search-overlay__bar {
+    min-height: 66px !important;
+    padding: 0 18px 0 20px !important;
+    gap: 14px !important;
   }
 
-  .search-overlay__bar {
-    min-height: 60px !important;
-    padding: 0 12px 0 14px !important;
-    gap: 10px !important;
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+  .search-overlay__field {
+    gap: 14px !important;
   }
 
   .search-overlay__input {
-    height: 56px !important;
-    font-size: 0.98rem !important;
+    height: 64px !important;
+    font-size: 1.05rem !important;
   }
 }

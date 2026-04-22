@@ -298,13 +298,9 @@ export async function onRequestGet({ params, env, request }) {
   
   <div class="search-overlay" id="siteSearchOverlay" hidden aria-hidden="true">
     <div class="search-overlay__backdrop" data-search-close></div>
-    <div class="search-overlay__panel" role="dialog" aria-modal="true" aria-labelledby="siteSearchTitle">
+    <div class="search-overlay__panel" role="dialog" aria-modal="true" aria-label="검색">
       <div class="search-overlay__head">
-        <div>
-          <div class="small">Search</div>
-          <h2 class="h2" id="siteSearchTitle">검색</h2>
-        </div>
-        <button class="search-overlay__close" type="button" aria-label="검색 닫기" data-search-close>닫기</button>
+<button class="search-overlay__close" type="button" aria-label="검색 닫기" data-search-close>닫기</button>
       </div>
       <form class="search-overlay__form" id="siteSearchForm">
         <label class="search-overlay__field" for="siteSearchInput">
