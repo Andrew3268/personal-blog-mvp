@@ -3,7 +3,7 @@
   if (!overlay) return;
 
   const input = overlay.querySelector('.search-overlay__input');
-  const form = overlay.querySelector('.search-overlay__bar');
+  const form = overlay.querySelector('.search-overlay__form, .search-overlay__bar');
   const openButtons = document.querySelectorAll('[data-search-open]');
   const closeButtons = overlay.querySelectorAll('[data-search-close]');
   const mobileMenu = document.getElementById('mobileSiteMenu');

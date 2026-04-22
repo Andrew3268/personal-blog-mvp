@@ -1790,8 +1790,7 @@ body.search-open-inline::before {
 @media (max-width: 1024px) {
   .search-overlay {
     position: absolute !important;
-    inset: auto 0 auto 0 !important;
-    top: var(--search-header-offset) !important;
+      top: var(--search-header-offset) !important;
     bottom: auto !important;
     background: transparent !important;
   }
@@ -1819,8 +1818,7 @@ body.search-open-inline::before {
 @media (max-width: 768px) {
   .search-overlay {
     position: absolute !important;
-    inset: auto 0 auto 0 !important;
-    top: var(--search-header-offset) !important;
+      top: var(--search-header-offset) !important;
     bottom: auto !important;
     background: transparent !important;
   }
@@ -1859,7 +1857,6 @@ body.search-open-inline::before {
   right: 0 !important;
   top: var(--search-header-offset) !important;
   bottom: auto !important;
-  inset: auto 0 auto 0 !important;
   z-index: 55 !important;
   pointer-events: none !important;
   background: transparent !important;
@@ -2053,8 +2050,7 @@ body.search-open-inline main {
   .search-overlay {
     position: absolute !important;
     top: var(--search-header-offset) !important;
-    inset: auto 0 auto 0 !important;
-    background: transparent !important;
+      background: transparent !important;
   }
 
   .search-overlay__backdrop {
@@ -2093,8 +2089,7 @@ body.search-open-inline main {
   .search-overlay {
     position: absolute !important;
     top: var(--search-header-offset) !important;
-    inset: auto 0 auto 0 !important;
-    background: transparent !important;
+      background: transparent !important;
   }
 
   .search-overlay__backdrop {
