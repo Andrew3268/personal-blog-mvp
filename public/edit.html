@@ -69,13 +69,27 @@
           <div class="grid editor-form-grid">
 
 
-            <label class="editor-status-field">
-              <div class="small">상태</div>
-              <select class="input" id="status">
-                <option value="published">발행</option>
-                <option value="draft">초안</option>
-              </select>
-            </label>
+            <div class="editor-top-controls">
+              <label class="editor-status-field">
+                <div class="small">상태</div>
+                <select class="input" id="status">
+                  <option value="published">발행</option>
+                  <option value="draft">초안</option>
+                </select>
+              </label>
+              <label class="editor-category-field">
+                <div class="small">카테고리</div>
+                <div class="editor-category-control">
+                  <select class="input" id="category"></select>
+                  <button class="btn btn--icon-only" id="openCategoryModalBtn" type="button" aria-label="카테고리 관리">
+                    <svg class="btn__icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 5v14"></path>
+                      <path d="M5 12h14"></path>
+                    </svg>
+                  </button>
+                </div>
+              </label>
+            </div>
 
 <div class="grid grid--3">
             <label>
