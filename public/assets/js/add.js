@@ -1045,9 +1045,6 @@ function evaluateSeo() {
   const bodyH1List = getHeadings(contentMd, 1);
   const h2List = getHeadings(contentMd, 2);
   const h3List = getHeadings(contentMd, 3);
-  const links = getLinks(contentMd);
-  const internalLinks = links.filter((href) => href.startsWith("/")).length;
-  const externalLinks = links.filter((href) => /^https?:\/\//.test(href)).length;
   const imageSeo = getImageSeoData(contentMd, coverImage, coverImageAlt, focusKeyword);
   const firstParagraph = getFirstParagraph(contentMd);
   const keywordInTitle = focusKeyword ? containsKeyword(title, focusKeyword) : false;
@@ -1122,20 +1119,6 @@ function evaluateSeo() {
       label: "H3 소제목 구조",
       status: h3List.length >= 2 ? "good" : "warn",
       detail: `현재 ${h3List.length}개 · 세부 구조 정리에 도움`
-    },
-    {
-      key: "internalLinks",
-      group: "structure",
-      label: "내부 링크",
-      status: internalLinks >= 1 ? "good" : "warn",
-      detail: `현재 ${internalLinks}개 · 관련 글 링크 1개 이상 권장`
-    },
-    {
-      key: "externalLinks",
-      group: "structure",
-      label: "외부 링크",
-      status: externalLinks >= 1 ? "good" : "warn",
-      detail: `현재 ${externalLinks}개 · 근거 링크가 있으면 신뢰도에 도움`
     },
     {
       key: "faqCount",
@@ -1297,6 +1280,60 @@ function getScoreSummary(checks) {
   return { score, grade };
 }
 
+function getSeoItemDisplay(item, selectedGroupKey) {
+  const statusMark = item.status === "good" ? "V" : item.status === "warn" ? "△" : "X";
+  const isKeywordGroup = selectedGroupKey === "keywords";
+
+  if (!isKeywordGroup) {
+    return {
+      title: item.label,
+      compact: false,
+      meta: "",
+      detail: item.detail || ""
+    };
+  }
+
+  const compactLabelMap = {
+    focusKeywordMissing: ["메인키워드", "설정 필요"],
+    keywordTitle: ["메인키워드", "제목 포함"],
+    keywordMeta: ["메인키워드", "메타 디스크립션"],
+    keywordSummary: ["메인키워드", "요약문"],
+    keywordSlug: ["메인키워드", "슬러그"],
+    keywordIntro: ["메인키워드", "첫 문단"],
+    keywordH2: ["메인키워드", "소제목"],
+    keywordDensity: ["메인키워드", "본문 언급 횟수"],
+    keywordStuffing: ["메인키워드", "스터핑 체크"],
+    longtailKeywords: ["롱테일 키워드", "설정"],
+    longtailCoverage: ["롱테일 키워드", "본문 포함"],
+    lsiKeywords: ["LSI 키워드", "설정"],
+    lsiCoverage: ["LSI 키워드", "본문 포함"]
+  };
+
+  const pair = compactLabelMap[item.key];
+  const metaByKey = {
+    keywordDensity: item.detail || "",
+    keywordStuffing: item.detail || "",
+    longtailCoverage: item.detail || "",
+    lsiCoverage: item.detail || ""
+  };
+
+  if (pair) {
+    return {
+      title: pair[0],
+      compact: true,
+      meta: metaByKey[item.key] || "",
+      detail: `- ${pair[1]} (${statusMark})`
+    };
+  }
+
+  return {
+    title: item.label,
+    compact: false,
+    meta: "",
+    detail: item.detail || ""
+  };
+}
+
 function renderSeoChecklist(activeGroupKey) {
   const tabsWrap = $("seoTabs");
   const wrap = $("seoChecklist");
@@ -1325,13 +1362,15 @@ function renderSeoChecklist(activeGroupKey) {
 
   wrap.innerHTML = (selectedGroup?.items || checks).map((item) => {
     const icon = item.status === "good" ? "통과" : item.status === "warn" ? "보완" : "부족";
+    const display = getSeoItemDisplay(item, selectedGroup?.key || "basic");
     return `
-      <div class="seo-check seo-check--${item.status}">
+      <div class="seo-check seo-check--${item.status} ${display.compact ? "seo-check--compact" : ""}">
         <div class="seo-check__head">
-          <strong>${item.label}</strong>
+          <strong>${display.title}</strong>
           <span class="seo-pill seo-pill--${item.status}">${icon}</span>
         </div>
-        <div class="small">${item.detail}</div>
+        ${display.meta ? `<div class="seo-check__meta">${display.meta}</div>` : ""}
+        <div class="small">${display.detail}</div>
       </div>
     `;
   }).join("");

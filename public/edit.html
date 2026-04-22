@@ -68,6 +68,15 @@
         <div class="editor-main">
           <div class="grid editor-form-grid">
 
+            <label class="editor-status-field">
+              <div class="small">상태</div>
+              <select class="input" id="status">
+                <option value="published">발행</option>
+                <option value="draft">초안</option>
+              </select>
+            </label>
+
+
           <div class="grid grid--3">
             <label>
               <div class="small">슬러그</div>
@@ -101,14 +110,6 @@
             <label>
               <div class="small">요약문 <span id="summaryCount"></span></div>
               <textarea class="input" id="summary" rows="4" placeholder="본문 상단 요약"></textarea>
-            </label>
-
-            <label class="editor-status-field">
-              <div class="small">상태</div>
-              <select class="input" id="status">
-                <option value="published">발행</option>
-                <option value="draft">초안</option>
-              </select>
             </label>
 
             <div class="grid grid--2">
