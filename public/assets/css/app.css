@@ -529,3 +529,18 @@ body.has-preview-open{overflow:hidden}
 .editor-category-control .input{flex:1}
 .seo-check__summary-list{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
 .seo-check__summary-list li{color:#334155;line-height:1.5}
+
+
+/* SEO checklist detail refinements */
+.seo-check__subsection{
+  margin-top:12px;
+}
+.seo-check__subheading{
+  font-size:13px;
+  font-weight:800;
+  color:#334155;
+  margin:0 0 8px;
+}
+.seo-check__summary-list--nested{
+  margin-top:0;
+}

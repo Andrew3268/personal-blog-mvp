@@ -983,12 +983,12 @@ function evaluateOtherKeywordStuffing(focusKeyword, contentText) {
     .map(([keyword, count]) => ({ keyword, count }))
     .filter((item) => item.count >= 8)
     .sort((a, b) => b.count - a.count)
-    .slice(0, 3);
+    .slice(0, 5);
 
   if (!suspicious.length) {
     return {
       status: "good",
-      detail: "메인 키워드 제외 반복 키워드 과다 사용은 발견되지 않았습니다."
+      detail: "반복 키워드 Top 5 없음"
     };
   }
 
@@ -996,7 +996,7 @@ function evaluateOtherKeywordStuffing(focusKeyword, contentText) {
   const status = worst.count >= 12 ? "bad" : "warn";
   return {
     status,
-    detail: `반복 가능 키워드: ${suspicious.map((item) => `${item.keyword} ${item.count}회`).join(" · ")}`
+    detail: `Top5: ${suspicious.map((item) => `${item.keyword} ${item.count}회`).join(" | ")}`
   };
 }
 
@@ -1334,34 +1334,105 @@ function getSeoStatusLabel(status) {
   return status === "good" ? "통과" : status === "warn" ? "보완" : "부족";
 }
 
-function getSeoDetailItems(item) {
+function getSeoDetailModel(item) {
   const detail = String(item?.detail || "").trim();
-  const statusLabel = getSeoStatusLabel(item?.status);
   const label = String(item?.label || "");
 
-  if (!detail) return [`결과: ${statusLabel}`];
+  const makeTextList = (parts) => ({
+    lines: parts.filter(Boolean).map((part) => ({ text: part }))
+  });
+
+  if (!detail) return makeTextList(["결과 없음"]);
 
   if (label === "메인 키워드 밀도 및 키워드 스터핑") {
-    const parts = detail.split("·").map((part) => part.trim()).filter(Boolean);
-    return [`상태: ${statusLabel}`, ...parts];
+    const countMatch = detail.match(/(\d+)회 언급/);
+    const densityMatch = detail.match(/추정 밀도\s*([\d.]+%)/);
+    const rangeMatch = detail.match(/(권장\s*[^·]+)/);
+    return {
+      lines: [
+        countMatch ? { text: `메인 키워드 언급 횟수: ${countMatch[1]}회` } : null,
+        densityMatch ? { text: `추정 밀도: ${densityMatch[1]}` } : null,
+        rangeMatch ? { text: rangeMatch[1] } : null
+      ].filter(Boolean)
+    };
   }
 
   if (label === "메인 키워드 제외 스터핑 키워드") {
-    const parts = detail.split("·").map((part) => part.trim()).filter(Boolean);
-    return [`상태: ${statusLabel}`, ...parts];
+    if (/없음|발견되지 않았습니다/.test(detail)) {
+      return makeTextList(["반복 키워드 Top 5 없음"]);
+    }
+
+    const raw = detail.replace(/^Top5:\s*/, "").trim();
+    const items = raw
+      .split(/\s*\|\s*|\s*·\s*/g)
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .map((part) => {
+        const match = part.match(/(.+?)\s+(\d+)회$/);
+        return match ? { keyword: match[1].trim(), count: match[2] } : null;
+      })
+      .filter(Boolean);
+
+    return {
+      lines: [{ text: "반복 키워드 Top 5" }],
+      topKeywords: items
+    };
   }
 
   if (label === "롱테일 키워드 본문 포함 여부" || label === "LSI 키워드 본문 포함 개수") {
-    const parts = detail.split("·").map((part) => part.trim()).filter(Boolean);
-    return [`상태: ${statusLabel}`, ...parts];
+    if (!detail.includes("미포함:")) {
+      return makeTextList([detail]);
+    }
+
+    const [summary, missingPart] = detail.split("미포함:");
+    const missing = String(missingPart || "")
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    return {
+      lines: [{ text: summary.replace(/·\s*$/, "").trim() }],
+      missingTitle: "미포함 키워드",
+      missing
+    };
   }
 
-  return [detail];
+  return makeTextList([detail]);
 }
 
 function renderSeoDetailList(item) {
-  const rows = getSeoDetailItems(item);
-  return `<ul class="seo-check__summary-list">${rows.map((row) => `<li>${escapeHtml(row)}</li>`).join("")}</ul>`;
+  const model = getSeoDetailModel(item);
+  const lines = Array.isArray(model?.lines) ? model.lines : [];
+  const topKeywords = Array.isArray(model?.topKeywords) ? model.topKeywords : [];
+  const missing = Array.isArray(model?.missing) ? model.missing : [];
+  const missingTitle = model?.missingTitle || "";
+
+  const baseList = lines.length
+    ? `<ul class="seo-check__summary-list">${lines.map((row) => `<li>${escapeHtml(row.text || "")}</li>`).join("")}</ul>`
+    : "";
+
+  const topKeywordHtml = topKeywords.length
+    ? `
+      <div class="seo-check__subsection">
+        <ul class="seo-check__summary-list seo-check__summary-list--nested">
+          ${topKeywords.map((item) => `<li>${escapeHtml(item.keyword)} · ${escapeHtml(String(item.count))}회</li>`).join("")}
+        </ul>
+      </div>
+    `
+    : "";
+
+  const missingHtml = missing.length
+    ? `
+      <div class="seo-check__subsection">
+        <div class="seo-check__subheading">${escapeHtml(missingTitle)}</div>
+        <ul class="seo-check__summary-list seo-check__summary-list--nested">
+          ${missing.map((keyword) => `<li>${escapeHtml(keyword)}</li>`).join("")}
+        </ul>
+      </div>
+    `
+    : "";
+
+  return `${baseList}${topKeywordHtml}${missingHtml}`;
 }
 
 function renderSeoKeywordChecklist(items) {
