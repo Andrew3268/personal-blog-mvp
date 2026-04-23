@@ -981,41 +981,28 @@
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  padding:0;
+  padding:0 0 6px;
   background:none;
   border:0;
+  border-bottom:2px solid transparent;
   color:#111827;
   text-decoration:none;
   font-weight:600;
   line-height:1.2;
+  transition:border-color .2s ease, color .2s ease;
 }
 
 .posts-home-hero__category-link::after,
 .posts-home-hero__about-link::after{
-  content:"";
-  position:absolute;
-  left:0;
-  right:0;
-  bottom:-6px;
-  height:2px;
-  border-radius:999px;
-  background:currentColor;
-  opacity:0;
-  transform:scaleX(.6);
-  transform-origin:center;
-  transition:opacity .2s ease, transform .2s ease;
+  display:none;
 }
 
-.posts-home-hero__category-link.is-active::after,
-.posts-home-hero__about-link.is-active::after{
-  opacity:1;
-  transform:scaleX(1);
-}
 .posts-home-hero__category-link.is-active,
 .posts-home-hero__about-link.is-active,
 .posts-home-hero__category-link[aria-current="page"],
 .posts-home-hero__about-link[aria-current="page"]{
   font-weight:700;
+  border-bottom-color:currentColor;
 }
 
 .about-postsHomeHero{
