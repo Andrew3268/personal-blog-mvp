@@ -11,12 +11,25 @@
       .replaceAll("'", '&#039;');
   }
 
-  function buildLink(label, href, key, activeKey, extraClass = 'posts-home-hero__category-link') {
-    const isActive = key === activeKey;
-    return `<a class="${extraClass}${isActive ? ' is-active' : ''}" href="${href}" data-hero-nav-key="${escapeHtml(key)}"${isActive ? ' aria-current="page"' : ''}>${escapeHtml(label)}</a>`;
+  function getActiveKey() {
+    const path = window.location.pathname.replace(/\/+$/, '') || '/';
+    const params = new URLSearchParams(window.location.search);
+    const category = (params.get('category') || '').trim();
+    if (path.includes('/about')) return 'about';
+    if (category) return category;
+    return 'all';
   }
 
-  const activeKey = 'about';
+  function applyActiveState(container) {
+    const activeKey = getActiveKey();
+    container.querySelectorAll('.posts-home-hero__category-link, .posts-home-hero__about-link').forEach((link) => {
+      const key = String(link.getAttribute('data-active-key') || '').trim();
+      const isActive = key && key === activeKey;
+      link.classList.toggle('is-active', isActive);
+      if (isActive) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
+    });
+  }
 
   fetch('/api/categories', { headers: { Accept: 'application/json' } })
     .then((res) => res.ok ? res.json() : Promise.reject(new Error('load failed')))
@@ -27,17 +40,16 @@
         .filter((item) => item.name);
 
       const links = [
-        buildLink('전체', '/', 'all', activeKey),
-        ...categories.map((item) => buildLink(item.name, `/?category=${encodeURIComponent(item.name)}`, item.name, activeKey)),
-        buildLink('About', '/about/', 'about', activeKey, 'posts-home-hero__about-link')
+        '<a class="posts-home-hero__category-link" data-active-key="all" href="/">전체</a>',
+        ...categories.map((item) => `<a class="posts-home-hero__category-link" data-active-key="${escapeHtml(item.name)}" href="/?category=${encodeURIComponent(item.name)}">${escapeHtml(item.name)}</a>`),
+        '<a class="posts-home-hero__about-link" data-active-key="about" href="/about/">About</a>'
       ];
 
       heroBar.innerHTML = links.join('');
+      applyActiveState(heroBar);
     })
     .catch(() => {
-      heroBar.innerHTML = [
-        buildLink('전체', '/', 'all', activeKey),
-        buildLink('About', '/about/', 'about', activeKey, 'posts-home-hero__about-link')
-      ].join('');
+      heroBar.innerHTML = '<a class="posts-home-hero__category-link" data-active-key="all" href="/">전체</a><a class="posts-home-hero__about-link" data-active-key="about" href="/about/">About</a>';
+      applyActiveState(heroBar);
     });
 })();

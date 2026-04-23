@@ -989,20 +989,14 @@
   text-decoration:none;
   font-weight:600;
   line-height:1.2;
-  transition:border-color .2s ease, color .2s ease;
-}
-
-.posts-home-hero__category-link::after,
-.posts-home-hero__about-link::after{
-  display:none;
+  white-space:nowrap;
 }
 
 .posts-home-hero__category-link.is-active,
 .posts-home-hero__about-link.is-active,
 .posts-home-hero__category-link[aria-current="page"],
 .posts-home-hero__about-link[aria-current="page"]{
-  font-weight:700;
-  border-bottom-color:currentColor;
+  border-bottom-color:#111827;
 }
 
 .about-postsHomeHero{
@@ -1067,3 +1061,16 @@ body.search-open::before,
   transition: margin-top .18s ease !important;
 }
 
+
+
+/* 0423 active underline fix */
+#heroCategoryBar .posts-home-hero__category-link,
+#heroCategoryBar .posts-home-hero__about-link{
+  border-radius:0 !important;
+}
+#heroCategoryBar .posts-home-hero__category-link.is-active,
+#heroCategoryBar .posts-home-hero__about-link.is-active,
+#heroCategoryBar .posts-home-hero__category-link[aria-current="page"],
+#heroCategoryBar .posts-home-hero__about-link[aria-current="page"]{
+  border-bottom:2px solid #111827 !important;
+}

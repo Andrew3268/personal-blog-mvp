@@ -74,6 +74,20 @@ function mergeCategoryCounts(baseCategories = [], countedCategories = []) {
   return merged;
 }
 
+
+function applyPostsHeroActiveState(container) {
+  if (!container) return;
+  const activeKey = getPostsHeroActiveKey();
+  const links = container.querySelectorAll('.posts-home-hero__category-link, .posts-home-hero__about-link');
+  links.forEach((link) => {
+    const key = String(link.getAttribute('data-active-key') || '').trim();
+    const isActive = key && key === activeKey;
+    link.classList.toggle('is-active', isActive);
+    if (isActive) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+  });
+}
+
 function buildPostsHeroNav(categories = []) {
   const activeKey = getPostsHeroActiveKey();
   const unique = [];
@@ -86,15 +100,15 @@ function buildPostsHeroNav(categories = []) {
     unique.push({ name, count: Number(cat?.count || 0) });
   });
 
-  const buildLink = (label, href, key, extraClass = 'posts-home-hero__category-link') => {
-    const isActive = activeKey === key;
-    return `<a class="${extraClass}${isActive ? ' is-active' : ''}" href="${href}" data-hero-nav-key="${escapeHtml(key)}" aria-current="${isActive ? 'page' : 'false'}">${escapeHtml(label)}</a>`;
-  };
-
   const items = [
-    buildLink('전체', '/', 'all'),
-    ...unique.map((cat) => buildLink(cat.name, `/?category=${encodeURIComponent(cat.name)}`, cat.name)),
-    buildLink('About', '/about/', 'about', 'posts-home-hero__about-link')
+    `<a class="posts-home-hero__category-link ${activeKey === 'all' ? 'is-active' : ''}" data-active-key="all" ${activeKey === 'all' ? 'aria-current="page"' : ''} href="/">전체</a>`,
+    ...unique.map((cat) => {
+      const safeName = cat.name;
+      const isActive = activeKey === safeName;
+      const href = `/?category=${encodeURIComponent(safeName)}`;
+      return `<a class="posts-home-hero__category-link ${isActive ? 'is-active' : ''}" data-active-key="${escapeHtml(safeName)}" ${isActive ? 'aria-current="page"' : ''} href="${href}">${escapeHtml(safeName)}</a>`;
+    }),
+    `<a class="posts-home-hero__about-link ${activeKey === 'about' ? 'is-active' : ''}" data-active-key="about" ${activeKey === 'about' ? 'aria-current="page"' : ''} href="/about/">About</a>`
   ];
 
   return items.join('');
@@ -146,17 +160,6 @@ function buildPostsHeroNav(categories = []) {
     const heroCategoryWrap = postsHomeHeroEl.querySelector('.posts-home-hero__category-wrap');
     if (kickerEl) kickerEl.hidden = !isHomeDefault;
     if (heroCategoryWrap) heroCategoryWrap.hidden = false;
-  }
-
-  function applyPostsHeroActiveState() {
-    if (!heroCategoryBarEl) return;
-    const activeKey = getPostsHeroActiveKey();
-    heroCategoryBarEl.querySelectorAll('[data-hero-nav-key]').forEach((link) => {
-      const isActive = String(link.getAttribute('data-hero-nav-key') || '') === activeKey;
-      link.classList.toggle('is-active', isActive);
-      if (isActive) link.setAttribute('aria-current', 'page');
-      else link.removeAttribute('aria-current');
-    });
   }
   const loadMoreWrap = $('#postsLoadMoreWrap');
   const loadMoreBtn = $('#postsLoadMoreBtn');
@@ -306,7 +309,7 @@ function buildPostsHeroNav(categories = []) {
 
     if (heroCategoryBarEl) {
       heroCategoryBarEl.innerHTML = buildPostsHeroNav(navCategories);
-      applyPostsHeroActiveState();
+      applyPostsHeroActiveState(heroCategoryBarEl);
     }
 
     if (mobileSiteCategoryBarEl) {
@@ -447,7 +450,6 @@ function buildPostsHeroNav(categories = []) {
 
   if (pageTitleEl) pageTitleEl.textContent = getPageTitle();
   if (pageDescEl) pageDescEl.innerHTML = getPageDescription();
-  applyPostsHeroActiveState();
 
   function closeCategoriesMenu() {
     if (!postsCategoriesMenuEl || !postsCategoriesToggleEl) return;
@@ -535,7 +537,6 @@ function buildPostsHeroNav(categories = []) {
       siteCategories = await loadSiteCategories();
       if (heroCategoryBarEl && siteCategories.length) {
         heroCategoryBarEl.innerHTML = buildPostsHeroNav(siteCategories);
-        applyPostsHeroActiveState();
       }
     } catch (_) {
       siteCategories = [];
