@@ -360,7 +360,6 @@ export async function onRequestGet({ params, env, request }) {
   ${adsenseRuntimeScript}
   <script src="/assets/js/admin-ui.js" defer></script>
   <script src="/assets/js/nav.js" defer></script>
-  <script src="/assets/js/site-search.js" defer></script>
 </body>
 </html>`;
 
@@ -811,7 +810,6 @@ function topbar() {
       </a>
 
       <nav class="nav nav--utility nav--right" aria-label="오른쪽 메뉴">
-        <a href="/about/" data-path="/about">About</a>
         <a href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
       </nav>
     </div>
@@ -826,7 +824,6 @@ function topbar() {
       </div>
       <nav class="mobile-site-menu__nav" aria-label="모바일 주요 메뉴">
         <a class="mobile-site-menu__text-link" href="/" data-path="/">홈</a>
-        <a class="mobile-site-menu__text-link" href="/about/" data-path="/about">About</a>
       </nav>
       <div class="mobile-site-menu__section mobile-site-menu__section--categories">
         <div id="mobileSiteCategoryBar" class="topbar-categories__list topbar-categories__list--mobile"></div>
