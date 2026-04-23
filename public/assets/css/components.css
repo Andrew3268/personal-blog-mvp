@@ -754,7 +754,7 @@
   stroke-width:1.7;
   stroke-linecap:round;
   stroke-linejoin:round;
-  vertical-align:middle;
+  /* vertical-align:middle; */
   overflow:visible;
   transform:translateY(1px);
 }
@@ -937,30 +937,37 @@
 
 .brand__mark{display:none !important;}
 
-@media (max-width:768px){
-  
-  
-  
-  
-  
-  
-  
-  
-}
 
 @media (max-width:768px){
-  
-  
-  
-.posts-home-hero .topbar-categories__list--hero{width:100%;justify-content:flex-start;align-items:center}
-@media (max-width:768px){
-  .posts-home-hero--index{padding:14px 16px 8px;min-height:auto}
-  .posts-home-hero--category{padding:14px 16px 8px}
-  .posts-layout--home{margin-top:4px !important}
-  .posts-home-hero .topbar-categories__list--hero{gap:10px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;-ms-overflow-style:none;scrollbar-width:none}
-  .posts-home-hero .topbar-categories__list--hero::-webkit-scrollbar{display:none}
-}
+  .posts-home-hero .topbar-categories__list--hero{
+    width:100%;
+    justify-content:flex-start;
+    align-items:center;
+    gap:10px;
+    overflow-x:auto;
+    flex-wrap:nowrap;
+    padding-bottom:4px;
+    -ms-overflow-style:none;
+    scrollbar-width:none;
+  }
 
+  .posts-home-hero .topbar-categories__list--hero::-webkit-scrollbar{
+    display:none;
+  }
+
+  .posts-home-hero--index{
+    padding:14px 16px 8px;
+    min-height:auto;
+  }
+
+  .posts-home-hero--category{
+    padding:14px 16px 8px;
+  }
+
+  .posts-layout--home{
+    margin-top:4px !important;
+  }
+}
 /* 0422-V10: posts-home-hero active nav */
 .posts-home-hero--index,
 .posts-home-hero--category{
@@ -1027,41 +1034,8 @@
   }
 }
 
-:root {
-}
-
-  transition: margin-top .18s ease;
-}
-
-}
-
-}
-
-}
-
-/* ensure no global blur/dim remains */
-body.search-open,
-  overflow-x: hidden;
-}
-
-body.search-open::before,
-  display: none !important;
-}
-
-  
-
-  
-
-  
-}
-
-:root {
-}
-
-  transition: margin-top .18s ease !important;
-}
-
-
+body.search-open{overflow-x:hidden;}
+body.search-open::before{display:none !important;}
 
 /* 0423 active underline fix */
 #heroCategoryBar .posts-home-hero__category-link,
@@ -1241,10 +1215,11 @@ body.search-open::before,
 }
 .site-search__item-title{
   display:block;
-  color:#0f172a;
-  font-size:18px;
+  color:#333;
+  font-size:15px;
   line-height:1.45;
   letter-spacing:-.02em;
+  font-weight:400;
 }
 .site-search__empty{
   border:1px dashed rgba(203,213,225,.95);
