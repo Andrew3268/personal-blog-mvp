@@ -728,6 +728,7 @@
 }
 .posts-home-hero__category-wrap{
   display:block !important;
+  padding-left:20px;
 }
 #heroCategoryBar{
   display:flex;
