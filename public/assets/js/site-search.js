@@ -51,6 +51,10 @@
             <span class="site-search__close-icon" aria-hidden="true">${createCloseIcon()}</span>
           </button>
         </div>
+        <div class="site-search__filters" role="group" aria-label="검색 범위 선택">
+          <button type="button" class="site-search__toggle is-on" data-search-mode="title" aria-pressed="true">제목 검색</button>
+          <button type="button" class="site-search__toggle" data-search-mode="content" aria-pressed="false">내용 검색</button>
+        </div>
         <div class="site-search__results" data-site-search-results hidden></div>
       </div>
     </div>
@@ -62,10 +66,15 @@
   const results = searchRoot.querySelector('[data-site-search-results]');
   const clearBtn = searchRoot.querySelector('[data-site-search-clear]');
   const closeBtn = searchRoot.querySelector('[data-site-search-close]');
+  const toggleButtons = Array.from(searchRoot.querySelectorAll('[data-search-mode]'));
 
   let isOpen = false;
   let requestSeq = 0;
   let debounceTimer = null;
+  const modes = {
+    title: true,
+    content: false
+  };
 
   function escapeHtml(value) {
     return String(value ?? '')
@@ -74,6 +83,26 @@
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#039;');
+  }
+
+  function updatePlaceholder() {
+    if (modes.title && modes.content) {
+      input.placeholder = '제목과 내용으로 검색';
+    } else if (modes.content) {
+      input.placeholder = '내용으로 검색';
+    } else {
+      input.placeholder = '제목으로 검색';
+    }
+  }
+
+  function syncToggleUi() {
+    toggleButtons.forEach((button) => {
+      const mode = button.getAttribute('data-search-mode');
+      const isOn = !!modes[mode];
+      button.classList.toggle('is-on', isOn);
+      button.setAttribute('aria-pressed', isOn ? 'true' : 'false');
+    });
+    updatePlaceholder();
   }
 
   function buildResultItem(item) {
@@ -127,6 +156,8 @@
       url.searchParams.set('q', query);
       url.searchParams.set('page', '1');
       url.searchParams.set('per_page', '8');
+      url.searchParams.set('search_title', modes.title ? '1' : '0');
+      url.searchParams.set('search_content', modes.content ? '1' : '0');
       const res = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
       if (!res.ok) throw new Error('search_failed');
       const data = await res.json().catch(() => ({}));
@@ -144,17 +175,9 @@
     }
   }
 
-  function syncTopOffset() {
-    const rect = topbar.getBoundingClientRect();
-    const top = rect.bottom;
-    searchRoot.style.setProperty('--site-search-top', `${Math.max(64, Math.round(top))}px`);
-  }
-
   function openSearch() {
     if (isOpen) return;
     isOpen = true;
-    syncTopOffset();
-    document.body.classList.add('search-open');
     searchRoot.hidden = false;
     searchRoot.setAttribute('aria-hidden', 'false');
     searchButton.setAttribute('aria-expanded', 'true');
@@ -173,10 +196,9 @@
     searchRoot.setAttribute('aria-hidden', 'true');
     searchButton.setAttribute('aria-expanded', 'false');
     searchButton.classList.remove('is-active');
-    document.body.classList.remove('search-open');
     setTimeout(() => {
       if (!isOpen) searchRoot.hidden = true;
-    }, 180);
+    }, 220);
   }
 
   searchButton.addEventListener('click', () => {
@@ -190,6 +212,27 @@
     clearBtn.hidden = true;
     hideResults();
     input.focus();
+  });
+
+  toggleButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const mode = button.getAttribute('data-search-mode');
+      if (!mode || !(mode in modes)) return;
+
+      if (modes[mode]) {
+        const activeCount = Object.values(modes).filter(Boolean).length;
+        if (activeCount === 1) return;
+        modes[mode] = false;
+      } else {
+        modes[mode] = true;
+      }
+
+      syncToggleUi();
+      if (String(input.value || '').trim()) {
+        clearTimeout(debounceTimer);
+        runSearch(input.value);
+      }
+    });
   });
 
   input?.addEventListener('input', () => {
@@ -209,8 +252,5 @@
     closeSearch();
   });
 
-  window.addEventListener('resize', syncTopOffset);
-  window.addEventListener('scroll', () => {
-    if (isOpen) syncTopOffset();
-  }, { passive: true });
+  syncToggleUi();
 })();

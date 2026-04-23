@@ -12,6 +12,8 @@ export async function onRequestGet({ env, request }) {
   const category = String(url.searchParams.get("category") || "").trim();
   const tag = String(url.searchParams.get("tag") || "").trim();
   const query = String(url.searchParams.get("q") || "").trim().toLowerCase();
+  const searchTitle = String(url.searchParams.get("search_title") || "1").trim() !== "0";
+  const searchContent = String(url.searchParams.get("search_content") || "0").trim() === "1";
   const page = clampInt(url.searchParams.get("page"), 1, 1, 9999);
   const perPage = clampInt(url.searchParams.get("per_page"), 8, 1, 24);
   const offset = (page - 1) * perPage;
@@ -40,20 +42,34 @@ export async function onRequestGet({ env, request }) {
   }
 
   if (query) {
-    where.push(`(
-      LOWER(COALESCE(title, '')) LIKE ?
-      OR LOWER(COALESCE(summary, '')) LIKE ?
-      OR LOWER(COALESCE(meta_description, '')) LIKE ?
-      OR LOWER(COALESCE(category, '')) LIKE ?
-      OR LOWER(COALESCE(content_md, '')) LIKE ?
-      OR EXISTS (
+    const qLike = `%${query}%`;
+    const queryParts = [];
+
+    if (searchTitle) {
+      queryParts.push(`LOWER(COALESCE(title, '')) LIKE ?`);
+      binds.push(qLike);
+    }
+
+    if (searchContent) {
+      queryParts.push(`LOWER(COALESCE(summary, '')) LIKE ?`);
+      queryParts.push(`LOWER(COALESCE(meta_description, '')) LIKE ?`);
+      queryParts.push(`LOWER(COALESCE(category, '')) LIKE ?`);
+      queryParts.push(`LOWER(COALESCE(content_md, '')) LIKE ?`);
+      queryParts.push(`EXISTS (
         SELECT 1
         FROM json_each(COALESCE(tags_json, '[]'))
         WHERE LOWER(TRIM(json_each.value)) LIKE ?
-      )
-    )`);
-    const qLike = `%${query}%`;
-    binds.push(qLike, qLike, qLike, qLike, qLike, qLike);
+      )`);
+      binds.push(qLike, qLike, qLike, qLike, qLike);
+    }
+
+    if (!queryParts.length) {
+      queryParts.push(`LOWER(COALESCE(title, '')) LIKE ?`);
+      binds.push(qLike);
+    }
+
+    where.push(`(${queryParts.join("
+      OR ")})`);
   }
 
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
