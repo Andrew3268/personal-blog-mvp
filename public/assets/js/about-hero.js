@@ -26,8 +26,10 @@
       ];
 
       heroBar.innerHTML = links.join('');
+      if (typeof window.applyPostsHeroActiveState === 'function') window.applyPostsHeroActiveState(document);
     })
     .catch(() => {
       heroBar.innerHTML = '<a class="posts-home-hero__category-link" href="/">전체</a><a class="posts-home-hero__about-link is-active" href="/about/">About</a>';
+      if (typeof window.applyPostsHeroActiveState === 'function') window.applyPostsHeroActiveState(document);
     });
 })();

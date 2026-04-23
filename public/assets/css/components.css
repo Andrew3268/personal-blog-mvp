@@ -1006,6 +1006,13 @@
   transition:opacity .2s ease, transform .2s ease;
 }
 
+.posts-home-hero__category-link.is-active,
+.posts-home-hero__about-link.is-active{
+  text-decoration:underline;
+  text-decoration-thickness:2px;
+  text-underline-offset:8px;
+}
+
 .posts-home-hero__category-link.is-active::after,
 .posts-home-hero__about-link.is-active::after{
   opacity:1;

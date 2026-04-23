@@ -100,6 +100,12 @@ function buildPostsHeroNav(categories = []) {
   return items.join('');
 }
 
+function syncPostsHeroActiveState() {
+  if (typeof window.applyPostsHeroActiveState === 'function') {
+    window.applyPostsHeroActiveState(document);
+  }
+}
+
 (function () {
   const $ = (sel) => document.querySelector(sel);
   const listEl = $('#postsList');
@@ -120,6 +126,7 @@ function buildPostsHeroNav(categories = []) {
 
   const postsHomeHeroEl = $('#postsHomeHero');
 
+  syncPostsHeroActiveState();
 
 
   function setHomeHeroMode() {
@@ -522,6 +529,7 @@ function buildPostsHeroNav(categories = []) {
       siteCategories = await loadSiteCategories();
       if (heroCategoryBarEl && siteCategories.length) {
         heroCategoryBarEl.innerHTML = buildPostsHeroNav(siteCategories);
+        syncPostsHeroActiveState();
       }
     } catch (_) {
       siteCategories = [];
