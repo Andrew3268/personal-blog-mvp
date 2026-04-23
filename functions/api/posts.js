@@ -68,8 +68,7 @@ export async function onRequestGet({ env, request }) {
       binds.push(qLike);
     }
 
-    where.push(`(${queryParts.join("
-      OR ")})`);
+    where.push(`(${queryParts.join(" OR ")})`);
   }
 
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
