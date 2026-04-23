@@ -22,6 +22,12 @@
       </a>
 
       <nav class="nav nav--utility nav--right" aria-label="오른쪽 메뉴">
+        <button class="nav__icon-btn nav__search-btn" type="button" data-site-search-toggle aria-label="검색 열기" aria-expanded="false">
+          <svg class="nav__icon-svg nav__icon-svg--search" viewBox="0 0 24 24" aria-hidden="true" fill="none">
+            <circle cx="11" cy="11" r="6.5"></circle>
+            <path d="M16 16l5 5"></path>
+          </svg>
+        </button>
         <a href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
       </nav>
     </div>
@@ -414,6 +420,7 @@
   <script src="/assets/js/admin-guard.js"></script>
   <script src="/assets/js/admin-ui.js" defer></script>
   <script src="/assets/js/nav.js" defer></script>
+  <script src="/assets/js/site-search.js" defer></script>
   <script src="/assets/js/add.js" defer></script>
 </body>
 </html>

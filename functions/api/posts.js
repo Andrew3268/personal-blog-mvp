@@ -11,6 +11,7 @@ export async function onRequestGet({ env, request }) {
   const status = String(url.searchParams.get("status") || "published").trim().toLowerCase();
   const category = String(url.searchParams.get("category") || "").trim();
   const tag = String(url.searchParams.get("tag") || "").trim();
+  const query = String(url.searchParams.get("q") || "").trim().toLowerCase();
   const page = clampInt(url.searchParams.get("page"), 1, 1, 9999);
   const perPage = clampInt(url.searchParams.get("per_page"), 8, 1, 24);
   const offset = (page - 1) * perPage;
@@ -36,6 +37,23 @@ export async function onRequestGet({ env, request }) {
   if (tag) {
     where.push("EXISTS (SELECT 1 FROM json_each(COALESCE(tags_json, '[]')) WHERE TRIM(json_each.value) = ?)");
     binds.push(tag);
+  }
+
+  if (query) {
+    where.push(`(
+      LOWER(COALESCE(title, '')) LIKE ?
+      OR LOWER(COALESCE(summary, '')) LIKE ?
+      OR LOWER(COALESCE(meta_description, '')) LIKE ?
+      OR LOWER(COALESCE(category, '')) LIKE ?
+      OR LOWER(COALESCE(content_md, '')) LIKE ?
+      OR EXISTS (
+        SELECT 1
+        FROM json_each(COALESCE(tags_json, '[]'))
+        WHERE LOWER(TRIM(json_each.value)) LIKE ?
+      )
+    )`);
+    const qLike = `%${query}%`;
+    binds.push(qLike, qLike, qLike, qLike, qLike, qLike);
   }
 
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
@@ -102,7 +120,8 @@ export async function onRequestGet({ env, request }) {
     filters: {
       status: safeStatus,
       category,
-      tag
+      tag,
+      q: query
     },
     pagination: {
       page,

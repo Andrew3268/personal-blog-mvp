@@ -1074,3 +1074,230 @@ body.search-open::before,
 #heroCategoryBar .posts-home-hero__about-link[aria-current="page"]{
   border-bottom:2px solid #111827 !important;
 }
+
+
+/* 0423-v2 site search */
+.nav__search-btn{
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+}
+.nav__search-btn.is-active{
+  background:#f3f4f6;
+  color:#111827;
+}
+.nav__icon-svg--search{
+  width:22px;
+  height:22px;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.site-search{
+  --site-search-top:72px;
+  position:fixed;
+  left:0;
+  right:0;
+  top:var(--site-search-top);
+  z-index:95;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:opacity .18s ease, visibility .18s ease, transform .18s ease;
+  transform:translateY(-6px);
+}
+.site-search.is-open{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+  transform:translateY(0);
+}
+.site-search__shell{
+  width:min(1200px, calc(100vw - 32px));
+  margin:0 auto;
+}
+.site-search__panel{
+  background:rgba(255,255,255,.98);
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:26px;
+  box-shadow:0 18px 44px rgba(15,23,42,.12);
+  padding:18px;
+}
+.site-search__top{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.site-search__input-wrap{
+  flex:1;
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border:1px solid #e5e7eb;
+  border-radius:18px;
+  background:#fff;
+  min-height:58px;
+  padding:0 14px;
+}
+.site-search__input-icon{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  color:#6b7280;
+  flex:0 0 auto;
+}
+.site-search__input-icon .nav__icon-svg--search{
+  width:20px;
+  height:20px;
+}
+.site-search__input{
+  flex:1;
+  min-width:0;
+  height:56px;
+  border:0;
+  background:transparent;
+  color:#111827;
+  font:inherit;
+  font-size:16px;
+  outline:none;
+  padding:0;
+}
+.site-search__input::placeholder{
+  color:#94a3b8;
+}
+.site-search__clear,
+.site-search__close{
+  border:0;
+  background:#f8fafc;
+  color:#334155;
+  border-radius:14px;
+  height:42px;
+  padding:0 14px;
+  font:inherit;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+}
+.site-search__close{
+  flex:0 0 auto;
+}
+.site-search__status{
+  margin-top:12px;
+  color:#64748b;
+  font-size:13px;
+}
+.site-search__results{
+  display:grid;
+  gap:10px;
+  margin-top:14px;
+  max-height:min(60vh, 520px);
+  overflow:auto;
+}
+.site-search__item{
+  display:block;
+  border:1px solid rgba(226,232,240,.95);
+  border-radius:20px;
+  background:#fff;
+  padding:15px 16px;
+  text-decoration:none;
+  transition:border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+.site-search__item:hover,
+.site-search__item:focus-visible{
+  border-color:rgba(91,124,255,.36);
+  transform:translateY(-1px);
+  box-shadow:0 10px 24px rgba(15,23,42,.08);
+  outline:none;
+}
+.site-search__item-meta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:8px;
+}
+.site-search__item-badge{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  padding:0 10px;
+  border-radius:999px;
+  background:rgba(91,124,255,.1);
+  color:#1d4ed8;
+  font-size:12px;
+  font-weight:800;
+}
+.site-search__item-date{
+  color:#94a3b8;
+  font-size:12px;
+  white-space:nowrap;
+}
+.site-search__item-title{
+  display:block;
+  color:#0f172a;
+  font-size:19px;
+  line-height:1.35;
+  letter-spacing:-.02em;
+}
+.site-search__item-desc{
+  margin:8px 0 0;
+  color:#64748b;
+  font-size:14px;
+  line-height:1.7;
+}
+.site-search__empty{
+  border:1px dashed rgba(203,213,225,.95);
+  border-radius:20px;
+  background:#fff;
+  padding:26px 18px;
+  color:#64748b;
+  text-align:center;
+}
+.site-search__loading{
+  display:grid;
+  gap:10px;
+}
+.site-search__loading-line{
+  display:block;
+  width:100%;
+  height:18px;
+  border-radius:999px;
+  background:linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%);
+  background-size:200% 100%;
+  animation:site-search-shimmer 1.1s linear infinite;
+}
+.site-search__loading-line--short{
+  width:72%;
+}
+@keyframes site-search-shimmer{
+  0%{background-position:200% 0}
+  100%{background-position:-200% 0}
+}
+@media (max-width:768px){
+  .site-search{
+    top:var(--site-search-top);
+  }
+  .site-search__shell{
+    width:calc(100vw - 24px);
+  }
+  .site-search__panel{
+    border-radius:22px;
+    padding:14px;
+  }
+  .site-search__top{
+    gap:8px;
+  }
+  .site-search__input-wrap{
+    min-height:52px;
+    padding:0 12px;
+  }
+  .site-search__input{
+    height:50px;
+    font-size:15px;
+  }
+  .site-search__close{
+    display:none;
+  }
+}

@@ -360,6 +360,7 @@ export async function onRequestGet({ params, env, request }) {
   ${adsenseRuntimeScript}
   <script src="/assets/js/admin-ui.js" defer></script>
   <script src="/assets/js/nav.js" defer></script>
+  <script src="/assets/js/site-search.js" defer></script>
 </body>
 </html>`;
 
