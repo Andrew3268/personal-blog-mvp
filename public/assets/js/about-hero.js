@@ -11,6 +11,13 @@
       .replaceAll("'", '&#039;');
   }
 
+  function buildLink(label, href, key, activeKey, extraClass = 'posts-home-hero__category-link') {
+    const isActive = key === activeKey;
+    return `<a class="${extraClass}${isActive ? ' is-active' : ''}" href="${href}" data-hero-nav-key="${escapeHtml(key)}"${isActive ? ' aria-current="page"' : ''}>${escapeHtml(label)}</a>`;
+  }
+
+  const activeKey = 'about';
+
   fetch('/api/categories', { headers: { Accept: 'application/json' } })
     .then((res) => res.ok ? res.json() : Promise.reject(new Error('load failed')))
     .then((data) => {
@@ -20,16 +27,17 @@
         .filter((item) => item.name);
 
       const links = [
-        '<a class="posts-home-hero__category-link" href="/">전체</a>',
-        ...categories.map((item) => `<a class="posts-home-hero__category-link" href="/?category=${encodeURIComponent(item.name)}">${escapeHtml(item.name)}</a>`),
-        '<a class="posts-home-hero__about-link is-active" href="/about/">About</a>'
+        buildLink('전체', '/', 'all', activeKey),
+        ...categories.map((item) => buildLink(item.name, `/?category=${encodeURIComponent(item.name)}`, item.name, activeKey)),
+        buildLink('About', '/about/', 'about', activeKey, 'posts-home-hero__about-link')
       ];
 
       heroBar.innerHTML = links.join('');
-      if (typeof window.applyPostsHeroActiveState === 'function') window.applyPostsHeroActiveState(document);
     })
     .catch(() => {
-      heroBar.innerHTML = '<a class="posts-home-hero__category-link" href="/">전체</a><a class="posts-home-hero__about-link is-active" href="/about/">About</a>';
-      if (typeof window.applyPostsHeroActiveState === 'function') window.applyPostsHeroActiveState(document);
+      heroBar.innerHTML = [
+        buildLink('전체', '/', 'all', activeKey),
+        buildLink('About', '/about/', 'about', activeKey, 'posts-home-hero__about-link')
+      ].join('');
     });
 })();

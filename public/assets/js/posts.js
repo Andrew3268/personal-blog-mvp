@@ -86,24 +86,18 @@ function buildPostsHeroNav(categories = []) {
     unique.push({ name, count: Number(cat?.count || 0) });
   });
 
+  const buildLink = (label, href, key, extraClass = 'posts-home-hero__category-link') => {
+    const isActive = activeKey === key;
+    return `<a class="${extraClass}${isActive ? ' is-active' : ''}" href="${href}" data-hero-nav-key="${escapeHtml(key)}" aria-current="${isActive ? 'page' : 'false'}">${escapeHtml(label)}</a>`;
+  };
+
   const items = [
-    `<a class="posts-home-hero__category-link ${activeKey === 'all' ? 'is-active' : ''}" href="/">전체</a>`,
-    ...unique.map((cat) => {
-      const safeName = cat.name;
-      const isActive = activeKey === safeName;
-      const href = `/?category=${encodeURIComponent(safeName)}`;
-      return `<a class="posts-home-hero__category-link ${isActive ? 'is-active' : ''}" href="${href}">${escapeHtml(safeName)}</a>`;
-    }),
-    `<a class="posts-home-hero__about-link ${activeKey === 'about' ? 'is-active' : ''}" href="/about/">About</a>`
+    buildLink('전체', '/', 'all'),
+    ...unique.map((cat) => buildLink(cat.name, `/?category=${encodeURIComponent(cat.name)}`, cat.name)),
+    buildLink('About', '/about/', 'about', 'posts-home-hero__about-link')
   ];
 
   return items.join('');
-}
-
-function syncPostsHeroActiveState() {
-  if (typeof window.applyPostsHeroActiveState === 'function') {
-    window.applyPostsHeroActiveState(document);
-  }
 }
 
 (function () {
@@ -126,7 +120,6 @@ function syncPostsHeroActiveState() {
 
   const postsHomeHeroEl = $('#postsHomeHero');
 
-  syncPostsHeroActiveState();
 
 
   function setHomeHeroMode() {
@@ -153,6 +146,17 @@ function syncPostsHeroActiveState() {
     const heroCategoryWrap = postsHomeHeroEl.querySelector('.posts-home-hero__category-wrap');
     if (kickerEl) kickerEl.hidden = !isHomeDefault;
     if (heroCategoryWrap) heroCategoryWrap.hidden = false;
+  }
+
+  function applyPostsHeroActiveState() {
+    if (!heroCategoryBarEl) return;
+    const activeKey = getPostsHeroActiveKey();
+    heroCategoryBarEl.querySelectorAll('[data-hero-nav-key]').forEach((link) => {
+      const isActive = String(link.getAttribute('data-hero-nav-key') || '') === activeKey;
+      link.classList.toggle('is-active', isActive);
+      if (isActive) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
+    });
   }
   const loadMoreWrap = $('#postsLoadMoreWrap');
   const loadMoreBtn = $('#postsLoadMoreBtn');
@@ -302,6 +306,7 @@ function syncPostsHeroActiveState() {
 
     if (heroCategoryBarEl) {
       heroCategoryBarEl.innerHTML = buildPostsHeroNav(navCategories);
+      applyPostsHeroActiveState();
     }
 
     if (mobileSiteCategoryBarEl) {
@@ -442,6 +447,7 @@ function syncPostsHeroActiveState() {
 
   if (pageTitleEl) pageTitleEl.textContent = getPageTitle();
   if (pageDescEl) pageDescEl.innerHTML = getPageDescription();
+  applyPostsHeroActiveState();
 
   function closeCategoriesMenu() {
     if (!postsCategoriesMenuEl || !postsCategoriesToggleEl) return;
@@ -529,7 +535,7 @@ function syncPostsHeroActiveState() {
       siteCategories = await loadSiteCategories();
       if (heroCategoryBarEl && siteCategories.length) {
         heroCategoryBarEl.innerHTML = buildPostsHeroNav(siteCategories);
-        syncPostsHeroActiveState();
+        applyPostsHeroActiveState();
       }
     } catch (_) {
       siteCategories = [];
