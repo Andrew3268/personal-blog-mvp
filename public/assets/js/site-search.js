@@ -13,6 +13,13 @@
     </svg>
   `;
 
+  const createCloseIcon = () => `
+    <svg class="nav__icon-svg nav__icon-svg--close" viewBox="0 0 24 24" aria-hidden="true" fill="none">
+      <path d="M6 6l12 12"></path>
+      <path d="M18 6L6 18"></path>
+    </svg>
+  `;
+
   let searchButton = utilityNav.querySelector('[data-site-search-toggle]');
   if (!searchButton) {
     searchButton = document.createElement('button');
@@ -31,21 +38,20 @@
   searchRoot.setAttribute('aria-hidden', 'true');
   searchRoot.innerHTML = `
     <div class="site-search__shell">
-      <div class="site-search__panel" role="dialog" aria-modal="false" aria-labelledby="siteSearchLabel">
+      <div class="site-search__panel" role="dialog" aria-modal="false" aria-label="사이트 검색">
         <div class="site-search__top">
           <div class="site-search__input-wrap">
             <span class="site-search__input-icon" aria-hidden="true">
               ${createSearchIcon()}
             </span>
-            <input id="siteSearchInput" class="site-search__input" type="search" placeholder="제목, 요약, 카테고리로 검색" autocomplete="off" spellcheck="false" />
+            <input id="siteSearchInput" class="site-search__input" type="search" placeholder="제목으로 검색" autocomplete="off" spellcheck="false" />
             <button type="button" class="site-search__clear" data-site-search-clear hidden>지우기</button>
           </div>
-          <button type="button" class="site-search__close" data-site-search-close aria-label="검색 닫기">닫기</button>
+          <button type="button" class="site-search__close" data-site-search-close aria-label="검색 닫기">
+            <span class="site-search__close-icon" aria-hidden="true">${createCloseIcon()}</span>
+          </button>
         </div>
-        <div class="site-search__status" id="siteSearchLabel">검색어를 입력하면 관련 글이 바로 표시됩니다.</div>
-        <div class="site-search__results" data-site-search-results>
-          <div class="site-search__empty">검색어를 입력해 주세요.</div>
-        </div>
+        <div class="site-search__results" data-site-search-results hidden></div>
       </div>
     </div>
   `;
@@ -56,7 +62,6 @@
   const results = searchRoot.querySelector('[data-site-search-results]');
   const clearBtn = searchRoot.querySelector('[data-site-search-clear]');
   const closeBtn = searchRoot.querySelector('[data-site-search-close]');
-  const statusEl = searchRoot.querySelector('.site-search__status');
 
   let isOpen = false;
   let requestSeq = 0;
@@ -71,31 +76,26 @@
       .replaceAll("'", '&#039;');
   }
 
-  function normalizeText(value, limit = 140) {
-    const text = String(value || '').replace(/\s+/g, ' ').trim();
-    if (!text) return '';
-    return text.length > limit ? `${text.slice(0, limit).trim()}…` : text;
-  }
-
   function buildResultItem(item) {
     const href = `/post/${encodeURIComponent(item.slug || '')}`;
-    const category = normalizeText(item.category || '전체', 18);
-    const summary = normalizeText(item.summary || item.meta_description || '', 110);
-    const updatedAt = String(item.updated_at || item.published_at || '').slice(0, 10);
     return `
       <a class="site-search__item" href="${href}">
-        <div class="site-search__item-meta">
-          <span class="site-search__item-badge">${escapeHtml(category)}</span>
-          ${updatedAt ? `<time class="site-search__item-date" datetime="${escapeHtml(updatedAt)}">${escapeHtml(updatedAt)}</time>` : ''}
-        </div>
         <strong class="site-search__item-title">${escapeHtml(item.title || '')}</strong>
-        ${summary ? `<p class="site-search__item-desc">${escapeHtml(summary)}</p>` : ''}
       </a>
     `;
   }
 
+  function showResults() {
+    results.hidden = false;
+  }
+
+  function hideResults() {
+    results.hidden = true;
+    results.innerHTML = '';
+  }
+
   function setLoading() {
-    statusEl.textContent = '검색 중입니다.';
+    showResults();
     results.innerHTML = `
       <div class="site-search__loading">
         <span class="site-search__loading-line"></span>
@@ -106,15 +106,15 @@
   }
 
   function setEmpty(message) {
-    statusEl.textContent = message;
+    showResults();
     results.innerHTML = `<div class="site-search__empty">${escapeHtml(message)}</div>`;
   }
 
   async function runSearch(keyword) {
     const query = String(keyword || '').trim();
     if (!query) {
-      setEmpty('검색어를 입력해 주세요.');
       clearBtn.hidden = true;
+      hideResults();
       return;
     }
 
@@ -136,7 +136,7 @@
         setEmpty(`“${query}”에 대한 검색 결과가 없습니다.`);
         return;
       }
-      statusEl.textContent = `총 ${items.length}개의 관련 글을 찾았습니다.`;
+      showResults();
       results.innerHTML = items.map(buildResultItem).join('');
     } catch (_) {
       if (currentSeq !== requestSeq) return;
@@ -188,7 +188,7 @@
   clearBtn?.addEventListener('click', () => {
     input.value = '';
     clearBtn.hidden = true;
-    setEmpty('검색어를 입력해 주세요.');
+    hideResults();
     input.focus();
   });
 
