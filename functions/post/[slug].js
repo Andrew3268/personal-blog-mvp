@@ -299,29 +299,31 @@ export async function onRequestGet({ params, env, request }) {
     ${breadcrumbHtml}
 
     <article class="post-shell" itemscope itemtype="https://schema.org/BlogPosting">
-      <header class="card post-hero">
-        <h1 class="h1 post-title" itemprop="headline">${escapeHtml(titleText)}</h1>
-
-        ${row.summary ? `<p class="p post-summary" itemprop="description">${escapeHtml(String(row.summary))}</p>` : ""}
-
-        ${authorCardHtml}
-
-        ${coverImageHtml}
-
-        <meta itemprop="author" content="${escapeHtml(authorName)}" />
-        <meta itemprop="datePublished" content="${escapeHtml(publishedIso || "")}" />
-        <meta itemprop="dateModified" content="${escapeHtml(updatedIso || "")}" />
-        <meta itemprop="mainEntityOfPage" content="${escapeHtml(canonical.toString())}" />
-        <meta itemprop="image" content="${escapeHtml(ogImage)}" />
-      </header>
-
       <div class="post-grid">
-        <section class="card post-body" aria-label="본문">
-          ${bodyHtml}
-          ${tagHighlightsHtml}
-          ${faqSectionHtml}
-          ${relatedPostsHtml}
-        </section>
+        <div class="post-main">
+          <header class="card post-hero">
+            <h1 class="h1 post-title" itemprop="headline">${escapeHtml(titleText)}</h1>
+
+            ${row.summary ? `<p class="p post-summary" itemprop="description">${escapeHtml(String(row.summary))}</p>` : ""}
+
+            ${authorCardHtml}
+
+            ${coverImageHtml}
+
+            <meta itemprop="author" content="${escapeHtml(authorName)}" />
+            <meta itemprop="datePublished" content="${escapeHtml(publishedIso || "")}" />
+            <meta itemprop="dateModified" content="${escapeHtml(updatedIso || "")}" />
+            <meta itemprop="mainEntityOfPage" content="${escapeHtml(canonical.toString())}" />
+            <meta itemprop="image" content="${escapeHtml(ogImage)}" />
+          </header>
+
+          <section class="card post-body" aria-label="본문">
+            ${bodyHtml}
+            ${tagHighlightsHtml}
+            ${faqSectionHtml}
+            ${relatedPostsHtml}
+          </section>
+        </div>
 
         <aside class="card post-side" aria-label="추가 콘텐츠">
           ${sidebarAdHtml}
