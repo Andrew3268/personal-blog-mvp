@@ -62,13 +62,6 @@ export async function onRequestGet({ params, env, request }) {
         });
       }
 
-      let tags = [];
-      try {
-        tags = JSON.parse(row.tags_json || "[]");
-        if (!Array.isArray(tags)) tags = [];
-      } catch {
-        tags = [];
-      }
 
       const origin = url.origin;
       const canonical = new URL(request.url);
@@ -108,7 +101,6 @@ export async function onRequestGet({ params, env, request }) {
       const bodyHtml = buildArticleBodyHtml(row.content_md || "", inArticleAds, contentTextLength, env);
       const faqSectionHtml = renderFaqSection(faqItems);
       const relatedPostsHtml = renderRelatedPostsSection(relatedRows, row.category);
-      const tagHighlightsHtml = renderTagHighlights(tags);
       const popularPostsHtml = renderPopularPosts(popularRows);
       const sidebarAdHtml = shouldShowSidebarAd ? renderSidebarAd(adConfig) : "";
       const adsenseHeadScript = renderAdsenseHeadScript(adConfig, shouldShowSidebarAd || shouldShowInarticleAds);
@@ -198,7 +190,7 @@ export async function onRequestGet({ params, env, request }) {
         url: canonical.toString(),
         inLanguage: "ko-KR",
         articleSection: row.category || "블로그",
-        keywords: tags.join(", ")
+        wordCount: stripMarkdown(row.content_md || "").split(/\s+/).filter(Boolean).length
       };
 
       const webPageJsonLd = {
@@ -264,7 +256,6 @@ export async function onRequestGet({ params, env, request }) {
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
   <meta name="theme-color" content="#5B7CFF" />
   <meta name="author" content="${escapeHtml(authorName)}" />
-  <meta name="keywords" content="${escapeHtml(buildKeywords(row.category, tags))}" />
   <link rel="canonical" href="${escapeHtml(canonical.toString())}" />
   ${coverImagePreload}
   ${adsenseHeadScript}
@@ -319,7 +310,6 @@ export async function onRequestGet({ params, env, request }) {
 
           <section class="card post-body" aria-label="본문">
             ${bodyHtml}
-            ${tagHighlightsHtml}
             ${faqSectionHtml}
             ${relatedPostsHtml}
           </section>
@@ -575,26 +565,12 @@ function dedupePositions(positions, blockLength) {
   return result;
 }
 
-function renderTagHighlights(tags) {
-  if (!Array.isArray(tags) || !tags.length) return "";
-  const cleanTags = tags.map((tag) => String(tag || "").trim()).filter(Boolean);
-  if (!cleanTags.length) return "";
-  return `
-    <section class="post-tags-highlight post-section-divider post-section-divider--tags" aria-labelledby="post-tags-highlight-title">
-      <h2 id="post-tags-highlight-title" class="h2">핵심 키워드</h2>
-      <div class="row row--chips row--top-gap">
-        ${cleanTags.map((tag) => `<span class="tag-chip tag-chip--static">#${escapeHtml(tag)}</span>`).join("")}
-      </div>
-    </section>
-  `;
-}
-
 function renderPopularPosts(items) {
   if (!Array.isArray(items) || !items.length) return "";
   return `
     <section class="post-side__section post-side__popular" aria-labelledby="post-popular-title">
       <div class="row post-section-header post-section-header--compact">
-        <h2 id="post-popular-title" class="h2">인기글</h2>
+        <p id="post-popular-title" class="h2 post-side__title">인기글</p>
         
       </div>
       <ul class="post-side__popular-list">
@@ -653,11 +629,9 @@ function renderFaqSection(items) {
       <h2 id="post-faq-title" class="h2">자주 묻는 질문</h2>
       <div class="post-faq__list">
         ${items.map((item) => `
-          <article class="card" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
-            <h3 class="h3 post-faq__question" itemprop="name">Q. ${escapeHtml(item.question)}</h3>
-            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
-              <div itemprop="text">${renderMarkdown(item.answerMd || "")}</div>
-            </div>
+          <article class="card">
+            <h3 class="h3 post-faq__question">Q. ${escapeHtml(item.question)}</h3>
+            <div class="post-faq__answer">${renderMarkdown(item.answerMd || "")}</div>
           </article>
         `).join("")}
       </div>
@@ -707,18 +681,6 @@ function buildDescription(metaDescription, summary, markdown, title) {
   if (plain) return truncateText(plain, 155);
 
   return truncateText(`${title}에 대한 글입니다.`, 155);
-}
-
-function buildKeywords(category, tags) {
-  const parts = [];
-  if (category) parts.push(String(category).trim());
-
-  for (const tag of tags || []) {
-    const t = String(tag).trim();
-    if (t) parts.push(t);
-  }
-
-  return parts.filter(Boolean).join(", ");
 }
 
 function stripMarkdown(md) {
