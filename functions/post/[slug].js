@@ -182,7 +182,9 @@ export async function onRequestGet({ params, env, request }) {
           name: siteName,
           logo: {
             "@type": "ImageObject",
-            url: `${origin}/assets/images/logo.png`
+            url: `${origin}/assets/images/logo.png`,
+            width: 512,
+            height: 512
           }
         },
         datePublished: publishedIso || row.published_at || "",
@@ -309,7 +311,9 @@ export async function onRequestGet({ params, env, request }) {
           </header>
 
           <section class="card post-body" aria-label="본문">
-            ${bodyHtml}
+            <div class="post-content" itemprop="articleBody">
+              ${bodyHtml}
+            </div>
             ${faqSectionHtml}
             ${relatedPostsHtml}
           </section>
@@ -570,7 +574,7 @@ function renderPopularPosts(items) {
   return `
     <section class="post-side__section post-side__popular" aria-labelledby="post-popular-title">
       <div class="row post-section-header post-section-header--compact">
-        <p id="post-popular-title" class="h2 post-side__title">인기글</p>
+        <p id="post-popular-title" class="post-side__title">인기글</p>
         
       </div>
       <ul class="post-side__popular-list">
