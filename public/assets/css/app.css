@@ -77,12 +77,11 @@ h1 { font-size: 2rem; } h2 { font-size: 1.5rem; } h3 { font-size: 1.2rem; }/* Îç
 .post-body blockquote{margin:22px 0;padding:18px;background:rgba(91,124,255,.06);border-radius:16px}
 .post-body blockquote p{margin:0;}
 .post-body code{background:#eff6ff;padding:3px 6px;border-radius:8px;font-size:.92em}
-.post-side{height:max-content;position:sticky;top:15px;display:flex;flex-direction:column;gap:18px;min-height:820px}
-.post-shell .post-side{top:var(--post-sidebar-sticky-top,92px);transition:top .18s ease}
+.post-side{height:max-content;position:sticky;--site-sidebar-base-top:15px;top:var(--site-sidebar-sticky-top,var(--site-sidebar-base-top));display:flex;flex-direction:column;gap:18px;min-height:820px;transition:top .18s ease}
 .posts-page{padding-top:20px}
 .posts-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;align-items:start}
 .posts-main{min-width:0}
-.posts-sidebar{min-height:auto;top:24px}
+.posts-sidebar{min-height:auto;--site-sidebar-base-top:24px}
 .posts-sidebar__summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .posts-summary-card{display:flex;flex-direction:column;gap:6px;padding:14px 12px;border-radius:18px;background:linear-gradient(180deg,#f8fbff,#fff);border:1px solid rgba(91,124,255,.12);text-align:center}
 .posts-summary-card strong{font-size:22px;line-height:1;font-weight:1000;color:#0f172a}
@@ -258,7 +257,7 @@ body.has-preview-open{overflow:hidden}
 .post-toc__body{padding:10px;border-top:1px solid rgba(148,163,184,.16)}
 .post-toc__list{margin:0 !important;padding:14px 0 0;list-style:none;display:grid;gap:0;}
 .post-toc__list li{margin:0 !important;}
-.post-toc__item a{display:grid;grid-template-columns:auto minmax(0,1fr);/*gap:10px;*/align-items:start;padding:7px 12px;border-radius:16px;color:#1e3a8a;text-decoration:none;line-height:1.7;transition:.18s ease}
+.post-toc__item a{display:grid;grid-template-columns:auto minmax(0,1fr);/*gap:10px;*/align-items:start;padding:10px 12px;border-radius:16px;color:#1e3a8a;text-decoration:none;line-height:1.7;transition:.18s ease}
 /*.post-toc__item a:hover{background:rgba(91,124,255,.08);text-decoration:none}*/
 .post-toc__index{font-weight:900;color:#333;min-width:20px}
 .post-toc__text{min-width:0;color:#1e293b}

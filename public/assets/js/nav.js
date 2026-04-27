@@ -70,27 +70,32 @@
 })();
 
 (function () {
-  const postSidebar = document.querySelector('.post-shell .post-side');
+  const sidebars = Array.from(document.querySelectorAll('.post-side'));
   const topbar = document.querySelector('.topbar--editorial');
-  if (!postSidebar || !topbar) return;
+  if (!sidebars.length || !topbar) return;
 
-  const root = document.documentElement;
   let ticking = false;
 
-  function updatePostSidebarOffset() {
+  function updateSidebarOffset() {
     const rect = topbar.getBoundingClientRect();
     const headerVisible = rect.bottom > 4 && rect.top < window.innerHeight;
-    const baseGap = 15;
     const visibleGap = 20;
-    const nextTop = headerVisible ? Math.ceil(rect.bottom + visibleGap) : baseGap;
-    root.style.setProperty('--post-sidebar-sticky-top', `${nextTop}px`);
+
+    sidebars.forEach((sidebar) => {
+      if (headerVisible) {
+        sidebar.style.setProperty('--site-sidebar-sticky-top', `${Math.ceil(rect.bottom + visibleGap)}px`);
+      } else {
+        sidebar.style.removeProperty('--site-sidebar-sticky-top');
+      }
+    });
+
     ticking = false;
   }
 
   function requestUpdate() {
     if (ticking) return;
     ticking = true;
-    window.requestAnimationFrame(updatePostSidebarOffset);
+    window.requestAnimationFrame(updateSidebarOffset);
   }
 
   requestUpdate();
