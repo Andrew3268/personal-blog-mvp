@@ -184,8 +184,11 @@
     searchButton.classList.add('is-active');
     requestAnimationFrame(() => {
       searchRoot.classList.add('is-open');
-      input?.focus();
-      input?.select();
+      window.setTimeout(() => {
+        if (!isOpen) return;
+        input?.focus();
+        input?.select();
+      }, 90);
     });
   }
 
@@ -198,7 +201,7 @@
     searchButton.classList.remove('is-active');
     setTimeout(() => {
       if (!isOpen) searchRoot.hidden = true;
-    }, 220);
+    }, 360);
   }
 
   searchButton.addEventListener('click', () => {
