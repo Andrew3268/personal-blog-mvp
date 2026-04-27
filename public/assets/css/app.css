@@ -78,6 +78,7 @@ h1 { font-size: 2rem; } h2 { font-size: 1.5rem; } h3 { font-size: 1.2rem; }/* Îç
 .post-body blockquote p{margin:0;}
 .post-body code{background:#eff6ff;padding:3px 6px;border-radius:8px;font-size:.92em}
 .post-side{height:max-content;position:sticky;top:15px;display:flex;flex-direction:column;gap:18px;min-height:820px}
+.post-shell .post-side{top:92px}
 .posts-page{padding-top:20px}
 .posts-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;align-items:start}
 .posts-main{min-width:0}
@@ -503,7 +504,7 @@ body.has-preview-open{overflow:hidden}
 .post-section-header--related{gap:12px}
 .post-section-title{margin:0}
 .post-related__list{display:grid;gap:10px;margin-top:16px}
-.post-related__list li{margin:0;}
+.post-related__list li{margin:0 !important;}
 .post-related-link{display:inline-flex;align-items:flex-start;text-decoration:none;line-height:1.55}
 .post-related-link__index{color:#333;font-weight:800;min-width:1.5em}
 .post-faq h3{margin-top:7px}
@@ -515,10 +516,10 @@ body.has-preview-open{overflow:hidden}
 .table-cell--right{text-align:right}
 @media (max-width: 768px) {.post-faq__list{gap:0;}}
 
-.post-author-card{display:flex;align-items:center;gap:14px;padding:12px 0 4px}
-.post-author-card__avatar{width:48px;height:48px;border-radius:999px;background:linear-gradient(135deg,#fde68a,#f59e0b);color:#1f2937;display:grid;place-items:center;font-size:15px;font-weight:900;letter-spacing:.04em;flex-shrink:0}
-.post-author-card__body{min-width:0;display:grid;gap:4px}
-.post-author-card__name{font-size:20px;font-weight:800;line-height:1.2;color:#0f172a}
+.post-author-card{display:flex;align-items:center;gap:10px;padding:12px 0 4px}
+.post-author-card__avatar{width:40px;height:40px;border-radius:999px;background:linear-gradient(135deg,#fde68a,#f59e0b);color:#1f2937;display:grid;place-items:center;font-size:15px;font-weight:900;letter-spacing:.04em;flex-shrink:0}
+.post-author-card__body{min-width:0;display:grid;}
+.post-author-card__name{font-size:16px;font-weight:800;line-height:1.2;color:#0f172a}
 .post-author-card__meta{font-size:14px;color:#64748b;line-height:1.5}
 .post-related__layout{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"header action" "list list";gap:16px 20px;align-items:end}
 .post-section-header--related{grid-area:header}
