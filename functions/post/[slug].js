@@ -257,6 +257,10 @@ export async function onRequestGet({ params, env, request }) {
   <meta name="description" content="${escapeHtml(descriptionText)}" />
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
   <meta name="theme-color" content="#5B7CFF" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/favicon-192x192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
   <meta name="author" content="${escapeHtml(authorName)}" />
   <link rel="canonical" href="${escapeHtml(canonical.toString())}" />
   ${coverImagePreload}
@@ -745,6 +749,11 @@ function renderNotFound(slug) {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>글을 찾을 수 없습니다</title>
   <meta name="robots" content="noindex,nofollow" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/favicon-192x192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
+  <meta name="theme-color" content="#5B7CFF" />
   <link rel="stylesheet" href="/assets/css/app.css" />
   <link rel="stylesheet" href="/assets/css/components.css" />
 </head>
