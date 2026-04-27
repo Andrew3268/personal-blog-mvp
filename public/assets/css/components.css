@@ -698,7 +698,7 @@
   align-items:center;
   justify-content:flex-start;
   gap:8px;
-  color:#333;
+  color:#555;
   font-size:14px;
   font-weight:700;
   line-height:1.2;
@@ -993,11 +993,11 @@
   background:none;
   border:0;
   border-bottom:2px solid transparent;
-  color:#111827;
+  color:#555;
   text-decoration:none;
-  font-weight:600;
   line-height:1.2;
   white-space:nowrap;
+  font-size:15px;
 }
 
 .posts-home-hero__category-link.is-active,
