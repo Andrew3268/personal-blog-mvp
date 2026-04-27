@@ -68,3 +68,32 @@
     });
   }
 })();
+
+(function () {
+  const postSidebar = document.querySelector('.post-shell .post-side');
+  const topbar = document.querySelector('.topbar--editorial');
+  if (!postSidebar || !topbar) return;
+
+  const root = document.documentElement;
+  let ticking = false;
+
+  function updatePostSidebarOffset() {
+    const rect = topbar.getBoundingClientRect();
+    const headerVisible = rect.bottom > 4 && rect.top < window.innerHeight;
+    const baseGap = 15;
+    const visibleGap = 20;
+    const nextTop = headerVisible ? Math.ceil(rect.bottom + visibleGap) : baseGap;
+    root.style.setProperty('--post-sidebar-sticky-top', `${nextTop}px`);
+    ticking = false;
+  }
+
+  function requestUpdate() {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(updatePostSidebarOffset);
+  }
+
+  requestUpdate();
+  window.addEventListener('scroll', requestUpdate, { passive: true });
+  window.addEventListener('resize', requestUpdate);
+})();
