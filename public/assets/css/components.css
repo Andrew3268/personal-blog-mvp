@@ -993,11 +993,12 @@
   background:none;
   border:0;
   border-bottom:2px solid transparent;
-  color:#666;
+  color:#111827;
   text-decoration:none;
+  font-weight:600;
   line-height:1.2;
   white-space:nowrap;
-  font-size:15px;
+}
 
 .posts-home-hero__category-link.is-active,
 .posts-home-hero__about-link.is-active,
