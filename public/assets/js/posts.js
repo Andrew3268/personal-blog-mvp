@@ -365,8 +365,7 @@ function buildPostsHeroNav(categories = []) {
             <div class="post-card__summary">${summary}</div>
             <div class="row post-admin-actions post-admin-actions--wrap">
               ${itemStatus === 'published' ? `<a class="post-card__readmore" href="/post/${encodeURIComponent(slug)}"><span class="post-card__readmore-text">Read more</span><svg class="post-card__readmore-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h11"></path><path d="M13 7l5 5-5 5"></path></svg></a>` : ''}
-              ${isAdmin ? `<a class="btn" href="/edit.html?slug=${encodeURIComponent(slug)}">수정</a>` : ''}
-              ${isAdmin ? `<button class="btn btn--danger js-delete-post" type="button" data-slug="${encodeURIComponent(slug)}" data-title="${escapeHtml(rawTitle)}">삭제</button>` : ''}
+              ${isAdmin ? `<span class="post-admin-actions__controls"><a class="btn" href="/edit.html?slug=${encodeURIComponent(slug)}">수정</a><button class="btn btn--danger js-delete-post" type="button" data-slug="${encodeURIComponent(slug)}" data-title="${escapeHtml(rawTitle)}">삭제</button></span>` : ''}
             </div>
           </div>
         </article>

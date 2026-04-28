@@ -1307,3 +1307,10 @@ body.search-open::before{display:none !important;}
   }
   .topbar-mobile-spacer{ display:none !important; }
 }
+
+
+/* 2026-04-28: mobile menu spacing + row card admin controls */
+.mobile-site-menu__panel{gap:0 !important;}
+.post-card--row .post-admin-actions--wrap{width:100%;align-items:center;gap:8px;}
+.post-card--row .post-admin-actions__controls{margin-left:auto;display:inline-flex;align-items:center;justify-content:flex-end;gap:6px;}
+.post-card--row .post-admin-actions__controls > .btn{padding:5px 9px;font-size:12px;line-height:1.15;border-radius:999px;min-height:28px;}

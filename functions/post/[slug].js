@@ -93,6 +93,9 @@ export async function onRequestGet({ params, env, request }) {
         LIMIT 5
       `).bind(slug).all()).results || [];
 
+      const categoryRows = await getMobileCategoryRows(env.BLOG_DB);
+      const mobileCategoryHtml = renderMobileCategoryLinks(categoryRows);
+
       const adConfig = buildAdsenseConfig(env);
       const contentTextLength = stripMarkdown(stripInlineImageTokens(row.content_md || "")).replace(/\s+/g, "").length;
       const shouldShowSidebarAd = toBool(row.enable_sidebar_ad, true);
@@ -290,7 +293,7 @@ export async function onRequestGet({ params, env, request }) {
 </head>
 <body>
 
-  ${topbar()}
+  ${topbar(mobileCategoryHtml)}
 
   <main id="main-content" class="container">
     ${breadcrumbHtml}
@@ -772,7 +775,45 @@ function renderNotFound(slug) {
 </html>`;
 }
 
-function topbar() {
+async function getMobileCategoryRows(db) {
+  try {
+    const rows = await db.prepare(`
+      SELECT c.name, COUNT(p.slug) AS count
+      FROM categories c
+      LEFT JOIN posts p
+        ON TRIM(COALESCE(p.category, '')) = TRIM(c.name)
+       AND p.status = 'published'
+      GROUP BY c.name, c.sort_order
+      ORDER BY c.sort_order ASC, c.name COLLATE NOCASE ASC
+    `).all();
+    const items = rows.results || [];
+    if (items.length) return items;
+  } catch (err) {
+    // categories 테이블이 아직 마이그레이션되지 않은 배포 환경을 위한 안전장치
+  }
+
+  const fallback = await db.prepare(`
+    SELECT TRIM(COALESCE(category, '')) AS name, COUNT(*) AS count
+    FROM posts
+    WHERE status = 'published'
+      AND TRIM(COALESCE(category, '')) != ''
+    GROUP BY TRIM(COALESCE(category, ''))
+    ORDER BY name COLLATE NOCASE ASC
+  `).all();
+  return fallback.results || [];
+}
+
+function renderMobileCategoryLinks(items = []) {
+  const links = (items || [])
+    .map((item) => String(item?.name || '').trim())
+    .filter(Boolean)
+    .map((name) => '<a class="topbar-categories__chip" href="/?category=' + encodeURIComponent(name) + '">' + escapeHtml(name) + '</a>')
+    .join('');
+
+  return '<a class="topbar-categories__chip topbar-categories__chip--utility" href="/">전체</a>' + links + '<a class="topbar-categories__chip topbar-categories__chip--utility" href="/about/">About</a>';
+}
+
+function topbar(mobileCategoryHtml = "") {
   return `<header class="topbar topbar--editorial">
     <div class="topbar__inner topbar__inner--editorial">
       <button class="topbar-hamburger" type="button" aria-expanded="false" aria-controls="mobileSiteMenu" aria-label="메뉴 열기">
@@ -802,7 +843,7 @@ function topbar() {
       <nav class="mobile-site-menu__nav" aria-label="모바일 주요 메뉴">
       </nav>
       <div class="mobile-site-menu__section mobile-site-menu__section--categories">
-        <div id="mobileSiteCategoryBar" class="topbar-categories__list topbar-categories__list--mobile"></div>
+        <div id="mobileSiteCategoryBar" class="topbar-categories__list topbar-categories__list--mobile">${mobileCategoryHtml}</div>
       </div>
       <div class="mobile-site-menu__section mobile-site-menu__section--admin" data-mobile-admin-section hidden>
         <a class="mobile-site-menu__text-link" href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>

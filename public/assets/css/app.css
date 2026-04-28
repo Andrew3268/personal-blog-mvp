@@ -491,9 +491,9 @@ body.has-preview-open{overflow:hidden}
 .row--top-gap{margin-top:14px}
 .row--top-gap-lg{margin-top:14px}
 .post-admin-actions--wrap{flex-wrap:wrap}
-.post-card--row .post-admin-actions--wrap{width:100%;align-items:center}
-.post-card--row .post-admin-actions--wrap > .btn:first-of-type{margin-left:auto}
-.post-card--row .post-admin-actions--wrap > .btn{padding:6px 10px;font-size:12px;line-height:1.15;border-radius:999px;min-height:30px}
+.post-card--row .post-admin-actions--wrap{width:100%;align-items:center;gap:8px}
+.post-card--row .post-admin-actions__controls{margin-left:auto;display:inline-flex;align-items:center;justify-content:flex-end;gap:6px}
+.post-card--row .post-admin-actions__controls > .btn{padding:5px 9px;font-size:12px;line-height:1.15;border-radius:999px;min-height:28px}
 .post-admin-actions--meta{gap:8px;flex-wrap:wrap;align-items:center}
 .badge--draft{background:rgba(245,158,11,.14);color:#92400e;border-color:rgba(245,158,11,.22)}
 .adsbygoogle--block{display:block}
