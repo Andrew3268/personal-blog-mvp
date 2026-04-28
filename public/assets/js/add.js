@@ -869,10 +869,30 @@ function absolutizeImageUrl(src = "") {
   }
 }
 
+function getImageHostname(url = "") {
+  try { return new URL(url).hostname.toLowerCase(); } catch (_) { return ""; }
+}
+
+function getImageBaseDomain(hostname = "") {
+  const parts = String(hostname || "").toLowerCase().split(".").filter(Boolean);
+  if (parts.length <= 2) return parts.join(".");
+  return parts.slice(-2).join(".");
+}
+
+function canUseCloudflareImageTransform(absolute = "") {
+  const srcHost = getImageHostname(absolute);
+  const originHost = getImageHostname(window.location.origin);
+  if (!srcHost || !originHost) return false;
+  if (srcHost === originHost) return true;
+  if (srcHost.endsWith(".r2.dev") || srcHost === "r2.dev") return false;
+  return getImageBaseDomain(srcHost) === getImageBaseDomain(originHost);
+}
+
 function buildCfImageUrl(src = "", options = {}) {
   const absolute = absolutizeImageUrl(src);
   if (!absolute) return "";
   if (/^(data|blob):/i.test(absolute) || absolute.includes("/cdn-cgi/image/")) return absolute;
+  if (!canUseCloudflareImageTransform(absolute)) return absolute;
   const config = { format: "auto", quality: 85, ...options };
   const params = Object.entries(config)
     .filter(([, value]) => value !== null && value !== undefined && value !== "")
@@ -885,18 +905,22 @@ function buildImageAttrs(src = "", config = {}) {
   const widths = Array.isArray(config.widths) && config.widths.length ? config.widths : [480, 768, 960, 1280];
   const normalized = [...new Set(widths.map((value) => Math.max(1, parseInt(value, 10) || 0)).filter(Boolean))].sort((a, b) => a - b);
   const baseOptions = { fit: config.fit || "scale-down", format: config.format || "auto", quality: config.quality || 85 };
-  const srcset = normalized.map((width) => `${buildCfImageUrl(src, { ...baseOptions, width })} ${width}w`).join(", ");
+  const absolute = absolutizeImageUrl(src);
+  const transformed = canUseCloudflareImageTransform(absolute);
+  const srcset = transformed ? normalized.map((width) => `${buildCfImageUrl(src, { ...baseOptions, width })} ${width}w`).join(", ") : "";
   const fallbackWidth = config.fallbackWidth || normalized[Math.min(1, normalized.length - 1)] || 768;
   return {
     src: buildCfImageUrl(src, { ...baseOptions, width: fallbackWidth }),
     srcset,
-    sizes: config.sizes || "100vw"
+    sizes: config.sizes || "100vw",
+    original: absolute
   };
 }
 
 function renderOptimizedImageAttrs(src = "", config = {}) {
   const image = buildImageAttrs(src, config);
-  return `src="${escapeHtml(image.src)}" srcset="${escapeHtml(image.srcset)}" sizes="${escapeHtml(image.sizes)}"`;
+  const fallbackSrc = image.original || absolutizeImageUrl(src);
+  return `src="${escapeHtml(image.src)}"${image.srcset ? ` srcset="${escapeHtml(image.srcset)}"` : ""} sizes="${escapeHtml(image.sizes)}" data-original-src="${escapeHtml(fallbackSrc)}" onerror="this.onerror=null;this.removeAttribute('srcset');this.src=this.dataset.originalSrc;"`;
 }
 
 
