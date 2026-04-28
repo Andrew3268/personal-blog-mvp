@@ -197,14 +197,14 @@ function buildPostsHeroNav(categories = []) {
   });
 
   const items = [
-    `<a class="posts-home-hero__category-link ${activeKey === 'all' ? 'is-active' : ''}" data-active-key="all" ${activeKey === 'all' ? 'aria-current="page"' : ''} href="/">전체</a>`,
+    `<a class="posts-home-hero__category-link ${activeKey === 'all' ? 'is-active' : ''}" data-active-key="all" ${activeKey === 'all' ? 'aria-current="page"' : ''} href="/">ALL</a>`,
     ...unique.map((cat) => {
       const safeName = cat.name;
       const isActive = activeKey === safeName;
       const href = `/?category=${encodeURIComponent(safeName)}`;
       return `<a class="posts-home-hero__category-link ${isActive ? 'is-active' : ''}" data-active-key="${escapeHtml(safeName)}" ${isActive ? 'aria-current="page"' : ''} href="${href}">${escapeHtml(safeName)}</a>`;
     }),
-    `<a class="posts-home-hero__about-link ${activeKey === 'about' ? 'is-active' : ''}" data-active-key="about" ${activeKey === 'about' ? 'aria-current="page"' : ''} href="/about/">About</a>`
+    `<a class="posts-home-hero__about-link ${activeKey === 'about' ? 'is-active' : ''}" data-active-key="about" ${activeKey === 'about' ? 'aria-current="page"' : ''} href="/about/">ABOUT</a>`
   ];
 
   return items.join('');
@@ -227,6 +227,7 @@ function buildPostsHeroNav(categories = []) {
   const postsCategoriesCloseEl = $('#postsCategoriesClose');
   const postsPopularEl = $('#postsPopular');
   const mobileSiteCategoryBarEl = $('#mobileSiteCategoryBar');
+  const indexSidebarAdEl = document.querySelector('[data-index-sidebar-ad]');
 
   const postsHomeHeroEl = $('#postsHomeHero');
 
@@ -374,6 +375,12 @@ function buildPostsHeroNav(categories = []) {
     const counts = sidebarData.counts || {};
     const categories = Array.isArray(sidebarData.categories) ? sidebarData.categories : [];
     const popular = Array.isArray(sidebarData.popular) ? sidebarData.popular : [];
+    const settings = sidebarData.settings || {};
+    const showIndexSidebarAd = Boolean(settings.index_sidebar_ad_enabled);
+
+    if (indexSidebarAdEl) {
+      indexSidebarAdEl.hidden = !showIndexSidebarAd;
+    }
 
     if (postsSummaryEl) {
       postsSummaryEl.innerHTML = [
@@ -397,7 +404,7 @@ function buildPostsHeroNav(categories = []) {
         }).join('')
       : '<span class="small">표시할 카테고리가 없습니다.</span>';
 
-    const categoriesHtml = `<a class="topbar-categories__chip topbar-categories__chip--utility" href="/">전체</a>${categoryLinksHtml}<a class="topbar-categories__chip topbar-categories__chip--utility" href="/about/">About</a>`;
+    const categoriesHtml = `<a class="topbar-categories__chip topbar-categories__chip--utility" href="/">ALL</a>${categoryLinksHtml}<a class="topbar-categories__chip topbar-categories__chip--utility" href="/about/">ABOUT</a>`;
 
     if (postsCategoriesBarEl) {
       postsCategoriesBarEl.innerHTML = categoriesHtml;

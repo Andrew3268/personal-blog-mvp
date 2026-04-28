@@ -40,16 +40,16 @@
         .filter((item) => item.name);
 
       const links = [
-        '<a class="posts-home-hero__category-link" data-active-key="all" href="/">전체</a>',
+        '<a class="posts-home-hero__category-link" data-active-key="all" href="/">ALL</a>',
         ...categories.map((item) => `<a class="posts-home-hero__category-link" data-active-key="${escapeHtml(item.name)}" href="/?category=${encodeURIComponent(item.name)}">${escapeHtml(item.name)}</a>`),
-        '<a class="posts-home-hero__about-link" data-active-key="about" href="/about/">About</a>'
+        '<a class="posts-home-hero__about-link" data-active-key="about" href="/about/">ABOUT</a>'
       ];
 
       heroBar.innerHTML = links.join('');
       applyActiveState(heroBar);
     })
     .catch(() => {
-      heroBar.innerHTML = '<a class="posts-home-hero__category-link" data-active-key="all" href="/">전체</a><a class="posts-home-hero__about-link" data-active-key="about" href="/about/">About</a>';
+      heroBar.innerHTML = '<a class="posts-home-hero__category-link" data-active-key="all" href="/">ALL</a><a class="posts-home-hero__about-link" data-active-key="about" href="/about/">ABOUT</a>';
       applyActiveState(heroBar);
     });
 })();

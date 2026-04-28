@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS posts (
   content_md TEXT DEFAULT '',
   faq_md TEXT DEFAULT '',
   view_count INTEGER DEFAULT 0,
-  enable_sidebar_ad INTEGER DEFAULT 1,
+  enable_sidebar_ad INTEGER DEFAULT 0,
   enable_inarticle_ads INTEGER DEFAULT 1,
   status TEXT DEFAULT 'published',
   published_at TEXT NOT NULL,
@@ -60,3 +60,13 @@ CREATE TABLE IF NOT EXISTS admin_sessions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_admin_sessions_admin_id ON admin_sessions(admin_id, expires_at DESC);
+
+
+CREATE TABLE IF NOT EXISTS site_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+INSERT OR IGNORE INTO site_settings (key, value, updated_at)
+VALUES ('index_sidebar_ad_enabled', '0', datetime('now'));

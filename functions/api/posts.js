@@ -100,7 +100,20 @@ export async function onRequestGet({ env, request }) {
   const countSql = `SELECT COUNT(*) AS total FROM posts ${whereSql}`;
 
   const baseBind = [...binds];
-  const [itemsRows, countRow, categoryRows, popularRows, statusRows] = await Promise.all([
+  await env.BLOG_DB.prepare(`
+    CREATE TABLE IF NOT EXISTS site_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `).run();
+
+  await env.BLOG_DB.prepare(`
+    INSERT OR IGNORE INTO site_settings (key, value, updated_at)
+    VALUES ('index_sidebar_ad_enabled', '0', ?)
+  `).bind(new Date().toISOString()).run();
+
+  const [itemsRows, countRow, categoryRows, popularRows, statusRows, settingsRows] = await Promise.all([
     env.BLOG_DB.prepare(itemsSql).bind(...baseBind, perPage, offset).all(),
     env.BLOG_DB.prepare(countSql).bind(...binds).first(),
     env.BLOG_DB.prepare(`
@@ -123,14 +136,15 @@ export async function onRequestGet({ env, request }) {
       FROM posts
       ${whereSql}
       GROUP BY status
-    `).bind(...binds).all()
+    `).bind(...binds).all(),
+    env.BLOG_DB.prepare(`SELECT key, value FROM site_settings WHERE key = 'index_sidebar_ad_enabled'`).all()
   ]);
 
   const total = Number(countRow?.total || 0);
   const totalPages = Math.max(1, Math.ceil(total / perPage));
   const statusMap = new Map((statusRows?.results || []).map((row) => [String(row.status || "published").trim().toLowerCase(), Number(row.count || 0)]));
   const publicCacheHeaders = !admin && safeStatus === "published"
-    ? { "cache-control": "public, max-age=60, s-maxage=600" }
+    ? { "cache-control": "public, max-age=30, s-maxage=60" }
     : { "cache-control": "private, no-store" };
 
   return okJson({
@@ -150,6 +164,9 @@ export async function onRequestGet({ env, request }) {
       next_page: page < totalPages ? page + 1 : null
     },
     sidebar: {
+      settings: {
+        index_sidebar_ad_enabled: (settingsRows.results || []).some((row) => row.key === "index_sidebar_ad_enabled" && String(row.value) === "1")
+      },
       counts: {
         total,
         published: statusMap.get("published") || 0,

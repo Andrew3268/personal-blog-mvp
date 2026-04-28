@@ -817,7 +817,7 @@ function renderMobileCategoryLinks(items = []) {
     .map((name) => '<a class="topbar-categories__chip" href="/?category=' + encodeURIComponent(name) + '">' + escapeHtml(name) + '</a>')
     .join('');
 
-  return '<a class="topbar-categories__chip topbar-categories__chip--utility" href="/">전체</a>' + links + '<a class="topbar-categories__chip topbar-categories__chip--utility" href="/about/">About</a>';
+  return '<a class="topbar-categories__chip topbar-categories__chip--utility" href="/">ALL</a>' + links + '<a class="topbar-categories__chip topbar-categories__chip--utility" href="/about/">ABOUT</a>';
 }
 
 function topbar(mobileCategoryHtml = "") {

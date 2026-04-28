@@ -19,6 +19,8 @@ async function initDashboard() {
   const popularListEl = document.getElementById('dashboardPopularList');
   const recentListEl = document.getElementById('dashboardRecentList');
   const categoryChipsEl = document.getElementById('dashboardCategoryChips');
+  const indexSidebarAdToggleEl = document.getElementById('indexSidebarAdToggle');
+  const indexSidebarAdStatusEl = document.getElementById('indexSidebarAdStatus');
 
   const sessionRes = await fetch('/api/admin/session', { credentials: 'same-origin' });
   const sessionJson = await sessionRes.json().catch(() => ({}));
@@ -36,6 +38,7 @@ async function initDashboard() {
   const postsRes = await fetch('/api/posts?status=all&page=1&per_page=5', { credentials: 'same-origin' });
   const postsJson = await postsRes.json().catch(() => ({}));
   const sidebar = postsJson.sidebar || {};
+  let indexSidebarAdEnabled = Boolean(sidebar.settings?.index_sidebar_ad_enabled);
   const counts = sidebar.counts || {};
   const popular = Array.isArray(sidebar.popular) ? sidebar.popular : [];
   const categories = Array.isArray(sidebar.categories) ? sidebar.categories : [];
@@ -72,6 +75,38 @@ async function initDashboard() {
   categoryChipsEl.innerHTML = categories.length
     ? categories.slice(0, 8).map((item) => `<span class="chip">${escapeHtml(item.name)} <strong>${formatNumber(item.count)}</strong></span>`).join('')
     : '<span class="chip">카테고리 없음</span>';
+
+
+  function renderIndexSidebarAdToggle() {
+    if (!indexSidebarAdToggleEl || !indexSidebarAdStatusEl) return;
+    indexSidebarAdToggleEl.disabled = false;
+    indexSidebarAdToggleEl.textContent = indexSidebarAdEnabled ? '사이드바 광고 끄기' : '사이드바 광고 켜기';
+    indexSidebarAdToggleEl.classList.toggle('btn--brand', !indexSidebarAdEnabled);
+    indexSidebarAdStatusEl.textContent = indexSidebarAdEnabled ? '현재 켜짐' : '현재 꺼짐';
+  }
+
+  renderIndexSidebarAdToggle();
+
+  indexSidebarAdToggleEl?.addEventListener('click', async () => {
+    const nextValue = !indexSidebarAdEnabled;
+    indexSidebarAdToggleEl.disabled = true;
+    indexSidebarAdToggleEl.textContent = '저장 중…';
+    try {
+      const res = await fetch('/api/site-settings', {
+        method: 'PUT',
+        credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ index_sidebar_ad_enabled: nextValue })
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.message || `저장 실패 (${res.status})`);
+      indexSidebarAdEnabled = Boolean(json?.settings?.index_sidebar_ad_enabled);
+      renderIndexSidebarAdToggle();
+    } catch (err) {
+      alert(err?.message || '광고 표시 설정 저장 중 오류가 발생했습니다.');
+      renderIndexSidebarAdToggle();
+    }
+  });
 }
 
 initDashboard();
