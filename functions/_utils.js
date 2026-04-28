@@ -157,11 +157,11 @@ export function buildAdminLogoutCookie() {
 }
 
 export async function getAdminSession(env, request) {
-  await ensureAdminTables(env.BLOG_DB);
   const cookies = parseCookies(request);
   const token = cookies[ADMIN_COOKIE];
   if (!token) return null;
 
+  await ensureAdminTables(env.BLOG_DB);
   const tokenHash = await sha256Hex(token);
   const row = await env.BLOG_DB.prepare(`
     SELECT s.token_hash, s.expires_at, u.id, u.email

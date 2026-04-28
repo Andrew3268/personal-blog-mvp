@@ -627,14 +627,13 @@ function buildPostsHeroNav(categories = []) {
     window.location.href = href;
   });
 
-  loadAdminState().finally(async () => {
-    try {
-      siteCategories = await loadSiteCategories();
-      if (heroCategoryBarEl && siteCategories.length) {
-        heroCategoryBarEl.innerHTML = buildPostsHeroNav(siteCategories);
-      }
-    } catch (_) {
-      siteCategories = [];
+  Promise.all([
+    loadAdminState().catch(() => ({ authenticated: false })),
+    loadSiteCategories().catch(() => [])
+  ]).then(([_, categoriesResult]) => {
+    siteCategories = Array.isArray(categoriesResult) ? categoriesResult : [];
+    if (heroCategoryBarEl && siteCategories.length) {
+      heroCategoryBarEl.innerHTML = buildPostsHeroNav(siteCategories);
     }
     fetchPage(initialPage, { append: false });
   });

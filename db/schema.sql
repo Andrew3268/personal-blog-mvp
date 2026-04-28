@@ -24,6 +24,9 @@ CREATE INDEX IF NOT EXISTS idx_posts_published_at ON posts(published_at DESC);
 CREATE INDEX IF NOT EXISTS idx_posts_updated_at ON posts(updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_posts_category ON posts(category);
 CREATE INDEX IF NOT EXISTS idx_posts_status ON posts(status);
+
+CREATE INDEX IF NOT EXISTS idx_posts_status_updated
+ON posts(status, updated_at DESC, published_at DESC);
 CREATE INDEX IF NOT EXISTS idx_posts_status_category_published
 ON posts(status, category, published_at DESC);
 

@@ -52,8 +52,10 @@ async function getCategories(db) {
 }
 
 export async function onRequestGet({ env }) {
-  await ensureCategoriesTable(env.BLOG_DB);
-  return okJson({ items: await getCategories(env.BLOG_DB) });
+  return okJson(
+    { items: await getCategories(env.BLOG_DB) },
+    { headers: { "cache-control": "public, max-age=60, s-maxage=3600" } }
+  );
 }
 
 export async function onRequestPost({ env, request }) {

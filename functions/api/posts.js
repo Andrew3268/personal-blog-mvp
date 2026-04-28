@@ -129,6 +129,9 @@ export async function onRequestGet({ env, request }) {
   const total = Number(countRow?.total || 0);
   const totalPages = Math.max(1, Math.ceil(total / perPage));
   const statusMap = new Map((statusRows?.results || []).map((row) => [String(row.status || "published").trim().toLowerCase(), Number(row.count || 0)]));
+  const publicCacheHeaders = !admin && safeStatus === "published"
+    ? { "cache-control": "public, max-age=60, s-maxage=600" }
+    : { "cache-control": "private, no-store" };
 
   return okJson({
     items: itemsRows.results || [],
@@ -164,7 +167,7 @@ export async function onRequestGet({ env, request }) {
         published_at: row.published_at
       }))
     }
-  });
+  }, { headers: publicCacheHeaders });
 }
 
 export async function onRequestPost({ env, request }) {
