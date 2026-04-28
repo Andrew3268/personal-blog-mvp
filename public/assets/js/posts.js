@@ -52,8 +52,10 @@ function getImageBaseDomain(hostname = "") {
 }
 
 function isR2DevImageUrl(url = "") {
-  const host = getImageHostname(url);
-  return host.endsWith(".r2.dev") || host === "r2.dev";
+  const raw = String(url || "").toLowerCase();
+  const normalized = unwrapCfImageUrl(raw).toLowerCase();
+  const host = getImageHostname(normalized);
+  return raw.includes(".r2.dev") || normalized.includes(".r2.dev") || host.endsWith(".r2.dev") || host === "r2.dev";
 }
 
 function canUseCloudflareImageTransform(absolute = "") {
@@ -67,9 +69,11 @@ function canUseCloudflareImageTransform(absolute = "") {
 }
 
 function buildCfImageUrl(src = "", options = {}) {
-  const absolute = absolutizeImageUrl(src);
+  const raw = String(src || "").trim();
+  const absolute = absolutizeImageUrl(raw);
   if (!absolute) return "";
   if (/^(data|blob):/i.test(absolute)) return absolute;
+  if (isR2DevImageUrl(raw) || isR2DevImageUrl(absolute)) return absolute;
   if (!canUseCloudflareImageTransform(absolute)) return absolute;
   const config = { format: "auto", quality: 85, ...options };
   const params = Object.entries(config)

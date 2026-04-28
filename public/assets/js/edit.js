@@ -297,7 +297,7 @@ function parseInlineImageMetaFromMarkdown(md = "") {
 
 function buildInlineImageToken(key, data) {
   if (!data || !data.enabled || !String((data.url || data.id || "")).trim()) return "";
-  const safeUrl = String((data.url || data.id || "")).trim().replace(/"/g, "&quot;");
+  const safeUrl = sanitizeImageUrlValue(data.url || data.id || "").replace(/"/g, "&quot;");
   const safeAlt = String(data.alt || "").trim().replace(/"/g, "&quot;");
   const safeCaption = String(data.caption || "").trim().replace(/"/g, "&quot;");
   const safePosition = Math.max(1, parseInt(data.position || 0, 10) || (key === "POST_IMAGE_1" ? 3 : 5));
@@ -308,14 +308,14 @@ function collectInlineImageFormData() {
   return {
     image1: {
       enabled: !!($("enableInlineImage1")?.checked),
-      url: $("inlineImage1Id")?.value.trim() || "",
+      url: sanitizeImageUrlValue($("inlineImage1Id")?.value || ""),
       alt: $("inlineImage1Alt")?.value.trim() || "",
       caption: $("inlineImage1Caption")?.value.trim() || "",
       position: Math.max(1, parseInt($("inlineImage1Position")?.value || "3", 10) || 3)
     },
     image2: {
       enabled: !!($("enableInlineImage2")?.checked),
-      url: $("inlineImage2Id")?.value.trim() || "",
+      url: sanitizeImageUrlValue($("inlineImage2Id")?.value || ""),
       alt: $("inlineImage2Alt")?.value.trim() || "",
       caption: $("inlineImage2Caption")?.value.trim() || "",
       position: Math.max(1, parseInt($("inlineImage2Position")?.value || "5", 10) || 5)
@@ -327,12 +327,12 @@ function applyInlineImageFormData(meta = {}) {
   const image1 = meta.image1 || {};
   const image2 = meta.image2 || {};
   if ($("enableInlineImage1")) $("enableInlineImage1").checked = !!image1.enabled;
-  if ($("inlineImage1Id")) $("inlineImage1Id").value = image1.url || image1.id || "";
+  if ($("inlineImage1Id")) $("inlineImage1Id").value = sanitizeImageUrlValue(image1.url || image1.id || "");
   if ($("inlineImage1Alt")) $("inlineImage1Alt").value = image1.alt || "";
   if ($("inlineImage1Caption")) $("inlineImage1Caption").value = image1.caption || "";
   if ($("inlineImage1Position")) $("inlineImage1Position").value = String(Math.max(1, parseInt(image1.position || 3, 10) || 3));
   if ($("enableInlineImage2")) $("enableInlineImage2").checked = !!image2.enabled;
-  if ($("inlineImage2Id")) $("inlineImage2Id").value = image2.url || image2.id || "";
+  if ($("inlineImage2Id")) $("inlineImage2Id").value = sanitizeImageUrlValue(image2.url || image2.id || "");
   if ($("inlineImage2Alt")) $("inlineImage2Alt").value = image2.alt || "";
   if ($("inlineImage2Caption")) $("inlineImage2Caption").value = image2.caption || "";
   if ($("inlineImage2Position")) $("inlineImage2Position").value = String(Math.max(1, parseInt(image2.position || 5, 10) || 5));
@@ -359,7 +359,7 @@ function buildContentWithInlineImageTokens(md = "") {
 }
 
 function renderInlineImageFigure(data = {}, index = 1) {
-  const imageUrl = String((data.url || data.id || "")).trim();
+  const imageUrl = sanitizeImageUrlValue(data.url || data.id || "");
   if (!imageUrl) return "";
   const alt = String(data.alt || `본문 이미지 ${index}`).trim();
   const caption = String(data.caption || "").trim();
@@ -442,7 +442,7 @@ function buildAffiliateToken(index, data = {}) {
   if (!hasContent) return "";
   const esc = (value) => String(value || "").trim().replace(/"/g, '&quot;');
   const safePosition = Math.max(1, parseInt(data.position || index || 1, 10) || index || 1);
-  return `[[POST_AFFILIATE_${index} image="${esc(data.imageUrl)}" link="${esc(data.linkUrl)}" name="${esc(data.productName)}" current="${esc(data.currentPrice)}" sale="${esc(data.salePrice)}" discount="${esc(data.discountRate)}" button="${esc(data.buttonText || "상품 보기")}" position="${safePosition}"]]`;
+  return `[[POST_AFFILIATE_${index} image="${esc(sanitizeImageUrlValue(data.imageUrl))}" link="${esc(data.linkUrl)}" name="${esc(data.productName)}" current="${esc(data.currentPrice)}" sale="${esc(data.salePrice)}" discount="${esc(data.discountRate)}" button="${esc(data.buttonText || "상품 보기")}" position="${safePosition}"]]`;
 }
 
 function collectAffiliateFormData() {
@@ -451,7 +451,7 @@ function collectAffiliateFormData() {
     const no = index + 1;
     return {
       enabled,
-      imageUrl: $("affiliateImageUrl" + no)?.value.trim() || "",
+      imageUrl: sanitizeImageUrlValue($("affiliateImageUrl" + no)?.value || ""),
       linkUrl: $("affiliateLinkUrl" + no)?.value.trim() || "",
       productName: $("affiliateProductName" + no)?.value.trim() || "",
       currentPrice: $("affiliateCurrentPrice" + no)?.value.trim() || "",
@@ -488,7 +488,7 @@ function applyAffiliateFormData(meta = {}) {
     visible = Math.max(visible, no);
     const card = $("affiliateItem" + no);
     if (card) card.hidden = false;
-    if ($("affiliateImageUrl" + no)) $("affiliateImageUrl" + no).value = item.imageUrl || "";
+    if ($("affiliateImageUrl" + no)) $("affiliateImageUrl" + no).value = sanitizeImageUrlValue(item.imageUrl || "");
     if ($("affiliateLinkUrl" + no)) $("affiliateLinkUrl" + no).value = item.linkUrl || "";
     if ($("affiliateProductName" + no)) $("affiliateProductName" + no).value = item.productName || "";
     if ($("affiliateCurrentPrice" + no)) $("affiliateCurrentPrice" + no).value = item.currentPrice || "";
@@ -894,6 +894,10 @@ function absolutizeImageUrl(src = "") {
   }
 }
 
+function sanitizeImageUrlValue(src = "") {
+  return unwrapCfImageUrl(src).trim();
+}
+
 function getImageHostname(url = "") {
   try { return new URL(url).hostname.toLowerCase(); } catch (_) { return ""; }
 }
@@ -905,8 +909,10 @@ function getImageBaseDomain(hostname = "") {
 }
 
 function isR2DevImageUrl(url = "") {
-  const host = getImageHostname(url);
-  return host.endsWith(".r2.dev") || host === "r2.dev";
+  const raw = String(url || "").toLowerCase();
+  const normalized = unwrapCfImageUrl(raw).toLowerCase();
+  const host = getImageHostname(normalized);
+  return raw.includes(".r2.dev") || normalized.includes(".r2.dev") || host.endsWith(".r2.dev") || host === "r2.dev";
 }
 
 function canUseCloudflareImageTransform(absolute = "") {
@@ -920,9 +926,11 @@ function canUseCloudflareImageTransform(absolute = "") {
 }
 
 function buildCfImageUrl(src = "", options = {}) {
-  const absolute = absolutizeImageUrl(src);
+  const raw = String(src || "").trim();
+  const absolute = absolutizeImageUrl(raw);
   if (!absolute) return "";
   if (/^(data|blob):/i.test(absolute)) return absolute;
+  if (isR2DevImageUrl(raw) || isR2DevImageUrl(absolute)) return absolute;
   if (!canUseCloudflareImageTransform(absolute)) return absolute;
   const config = { format: "auto", quality: 85, ...options };
   const params = Object.entries(config)
@@ -1032,7 +1040,7 @@ function evaluateSeo() {
   const focusKeyword = $("focusKeyword")?.value.trim() || "";
   const longtailKeywords = parseKeywords($("longtailKeywords")?.value || "");
   const lsiKeywords = parseKeywords($("lsiKeywords")?.value || "");
-  const coverImage = $("cover_image")?.value.trim() || "";
+  const coverImage = sanitizeImageUrlValue($("cover_image")?.value || "");
   const coverImageAlt = $("cover_image_alt")?.value.trim() || "";
 
   const plainContent = stripMarkdown(contentMd);
@@ -1696,7 +1704,7 @@ function renderPreview() {
   const category = $("category").value.trim();
   const summary = $("summary").value.trim();
   const metaDescription = $("meta_description").value.trim();
-  const coverImage = $("cover_image").value.trim();
+  const coverImage = sanitizeImageUrlValue($("cover_image").value);
   const coverImageAlt = $("cover_image_alt")?.value.trim() || "";
   const contentMd = stripLsiKeywordsTokenLines($("content_md").value || "");
   const inlineImages = collectInlineImageFormData();
@@ -1819,7 +1827,7 @@ async function load() {
   const loadedCategory = item.category || "";
   $("meta_description").value = item.meta_description || "";
   $("summary").value = item.summary || "";
-  $("cover_image").value = item.cover_image || "";
+  $("cover_image").value = sanitizeImageUrlValue(item.cover_image || "");
   if ($("cover_image_alt")) $("cover_image_alt").value = item.cover_image_alt || "";
   if ($("focusKeyword")) $("focusKeyword").value = item.focus_keyword || "";
   let longtailKeywords = [];
@@ -1863,7 +1871,7 @@ async function save() {
     category: $("category").value.trim(),
     meta_description: $("meta_description").value.trim(),
     summary: $("summary").value.trim(),
-    cover_image: $("cover_image").value.trim(),
+    cover_image: sanitizeImageUrlValue($("cover_image").value),
     cover_image_alt: $("cover_image_alt").value.trim(),
     focus_keyword: $("focusKeyword")?.value.trim() || "",
     longtail_keywords: parseKeywords($("longtailKeywords")?.value || ""),
