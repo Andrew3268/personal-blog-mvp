@@ -9,6 +9,49 @@ function escapeHtml(value) {
     .replaceAll("'", '&#039;');
 }
 
+function absolutizeImageUrl(src = "") {
+  const value = String(src || "").trim();
+  if (!value) return "";
+  if (/^(data|blob):/i.test(value)) return value;
+  if (/^https?:\/\//i.test(value)) return value;
+  if (value.startsWith("//")) return `https:${value}`;
+  try {
+    return new URL(value, window.location.origin).toString();
+  } catch (_) {
+    return value;
+  }
+}
+
+function buildCfImageUrl(src = "", options = {}) {
+  const absolute = absolutizeImageUrl(src);
+  if (!absolute) return "";
+  if (/^(data|blob):/i.test(absolute) || absolute.includes("/cdn-cgi/image/")) return absolute;
+  const config = { format: "auto", quality: 85, ...options };
+  const params = Object.entries(config)
+    .filter(([, value]) => value !== null && value !== undefined && value !== "")
+    .map(([key, value]) => `${key}=${value}`)
+    .join(",");
+  return `/cdn-cgi/image/${params}/${absolute}`;
+}
+
+function buildImageAttrs(src = "", config = {}) {
+  const widths = Array.isArray(config.widths) && config.widths.length ? config.widths : [480, 768, 960, 1280];
+  const normalized = [...new Set(widths.map((value) => Math.max(1, parseInt(value, 10) || 0)).filter(Boolean))].sort((a, b) => a - b);
+  const baseOptions = { fit: config.fit || "scale-down", format: config.format || "auto", quality: config.quality || 85 };
+  const srcset = normalized.map((width) => `${buildCfImageUrl(src, { ...baseOptions, width })} ${width}w`).join(", ");
+  const fallbackWidth = config.fallbackWidth || normalized[Math.min(1, normalized.length - 1)] || 768;
+  return {
+    src: buildCfImageUrl(src, { ...baseOptions, width: fallbackWidth }),
+    srcset,
+    sizes: config.sizes || "100vw"
+  };
+}
+
+function renderOptimizedImageAttrs(src = "", config = {}) {
+  const image = buildImageAttrs(src, config);
+  return `src="${escapeHtml(image.src)}" srcset="${escapeHtml(image.srcset)}" sizes="${escapeHtml(image.sizes)}"`;
+}
+
 function getPostsHeroActiveKey() {
   const path = window.location.pathname.replace(/\/+$/, '') || '/';
   const params = new URLSearchParams(window.location.search);
@@ -351,7 +394,7 @@ function buildPostsHeroNav(categories = []) {
       return `
         <article class="card post-card post-card--row js-post-card" data-href="${postHref}" tabindex="0" aria-label="${title} 글로 이동">
           <div class="post-card__thumb post-card__thumb--row">
-            ${cover ? `<img src="${escapeHtml(cover)}" alt="${title} 대표 이미지" loading="lazy" decoding="async" />` : '<div class="post-card__thumb-placeholder">대표 이미지 없음</div>'}
+            ${cover ? `<img ${renderOptimizedImageAttrs(cover, { widths: [320, 480, 640, 768], sizes: "(max-width: 760px) 36vw, 260px", fallbackWidth: 480, fit: "cover", quality: 85 })} alt="${title} 대표 이미지" loading="lazy" decoding="async" />` : '<div class="post-card__thumb-placeholder">대표 이미지 없음</div>'}
           </div>
           <div class="post-card__body">
             <div class="post-meta post-meta--row">

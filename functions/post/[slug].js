@@ -1,5 +1,6 @@
 import { escapeHtml, jsonld, okHtml, edgeCache } from "../_utils.js";
 import { renderMarkdown, renderMarkdownBlocks, buildTocItemsFromBlocks, renderTocHtml, parseInlineImages, stripInlineImageTokens } from "../../lib/posts/renderer.js";
+import { buildImageAttrs } from "../../lib/image-utils.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
 
@@ -226,18 +227,27 @@ export async function onRequestGet({ params, env, request }) {
           }
         : null;
 
-      const coverImagePreload = row.cover_image
-        ? `<link rel="preload" as="image" href="${escapeHtml(row.cover_image)}" fetchpriority="high" />`
+      const coverImage = row.cover_image
+        ? buildImageAttrs(row.cover_image, {
+            widths: [640, 960, 1200, 1600],
+            sizes: "(max-width: 900px) 100vw, 1200px",
+            fallbackWidth: 1200,
+            fit: "cover",
+            quality: 85
+          }, SITE_ORIGIN)
+        : null;
+      const coverImagePreload = coverImage
+        ? `<link rel="preload" as="image" href="${escapeHtml(coverImage.src)}" imagesrcset="${escapeHtml(coverImage.srcset)}" imagesizes="${escapeHtml(coverImage.sizes)}" fetchpriority="high" />`
         : "";
       const categoryLink = row.category
         ? `/?category=${encodeURIComponent(String(row.category))}`
         : "/";
-      const coverImageHtml = row.cover_image
+      const coverImageHtml = coverImage
         ? `
         <figure class="post-cover-wrap">
           <img
             class="post-cover"
-            src="${escapeHtml(row.cover_image)}"
+            ${coverImage.attrs}
             alt="${escapeHtml(coverImageAltText)}"
             loading="eager"
             fetchpriority="high"
@@ -488,7 +498,7 @@ function buildInArticleAds(config, count) {
 
 function buildArticleBodyHtml(contentMd, adHtmlList = [], contentTextLength = 0, env = {}) {
   const inlineImages = parseInlineImages(contentMd || "");
-  const blocks = renderMarkdownBlocks(contentMd || "", { inlineImages });
+  const blocks = renderMarkdownBlocks(contentMd || "", { inlineImages, origin: SITE_ORIGIN });
   if (!blocks.length) return "";
 
   const tocBlock = blocks.find((block) => block.type === "toc");
@@ -640,7 +650,7 @@ function renderFaqSection(items) {
         ${items.map((item) => `
           <article class="card">
             <h3 class="h3 post-faq__question">Q. ${escapeHtml(item.question)}</h3>
-            <div class="post-faq__answer">${renderMarkdown(item.answerMd || "")}</div>
+            <div class="post-faq__answer">${renderMarkdown(item.answerMd || "", { origin: SITE_ORIGIN })}</div>
           </article>
         `).join("")}
       </div>

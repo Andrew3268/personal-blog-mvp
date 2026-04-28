@@ -365,7 +365,7 @@ function renderInlineImageFigure(data = {}, index = 1) {
   const caption = String(data.caption || "").trim();
   return `
     <figure class="preview-inline-image">
-      <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(alt)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
+      <img ${renderOptimizedImageAttrs(imageUrl, { widths: [480, 768, 960, 1200], sizes: "(max-width: 760px) 100vw, 760px", fallbackWidth: 960, fit: "scale-down", quality: 85 })} alt="${escapeHtml(alt)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
       ${caption ? `<figcaption>${escapeHtml(caption)}</figcaption>` : ""}
     </figure>
   `;
@@ -590,7 +590,7 @@ function renderAffiliatePreviewCard(data = {}, index = 1) {
   return `
     <article class="preview-affiliate-card">
       <div class="preview-affiliate-card__media">
-        ${data.imageUrl ? `<img src="${escapeHtml(data.imageUrl)}" alt="${escapeHtml(data.productName || `제휴 상품 ${index}`)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" />` : `<div class="preview-affiliate-card__placeholder">상품 이미지</div>`}
+        ${data.imageUrl ? `<img ${renderOptimizedImageAttrs(data.imageUrl, { widths: [180, 240, 320, 480], sizes: "(max-width: 720px) 110px, 180px", fallbackWidth: 320, fit: "cover", quality: 85 })} alt="${escapeHtml(data.productName || `제휴 상품 ${index}`)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" />` : `<div class="preview-affiliate-card__placeholder">상품 이미지</div>`}
       </div>
       <div class="preview-affiliate-card__content">
         ${data.productName ? `<h3 class="preview-affiliate-card__title">${escapeHtml(data.productName)}</h3>` : ""}
@@ -854,6 +854,49 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function absolutizeImageUrl(src = "") {
+  const value = String(src || "").trim();
+  if (!value) return "";
+  if (/^(data|blob):/i.test(value)) return value;
+  if (/^https?:\/\//i.test(value)) return value;
+  if (value.startsWith("//")) return `https:${value}`;
+  try {
+    return new URL(value, window.location.origin).toString();
+  } catch (_) {
+    return value;
+  }
+}
+
+function buildCfImageUrl(src = "", options = {}) {
+  const absolute = absolutizeImageUrl(src);
+  if (!absolute) return "";
+  if (/^(data|blob):/i.test(absolute) || absolute.includes("/cdn-cgi/image/")) return absolute;
+  const config = { format: "auto", quality: 85, ...options };
+  const params = Object.entries(config)
+    .filter(([, value]) => value !== null && value !== undefined && value !== "")
+    .map(([key, value]) => `${key}=${value}`)
+    .join(",");
+  return `/cdn-cgi/image/${params}/${absolute}`;
+}
+
+function buildImageAttrs(src = "", config = {}) {
+  const widths = Array.isArray(config.widths) && config.widths.length ? config.widths : [480, 768, 960, 1280];
+  const normalized = [...new Set(widths.map((value) => Math.max(1, parseInt(value, 10) || 0)).filter(Boolean))].sort((a, b) => a - b);
+  const baseOptions = { fit: config.fit || "scale-down", format: config.format || "auto", quality: config.quality || 85 };
+  const srcset = normalized.map((width) => `${buildCfImageUrl(src, { ...baseOptions, width })} ${width}w`).join(", ");
+  const fallbackWidth = config.fallbackWidth || normalized[Math.min(1, normalized.length - 1)] || 768;
+  return {
+    src: buildCfImageUrl(src, { ...baseOptions, width: fallbackWidth }),
+    srcset,
+    sizes: config.sizes || "100vw"
+  };
+}
+
+function renderOptimizedImageAttrs(src = "", config = {}) {
+  const image = buildImageAttrs(src, config);
+  return `src="${escapeHtml(image.src)}" srcset="${escapeHtml(image.srcset)}" sizes="${escapeHtml(image.sizes)}"`;
 }
 
 
@@ -1645,7 +1688,7 @@ function markdownToHtml(md, options = {}) {
     if (imageMatch) {
       closeLists();
       closeQuote();
-      pushContentBlock(`<figure class="preview-figure"><img src="${escapeHtml(imageMatch[2])}" alt="${escapeHtml(imageMatch[1])}" loading="lazy"></figure>`);
+      pushContentBlock(`<figure class="preview-figure"><img ${renderOptimizedImageAttrs(imageMatch[2], { widths: [480, 768, 960, 1200], sizes: "(max-width: 760px) 100vw, 760px", fallbackWidth: 960, fit: "scale-down", quality: 85 })} alt="${escapeHtml(imageMatch[1])}" loading="lazy"></figure>`);
       continue;
     }
 
@@ -1774,7 +1817,7 @@ function renderPreview() {
         ${summary ? `<p class="preview-summary">${escapeHtml(summary)}</p>` : ""}
         ${tags.length ? `<div class="row">${tags.map((tag) => `<span class="tag-chip">#${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
       </header>
-      ${coverImage ? `<img class="preview-cover" src="${escapeHtml(coverImage)}" alt="${escapeHtml(coverImageAlt || `${title} 대표 이미지`)}" loading="lazy">` : ""}
+      ${coverImage ? `<img class="preview-cover" ${renderOptimizedImageAttrs(coverImage, { widths: [640, 960, 1200, 1600], sizes: "(max-width: 900px) 100vw, 960px", fallbackWidth: 960, fit: "cover", quality: 85 })} alt="${escapeHtml(coverImageAlt || `${title} 대표 이미지`)}" loading="lazy">` : ""}
       <section class="preview-body">${markdownToHtml(contentMd, { adPositions: previewAdPositions, showAds: true, inlineImages, affiliates: affiliateMeta })}</section>
       ${faqItems.length ? `
         <section class="preview-faq" aria-label="자주 묻는 질문">
