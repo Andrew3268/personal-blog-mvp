@@ -977,6 +977,137 @@ function renderOptimizedImageAttrs(src = "", config = {}) {
   return `src="${escapeHtml(image.src)}"${image.srcset ? ` srcset="${escapeHtml(image.srcset)}"` : ""} sizes="${escapeHtml(image.sizes)}" data-original-src="${escapeHtml(fallbackSrc)}" onerror="this.onerror=null;this.removeAttribute('srcset');this.src=this.dataset.originalSrc;"`;
 }
 
+
+function getHeadings(md = "", level = 2) {
+  const targetLevel = Math.min(6, Math.max(1, parseInt(level, 10) || 2));
+  const re = new RegExp(`^\\s{0,3}#{${targetLevel}}\\s+(.+?)\\s*#*\\s*$`, "gm");
+  const headings = [];
+  let match;
+  while ((match = re.exec(String(md || ""))) !== null) {
+    headings.push(String(match[1] || "").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/[*_`~]/g, "").trim());
+  }
+  return headings.filter(Boolean);
+}
+
+function getLinks(md = "") {
+  const links = [];
+  const re = /(?!!)?\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
+  let match;
+  while ((match = re.exec(String(md || ""))) !== null) {
+    const href = String(match[1] || "").trim();
+    if (href) links.push(href);
+  }
+  return links;
+}
+
+function getImages(md = "") {
+  const images = [];
+  const re = /!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
+  let match;
+  while ((match = re.exec(String(md || ""))) !== null) {
+    images.push({ alt: String(match[1] || "").trim(), src: String(match[2] || "").trim() });
+  }
+  return images;
+}
+
+function getFirstParagraph(md = "") {
+  const blocks = String(md || "")
+    .replace(/\r/g, "")
+    .split(/\n\s*\n/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .filter((block) => !/^\s{0,3}#{1,6}\s+/.test(block))
+    .filter((block) => !/^\s*\[\[(?:TOC|POST_|AFFILIATE_)/i.test(block))
+    .filter((block) => !/^\s*```/.test(block));
+  return stripMarkdown(blocks[0] || "");
+}
+
+function normalizeKeywordText(value = "") {
+  return String(value || "").toLowerCase().replace(/[\s\-_/]+/g, "").trim();
+}
+
+function containsKeyword(text = "", keyword = "") {
+  const normalizedText = normalizeKeywordText(text);
+  const normalizedKeyword = normalizeKeywordText(keyword);
+  return !!normalizedKeyword && normalizedText.includes(normalizedKeyword);
+}
+
+function escapeRegExp(value = "") {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function countKeywordOccurrences(text = "", keyword = "") {
+  const rawKeyword = String(keyword || "").trim();
+  if (!rawKeyword) return 0;
+  const source = String(text || "");
+  const compactSource = normalizeKeywordText(source);
+  const compactKeyword = normalizeKeywordText(rawKeyword);
+  if (!compactKeyword) return 0;
+
+  let count = 0;
+  let index = 0;
+  while ((index = compactSource.indexOf(compactKeyword, index)) !== -1) {
+    count += 1;
+    index += compactKeyword.length;
+  }
+  return count;
+}
+
+function evaluateLongtailKeywords(textParts = [], keywords = []) {
+  const source = Array.isArray(textParts) ? textParts.join("\n") : String(textParts || "");
+  const items = Array.isArray(keywords) ? keywords.filter(Boolean) : [];
+  const included = items.filter((keyword) => containsKeyword(source, keyword));
+  const missing = items.filter((keyword) => !containsKeyword(source, keyword));
+  return { total: items.length, count: included.length, included, missing };
+}
+
+function evaluateStuffing(keyword = "", plainContent = "") {
+  const keywordCount = countKeywordOccurrences(plainContent, keyword);
+  const contentLength = countTextWithoutSpaces(plainContent);
+  const estimatedWords = Math.max(1, Math.round(contentLength / 3));
+  const density = keywordCount ? (keywordCount / estimatedWords) * 100 : 0;
+  let status = "good";
+  if (density > 3.5 || keywordCount > 16) status = "bad";
+  else if (density > 2.2 || keywordCount > 12) status = "warn";
+  else if (keywordCount < 2) status = "warn";
+
+  return {
+    status,
+    detail: `본문 내 ${keywordCount}회 언급 · 추정 밀도 ${density.toFixed(1)}% · 권장 1~2% 내외`
+  };
+}
+
+function evaluateOtherKeywordStuffing(focusKeyword = "", plainContent = "") {
+  const stopwords = new Set([
+    "그리고", "그러나", "하지만", "또한", "그래서", "때문", "경우", "정도", "부분", "사용", "방법", "확인", "관리", "청소", "오늘", "본문", "키워드", "있습니다", "합니다", "됩니다", "하면", "있는", "없는", "위해", "보다", "까지", "에서", "으로", "처럼", "이런", "저런", "대한", "관련"
+  ]);
+  const focus = normalizeKeywordText(focusKeyword);
+  const words = String(plainContent || "")
+    .replace(/[A-Za-z0-9_가-힣]+/g, (word) => ` ${word} `)
+    .split(/[^A-Za-z0-9_가-힣]+/)
+    .map((word) => word.trim())
+    .filter((word) => word.length >= 2)
+    .filter((word) => !stopwords.has(word))
+    .filter((word) => normalizeKeywordText(word) !== focus);
+
+  const counts = new Map();
+  words.forEach((word) => counts.set(word, (counts.get(word) || 0) + 1));
+  const top = [...counts.entries()]
+    .filter(([, count]) => count >= 4)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+
+  if (!top.length) {
+    return { status: "good", detail: "반복 가능 키워드가 발견되지 않았습니다." };
+  }
+
+  const maxCount = top[0][1];
+  return {
+    status: maxCount >= 12 ? "bad" : maxCount >= 7 ? "warn" : "good",
+    detail: `Top5: ${top.map(([word, count]) => `${word} ${count}회`).join(" | ")}`
+  };
+}
+
 function getImageSeoData(contentMd, coverImage, coverImageAlt, focusKeyword) {
   const bodyImages = getImages(contentMd);
   const bodyImagesWithoutAlt = bodyImages.filter((img) => !img.alt).length;
