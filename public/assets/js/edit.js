@@ -24,6 +24,27 @@ function parseKeywords(raw) {
     .filter((item, index, arr) => arr.indexOf(item) === index);
 }
 
+function stripMarkdown(md) {
+  return String(md || "")
+    .replace(/^<!--\s*[\s\S]*?\s*-->\s*$/gm, "")
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .replace(/^\s{0,3}>\s?/gm, "")
+    .replace(/^\s*[-*+]\s+/gm, "")
+    .replace(/^\s*\d+\.\s+/gm, "")
+    .replace(/[*_~>#|]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function shouldShowInarticleAdsInEditor() {
+  const el = $("enable_inarticle_ads");
+  return !!(el && el.checked);
+}
+
 
 function normalizeCategoryName(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
@@ -1034,7 +1055,8 @@ function evaluateSeo() {
   const inlineImages = collectInlineImageFormData();
   const affiliateMeta = collectAffiliateFormData();
   const contentLengthWithoutSpaces = countTextWithoutSpaces(contentMd);
-  const previewAdPositions = getPreviewAdInsertPositions(contentMd, contentLengthWithoutSpaces);
+  const showPreviewAds = shouldShowInarticleAdsInEditor();
+  const previewAdPositions = showPreviewAds ? getPreviewAdInsertPositions(contentMd, contentLengthWithoutSpaces) : [];
   const faqMd = $("faq_md")?.value || "";
   const faqItems = parseFaqMarkdown(faqMd);
   const focusKeyword = $("focusKeyword")?.value.trim() || "";
@@ -1710,7 +1732,8 @@ function renderPreview() {
   const inlineImages = collectInlineImageFormData();
   const affiliateMeta = collectAffiliateFormData();
   const contentLengthWithoutSpaces = countTextWithoutSpaces(contentMd);
-  const previewAdPositions = getPreviewAdInsertPositions(contentMd, contentLengthWithoutSpaces);
+  const showPreviewAds = shouldShowInarticleAdsInEditor();
+  const previewAdPositions = showPreviewAds ? getPreviewAdInsertPositions(contentMd, contentLengthWithoutSpaces) : [];
   const faqMd = $("faq_md")?.value || "";
   const faqItems = parseFaqMarkdown(faqMd);
   const tags = parseTags($("tags").value);
@@ -1737,7 +1760,7 @@ function renderPreview() {
         ${tags.length ? `<div class="row">${tags.map((tag) => `<span class="tag-chip">#${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
       </header>
       ${coverImage ? `<img class="preview-cover" ${renderOptimizedImageAttrs(coverImage, { widths: [640, 960, 1200, 1600], sizes: "(max-width: 900px) 100vw, 960px", fallbackWidth: 960, fit: "cover", quality: 85 })} alt="${escapeHtml(coverImageAlt || `${title} 대표 이미지`)}" loading="lazy">` : ""}
-      <section class="preview-body">${markdownToHtml(contentMd, { adPositions: previewAdPositions, showAds: true, inlineImages, affiliates: affiliateMeta })}</section>
+      <section class="preview-body">${markdownToHtml(contentMd, { adPositions: previewAdPositions, showAds: showPreviewAds, inlineImages, affiliates: affiliateMeta })}</section>
       ${faqItems.length ? `
         <section class="preview-faq" aria-label="자주 묻는 질문">
           <h2>자주 묻는 질문</h2>
@@ -1926,11 +1949,13 @@ function handleRealtimeChange() {
 $("enableInlineImage1")?.addEventListener("change", handleRealtimeChange);
 $("enableInlineImage2")?.addEventListener("change", handleRealtimeChange);
 $("enableAffiliateLinks")?.addEventListener("change", handleRealtimeChange);
+$("enable_inarticle_ads")?.addEventListener("change", handleRealtimeChange);
+$("enable_sidebar_ad")?.addEventListener("change", handleRealtimeChange);
 $("addAffiliateItemBtn")?.addEventListener("click", () => { addAffiliateItemCard(); handleRealtimeChange(); });
 document.querySelectorAll("[data-affiliate-remove]").forEach((button) => {
   button.addEventListener("click", () => { removeAffiliateItemCard(Number(button.dataset.affiliateRemove || "0")); handleRealtimeChange(); });
 });
-if ($("saveBtn")) if ($("saveBtn")) $("saveBtn").addEventListener("click", save);
+if ($("saveBtn")) $("saveBtn").addEventListener("click", save);
 bindCategoryManagerEvents();
 $("enableToc")?.addEventListener("change", applyTocControls);
 $("includeTocH3")?.addEventListener("change", () => {
