@@ -427,7 +427,7 @@ function buildPostsHeroNav(categories = []) {
   }
 
   function renderItems(items, { append = false } = {}) {
-    const markup = items.map((it) => {
+    const markup = items.map((it, index) => {
       const rawTitle = String(it.title || '(제목 없음)');
       const title = escapeHtml(rawTitle);
       const categoryText = String(it.category || '').trim();
@@ -443,11 +443,16 @@ function buildPostsHeroNav(categories = []) {
         ? '<span class="badge badge--draft">초안</span>'
         : '<span class="badge">발행</span>';
       const postHref = itemStatus === 'published' ? `/post/${encodeURIComponent(slug)}` : `/edit.html?slug=${encodeURIComponent(slug)}`;
+      const shouldPrioritizeImage = !append && index === 0 && page === 1;
+      const imageLoadingAttrs = shouldPrioritizeImage
+        ? 'loading="eager" fetchpriority="high" decoding="async" width="627" height="350"'
+        : 'loading="lazy" decoding="async" width="627" height="350"';
+
 
       return `
         <article class="card post-card post-card--row js-post-card" data-href="${postHref}" tabindex="0" aria-label="${title} 글로 이동">
           <div class="post-card__thumb post-card__thumb--row">
-            ${cover ? `<img ${renderOptimizedImageAttrs(cover, { widths: [320, 480, 640, 768], sizes: "(max-width: 760px) 36vw, 260px", fallbackWidth: 480, fit: "cover", quality: 85 })} alt="${title} 대표 이미지" loading="lazy" decoding="async" />` : '<div class="post-card__thumb-placeholder">대표 이미지 없음</div>'}
+            ${cover ? `<img ${renderOptimizedImageAttrs(cover, { widths: [320, 480, 640, 768], sizes: "(max-width: 760px) 36vw, 260px", fallbackWidth: 480, fit: "cover", quality: 85 })} alt="${title} 대표 이미지" ${imageLoadingAttrs} />` : '<div class="post-card__thumb-placeholder">대표 이미지 없음</div>'}
           </div>
           <div class="post-card__body">
             <div class="post-meta post-meta--row">

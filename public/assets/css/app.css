@@ -77,11 +77,11 @@ h1 { font-size: 2rem; } h2 { font-size: 1.5rem; } h3 { font-size: 1.2rem; }/* �
 .post-body blockquote{margin:22px 0;padding:18px;background:rgba(91,124,255,.06);border-radius:16px}
 .post-body blockquote p{margin:0;}
 .post-body code{background:#eff6ff;padding:3px 6px;border-radius:8px;font-size:.92em}
-.post-side{height:max-content;position:sticky;--site-sidebar-base-top:15px;top:var(--site-sidebar-sticky-top,var(--site-sidebar-base-top));display:flex;flex-direction:column;gap:18px;min-height:820px;transition:top .18s ease}
+.post-side{height:max-content;position:sticky;--site-sidebar-base-top:93px;top:var(--site-sidebar-base-top);display:flex;flex-direction:column;gap:18px;min-height:820px}
 .posts-page{padding-top:20px}
 .posts-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;align-items:start}
 .posts-main{min-width:0}
-.posts-sidebar{min-height:auto;--site-sidebar-base-top:24px}
+.posts-sidebar{min-height:auto;--site-sidebar-base-top:93px}
 .posts-sidebar__summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .posts-summary-card{display:flex;flex-direction:column;gap:6px;padding:14px 12px;border-radius:18px;background:linear-gradient(180deg,#f8fbff,#fff);border:1px solid rgba(91,124,255,.12);text-align:center}
 .posts-summary-card strong{font-size:22px;line-height:1;font-weight:1000;color:#0f172a}
@@ -648,3 +648,7 @@ body.has-preview-open{overflow:hidden}
   .ww-value-card { border-left: none; border-top: 1px solid var(--ww-text); padding-left: 0; padding-top: 20px; }
   .ww-footer { flex-direction: column; gap: 20px; text-align: center; }
 }
+/* PageSpeed: 사이드바 광고/인기글 영역의 높이를 미리 확보해 CLS를 줄입니다. */
+.posts-sidebar__ad-shell{min-height:300px;contain:layout paint;}
+.posts-sidebar__popular-shell{min-height:190px;contain:layout paint;}
+.post-card__thumb img{aspect-ratio:16/9;}

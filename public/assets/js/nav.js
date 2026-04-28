@@ -68,37 +68,3 @@
     });
   }
 })();
-
-(function () {
-  const sidebars = Array.from(document.querySelectorAll('.post-side'));
-  const topbar = document.querySelector('.topbar--editorial');
-  if (!sidebars.length || !topbar) return;
-
-  let ticking = false;
-
-  function updateSidebarOffset() {
-    const rect = topbar.getBoundingClientRect();
-    const headerVisible = rect.bottom > 4 && rect.top < window.innerHeight;
-    const visibleGap = 20;
-
-    sidebars.forEach((sidebar) => {
-      if (headerVisible) {
-        sidebar.style.setProperty('--site-sidebar-sticky-top', `${Math.ceil(rect.bottom + visibleGap)}px`);
-      } else {
-        sidebar.style.removeProperty('--site-sidebar-sticky-top');
-      }
-    });
-
-    ticking = false;
-  }
-
-  function requestUpdate() {
-    if (ticking) return;
-    ticking = true;
-    window.requestAnimationFrame(updateSidebarOffset);
-  }
-
-  requestUpdate();
-  window.addEventListener('scroll', requestUpdate, { passive: true });
-  window.addEventListener('resize', requestUpdate);
-})();
