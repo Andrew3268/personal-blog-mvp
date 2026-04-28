@@ -856,8 +856,27 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-function absolutizeImageUrl(src = "") {
+function unwrapCfImageUrl(src = "") {
   const value = String(src || "").trim();
+  if (!value || !value.includes("/cdn-cgi/image/")) return value;
+
+  const marker = "/cdn-cgi/image/";
+  const markerIndex = value.indexOf(marker);
+  if (markerIndex < 0) return value;
+
+  const afterMarker = value.slice(markerIndex + marker.length);
+  const optionEnd = afterMarker.indexOf("/");
+  if (optionEnd < 0) return value;
+
+  const embedded = afterMarker.slice(optionEnd + 1);
+  if (!embedded) return value;
+  return embedded;
+
+}
+
+function absolutizeImageUrl(src = "") {
+  const unwrapped = unwrapCfImageUrl(src);
+  const value = String(unwrapped || "").trim();
   if (!value) return "";
   if (/^(data|blob):/i.test(value)) return value;
   if (/^https?:\/\//i.test(value)) return value;
@@ -879,19 +898,25 @@ function getImageBaseDomain(hostname = "") {
   return parts.slice(-2).join(".");
 }
 
+function isR2DevImageUrl(url = "") {
+  const host = getImageHostname(url);
+  return host.endsWith(".r2.dev") || host === "r2.dev";
+}
+
 function canUseCloudflareImageTransform(absolute = "") {
-  const srcHost = getImageHostname(absolute);
+  const normalized = unwrapCfImageUrl(absolute);
+  const srcHost = getImageHostname(normalized);
   const originHost = getImageHostname(window.location.origin);
   if (!srcHost || !originHost) return false;
+  if (isR2DevImageUrl(normalized)) return false;
   if (srcHost === originHost) return true;
-  if (srcHost.endsWith(".r2.dev") || srcHost === "r2.dev") return false;
   return getImageBaseDomain(srcHost) === getImageBaseDomain(originHost);
 }
 
 function buildCfImageUrl(src = "", options = {}) {
   const absolute = absolutizeImageUrl(src);
   if (!absolute) return "";
-  if (/^(data|blob):/i.test(absolute) || absolute.includes("/cdn-cgi/image/")) return absolute;
+  if (/^(data|blob):/i.test(absolute)) return absolute;
   if (!canUseCloudflareImageTransform(absolute)) return absolute;
   const config = { format: "auto", quality: 85, ...options };
   const params = Object.entries(config)
@@ -921,150 +946,6 @@ function renderOptimizedImageAttrs(src = "", config = {}) {
   const image = buildImageAttrs(src, config);
   const fallbackSrc = image.original || absolutizeImageUrl(src);
   return `src="${escapeHtml(image.src)}"${image.srcset ? ` srcset="${escapeHtml(image.srcset)}"` : ""} sizes="${escapeHtml(image.sizes)}" data-original-src="${escapeHtml(fallbackSrc)}" onerror="this.onerror=null;this.removeAttribute('srcset');this.src=this.dataset.originalSrc;"`;
-}
-
-
-
-function stripMarkdown(md) {
-  return String(md || "")
-    .replace(/```[\s\S]*?```/g, " ")
-    .replace(/`[^`]*`/g, " ")
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
-    .replace(/\[[^\]]*\]\([^)]*\)/g, " ")
-    .replace(/^>\s?/gm, "")
-    .replace(/^#{1,6}\s*/gm, "")
-    .replace(/[\-*_[\]()`>#]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function getHeadings(md, level) {
-  const re = new RegExp(`^#{${level}}\\s+(.+)$`, "gm");
-  const results = [];
-  let match;
-  while ((match = re.exec(String(md || ""))) !== null) {
-    results.push(match[1].trim());
-  }
-  return results;
-}
-
-function getLinks(md) {
-  const re = /\[[^\]]+\]\((https?:\/\/[^)]+|\/[^)]+)\)/g;
-  const results = [];
-  let match;
-  while ((match = re.exec(String(md || ""))) !== null) {
-    results.push(match[1]);
-  }
-  return results;
-}
-
-function getImages(md) {
-  const re = /!\[([^\]]*)\]\(([^)]+)\)/g;
-  const results = [];
-  let match;
-  while ((match = re.exec(String(md || ""))) !== null) {
-    results.push({ alt: String(match[1] || "").trim(), src: match[2] });
-  }
-  return results;
-}
-
-function countKeywordOccurrences(text, keyword) {
-  const source = normalizeText(text).toLowerCase();
-  const target = normalizeText(keyword).toLowerCase();
-  if (!source || !target) return 0;
-  return source.split(target).length - 1;
-}
-
-function getFirstParagraph(md) {
-  const parts = String(md || "")
-    .split(/\n\s*\n/)
-    .map((s) => stripMarkdown(s))
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return parts[0] || "";
-}
-
-function containsKeyword(text, keyword) {
-  return normalizeText(text).toLowerCase().includes(normalizeText(keyword).toLowerCase());
-}
-
-function evaluateLongtailKeywords(texts, keywords) {
-  if (!keywords.length) {
-    return { count: 0, total: 0, missing: [], matched: [] };
-  }
-
-  const matched = keywords.filter((keyword) => texts.some((text) => containsKeyword(text, keyword)));
-  const missing = keywords.filter((keyword) => !matched.includes(keyword));
-
-  return { count: matched.length, total: keywords.length, missing, matched };
-}
-
-function evaluateStuffing(keyword, contentText) {
-  if (!keyword) {
-    return {
-      status: "warn",
-      detail: "메인 키워드를 입력하면 과다 반복 여부를 계산합니다."
-    };
-  }
-
-  const occurrence = countKeywordOccurrences(contentText, keyword);
-  const sourceLen = normalizeText(contentText).length;
-  const keywordLen = normalizeText(keyword).length || 1;
-  const ratio = sourceLen > 0 ? ((occurrence * keywordLen) / sourceLen) * 100 : 0;
-
-  let status = "good";
-  if (occurrence === 0) status = "bad";
-  else if (ratio > 3.5 || occurrence > 20) status = "bad";
-  else if (ratio > 2.2 || occurrence > 14) status = "warn";
-
-  return {
-    status,
-    detail: `본문 내 ${occurrence}회 · 추정 밀도 ${ratio.toFixed(2)}% · 권장 0.5~2.2% 정도`
-  };
-}
-
-function evaluateOtherKeywordStuffing(focusKeyword, contentText) {
-  const normalizedFocus = normalizeText(focusKeyword || "");
-  const source = String(contentText || "");
-  const clean = source
-    .replace(/```[\s\S]*?```/g, " ")
-    .replace(/`[^`]*`/g, " ")
-    .replace(/https?:\/\/\S+/g, " ")
-    .replace(/[0-9]/g, " ");
-
-  const rawWords = clean.match(/[가-힣a-zA-Z]{2,}/g) || [];
-  const stopwords = new Set([
-    "그리고","하지만","또한","에서","으로","이것","그것","우리","정말","바로","가장","사용","방법","정리","체크","포함","관련","본문","제목","요약문","메타","디스크립션","키워드","내용","경우","이후","정도","하나","여기","때문","부분","조금","지금","이번","대한","위해","통해","먼저","다음","아래","위의","또는","대한","있는","하는","하면","했다","합니다","하세요","좋습니다","입니다"
-  ]);
-  const counts = new Map();
-
-  rawWords.forEach((word) => {
-    const normalized = normalizeText(word);
-    if (!normalized || normalized.length < 2) return;
-    if (stopwords.has(word)) return;
-    if (normalizedFocus && (normalized === normalizedFocus || normalized.includes(normalizedFocus) || normalizedFocus.includes(normalized))) return;
-    counts.set(word, (counts.get(word) || 0) + 1);
-  });
-
-  const suspicious = Array.from(counts.entries())
-    .map(([keyword, count]) => ({ keyword, count }))
-    .filter((item) => item.count >= 8)
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
-
-  if (!suspicious.length) {
-    return {
-      status: "good",
-      detail: "반복 키워드 Top 5 없음"
-    };
-  }
-
-  const worst = suspicious[0];
-  const status = worst.count >= 12 ? "bad" : "warn";
-  return {
-    status,
-    detail: `Top5: ${suspicious.map((item) => `${item.keyword} ${item.count}회`).join(" | ")}`
-  };
 }
 
 function getImageSeoData(contentMd, coverImage, coverImageAlt, focusKeyword) {

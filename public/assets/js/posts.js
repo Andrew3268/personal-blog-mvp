@@ -9,8 +9,27 @@ function escapeHtml(value) {
     .replaceAll("'", '&#039;');
 }
 
-function absolutizeImageUrl(src = "") {
+function unwrapCfImageUrl(src = "") {
   const value = String(src || "").trim();
+  if (!value || !value.includes("/cdn-cgi/image/")) return value;
+
+  const marker = "/cdn-cgi/image/";
+  const markerIndex = value.indexOf(marker);
+  if (markerIndex < 0) return value;
+
+  const afterMarker = value.slice(markerIndex + marker.length);
+  const optionEnd = afterMarker.indexOf("/");
+  if (optionEnd < 0) return value;
+
+  const embedded = afterMarker.slice(optionEnd + 1);
+  if (!embedded) return value;
+  return embedded;
+
+}
+
+function absolutizeImageUrl(src = "") {
+  const unwrapped = unwrapCfImageUrl(src);
+  const value = String(unwrapped || "").trim();
   if (!value) return "";
   if (/^(data|blob):/i.test(value)) return value;
   if (/^https?:\/\//i.test(value)) return value;
@@ -32,19 +51,25 @@ function getImageBaseDomain(hostname = "") {
   return parts.slice(-2).join(".");
 }
 
+function isR2DevImageUrl(url = "") {
+  const host = getImageHostname(url);
+  return host.endsWith(".r2.dev") || host === "r2.dev";
+}
+
 function canUseCloudflareImageTransform(absolute = "") {
-  const srcHost = getImageHostname(absolute);
+  const normalized = unwrapCfImageUrl(absolute);
+  const srcHost = getImageHostname(normalized);
   const originHost = getImageHostname(window.location.origin);
   if (!srcHost || !originHost) return false;
+  if (isR2DevImageUrl(normalized)) return false;
   if (srcHost === originHost) return true;
-  if (srcHost.endsWith(".r2.dev") || srcHost === "r2.dev") return false;
   return getImageBaseDomain(srcHost) === getImageBaseDomain(originHost);
 }
 
 function buildCfImageUrl(src = "", options = {}) {
   const absolute = absolutizeImageUrl(src);
   if (!absolute) return "";
-  if (/^(data|blob):/i.test(absolute) || absolute.includes("/cdn-cgi/image/")) return absolute;
+  if (/^(data|blob):/i.test(absolute)) return absolute;
   if (!canUseCloudflareImageTransform(absolute)) return absolute;
   const config = { format: "auto", quality: 85, ...options };
   const params = Object.entries(config)
