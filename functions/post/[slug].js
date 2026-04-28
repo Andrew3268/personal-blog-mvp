@@ -670,7 +670,6 @@ function renderRelatedPostsSection(items, category) {
           ${items.map((item, index) => `
             <li>
               <a href="/post/${encodeURIComponent(String(item.slug || ""))}" class="post-related-link">
-                <span aria-hidden="true" class="post-related-link__index">${index + 1}.</span>
                 <span>${escapeHtml(String(item.title || "(제목 없음)"))}</span>
               </a>
             </li>

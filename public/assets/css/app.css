@@ -508,7 +508,6 @@ body.has-preview-open{overflow:hidden}
 .post-related__list{display:grid;gap:10px;margin-top:16px}
 .post-related__list li{margin:0 !important;}
 .post-related-link{display:inline-flex;align-items:flex-start;text-decoration:none;line-height:1.55}
-.post-related-link__index{color:#333;font-weight:800;min-width:1.5em}
 .post-faq h3{margin-top:7px}
 .post-faq__list{display:grid;gap:14px;margin-top:14px}
 .post-faq__list p{margin:0;}
