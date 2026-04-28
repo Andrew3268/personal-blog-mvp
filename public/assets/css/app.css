@@ -548,3 +548,101 @@ body.has-preview-open{overflow:hidden}
 .seo-check__summary-list--nested{
   margin-top:0;
 }
+
+/* WackyWiki Specific Reset & Variables */
+.ww-wrapper {
+  --ww-bg: #ffffff;
+  --ww-text: #000000;
+  --ww-text-sub: #666666;
+  --ww-line-light: #eeeeee;
+  --ww-spacing: clamp(60px, 10vw, 150px);
+  background-color: var(--ww-bg);
+  color: var(--ww-text);
+  font-family: 'Noto Sans KR', sans-serif;
+  line-height: 1.6;
+  word-break: keep-all;
+  -webkit-font-smoothing: antialiased;
+}
+
+.ww-container { width: min(1200px, 90%); margin: 0 auto; }
+
+/* Scroll Animation */
+.ww-reveal { opacity: 0; transform: translateY(20px); transition: all 0.6s ease-out; }
+.ww-reveal.ww-active { opacity: 1; transform: translateY(0); }
+
+/* Hero Section */
+.ww-hero { 
+  min-height: 100vh; 
+  display: flex; 
+  flex-direction: column;
+  justify-content: center; 
+  border-bottom: 1px solid var(--ww-text); 
+  padding: 100px 0;
+}
+.ww-hero-title { 
+  font-family: 'Darker Grotesque', sans-serif;
+  font-size: clamp(4rem, 16vw, 14rem); 
+  line-height: 0.85; letter-spacing: -0.07em; font-weight: 900; 
+  text-transform: uppercase;
+}
+.ww-hero-title span { display: block; }
+.ww-hero-flex { margin-top: 60px; display: flex; justify-content: flex-end; }
+.ww-hero-desc { max-width: 450px; font-size: 1.1rem; color: var(--ww-text-sub); font-weight: 400; }
+
+/* Common Section Styles */
+.ww-section { padding: var(--ww-spacing) 0; }
+.ww-section-border { border-bottom: 1px solid var(--ww-line-light); }
+
+.ww-label-tag { 
+    display: inline-block; font-size: 0.75rem; font-weight: 900; 
+    text-transform: uppercase; margin-bottom: 40px; letter-spacing: 0.1em;
+    border: 1px solid var(--ww-text); padding: 4px 12px; border-radius: 50px;
+}
+
+.ww-split-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; }
+.ww-big-text { font-size: clamp(1.8rem, 4vw, 3.2rem); font-weight: 900; line-height: 1.2; letter-spacing: -0.04em; }
+.ww-big-text strong { color: var(--ww-text); text-decoration: underline; text-underline-offset: 8px; }
+
+/* Library List */
+.ww-topic-list { margin-top: 40px; border-top: 1px solid var(--ww-text); }
+.ww-topic-row { 
+    display: grid; grid-template-columns: 80px 1.5fr 1fr; 
+    padding: 50px 0; border-bottom: 1px solid var(--ww-line-light);
+}
+.ww-topic-num { font-family: 'Darker Grotesque', sans-serif; font-size: 1.5rem; font-weight: 900; }
+.ww-topic-title { font-family: 'Darker Grotesque', sans-serif; font-size: 2.5rem; font-weight: 900; letter-spacing: -0.04em; text-transform: uppercase; }
+.ww-topic-desc { font-size: 1.05rem; color: var(--ww-text-sub); align-self: center; }
+
+/* Method Cards */
+.ww-value-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-top: 60px; }
+.ww-value-card { border-left: 1px solid var(--ww-text); padding-left: 25px; }
+.ww-value-card h3 { font-size: 1.5rem; margin-bottom: 20px; font-weight: 900; }
+.ww-value-card p { font-size: 1rem; color: var(--ww-text-sub); line-height: 1.7; }
+
+/* Quote Wrap */
+.ww-quote-wrap { background: var(--ww-text); color: var(--ww-bg); text-align: center; padding: 120px 0; }
+.ww-quote-text { font-size: clamp(2.5rem, 6vw, 6rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.05em; }
+
+/* CTA Section */
+.ww-cta { text-align: center; padding: 150px 0; }
+.ww-big-btn { 
+    font-family: 'Darker Grotesque', sans-serif; font-size: clamp(3rem, 10vw, 8rem); 
+    font-weight: 900; letter-spacing: -0.05em; text-decoration: none; 
+    color: var(--ww-text); display: inline-block; line-height: 0.9;
+}
+.ww-cta-desc { margin-top: 50px; color: var(--ww-text-sub); max-width: 600px; margin-inline: auto; font-size: 1rem; }
+
+/* Footer */
+.ww-footer { padding: 80px 0 40px; display: flex; justify-content: space-between; font-size: 0.8rem; color: #999; border-top: 1px solid var(--ww-line-light); }
+
+/* Mobile Responsive */
+@media (max-width: 900px) {
+  .ww-hero { padding: 80px 0; min-height: auto; }
+  .ww-split-grid, .ww-value-grid { grid-template-columns: 1fr; gap: 30px; }
+  .ww-topic-row { grid-template-columns: 1fr; gap: 10px; padding: 40px 0; }
+  .ww-hero-title { font-size: 20vw; }
+  .ww-hero-flex { justify-content: flex-start; margin-top: 40px; }
+  .ww-topic-title { font-size: 1.8rem; }
+  .ww-value-card { border-left: none; border-top: 1px solid var(--ww-text); padding-left: 0; padding-top: 20px; }
+  .ww-footer { flex-direction: column; gap: 20px; text-align: center; }
+}

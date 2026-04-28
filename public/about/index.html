@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="/assets/css/app.css" />
   <link rel="stylesheet" href="/assets/css/components.css" />
 </head>
-<body>
+<body class="ww-wrapper">
   <header class="topbar topbar--editorial">
     <div class="topbar__inner topbar__inner--editorial">
       <button class="topbar-hamburger" type="button" aria-expanded="false" aria-controls="mobileSiteMenu" aria-label="메뉴 열기">
@@ -38,7 +38,7 @@
     </div>
   </header>
 
-  <aside id="mobileSiteMenu" class="mobile-site-menu" hidden aria-hidden="true">
+  <!-- <aside id="mobileSiteMenu" class="mobile-site-menu" hidden aria-hidden="true">
     <div class="mobile-site-menu__panel">
       <div class="mobile-site-menu__close-wrap">
         <button class="mobile-site-menu__close-toggle topbar-hamburger is-open" type="button" aria-label="메뉴 닫기" data-mobile-menu-close>
@@ -54,29 +54,123 @@
         <a class="mobile-site-menu__text-link" href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
       </div>
     </div>
-  </aside>
+  </aside> -->
 
-  <main class="container">
-
-    <section id="postsHomeHero" class="posts-home-hero posts-home-hero--category about-postsHomeHero" aria-label="페이지 메뉴">
-      <div class="posts-home-hero__category-wrap">
-        <div id="heroCategoryBar" class="topbar-categories__list topbar-categories__list--hero"><a class="posts-home-hero__category-link" data-active-key="all" href="/">전체</a><a class="posts-home-hero__about-link is-active" data-active-key="about" aria-current="page" href="/about/">About</a></div>
+  <main>
+    <section class="ww-hero ww-reveal">
+      <div class="ww-container">
+        <h1 class="ww-hero-title">
+          <span>BETTER</span>
+          <span>LIVING</span>
+          <span>EVERYDAY</span>
+        </h1>
+        <div class="ww-hero-flex">
+          <p class="ww-hero-desc">
+            WackyWiki는 주방, 청소, 보관, 리빙 관리처럼 생활 속에서 자주 겪는 문제를 쉽고 현실적으로 정리하는 라이프스타일 아카이브입니다.
+          </p>
+        </div>
       </div>
     </section>
 
-    <section class="card" style="display:flex;flex-direction:column;gap:12px">
-      <h1 class="h1">이 MVP가 하는 일</h1>
-      <p class="p">이 프로젝트는 개인 블로그 운영자가 직접 글을 저장하고, 그 글이 실제 페이지로 SSR 렌더링되는 최소 구조를 제공합니다.</p>
-      <div class="sep"></div>
-      <ul class="plain-list">
-        <li>글 작성 / 수정 관리자 화면</li>
-        <li>D1 저장</li>
-        <li>개별 글 SSR</li>
-        <li>Cloudflare 엣지 캐시</li>
-        <li>사이트맵 자동 생성</li>
-      </ul>
+    <section class="ww-section ww-section-border ww-reveal">
+      <div class="ww-container">
+        <span class="ww-label-tag">Philosophy</span>
+        <div class="ww-split-grid">
+          <div class="ww-big-text">
+            우리는 작은 불편의 <strong>본질적인 원인</strong>을 탐구합니다.
+          </div>
+          <div>
+            <p class="ww-text-sub">
+              단순히 “이렇게 하세요”라고 말하기보다, 독자가 자신의 상황에 맞게 판단할 수 있는 가이드를 지향합니다. 사소하지만 반복되는 일상의 노이즈를 쉽고 실용적인 방식으로 풀어갑니다.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ww-section ww-section-border ww-reveal">
+      <div class="ww-container">
+        <span class="ww-label-tag">Library</span>
+        <div class="ww-topic-list">
+          <div class="ww-topic-row">
+            <span class="ww-topic-num">01</span>
+            <h2 class="ww-topic-title">Kitchen</h2>
+            <p class="ww-topic-desc">탄 자국, 도마 관리, 식재료 보관까지 주방의 모든 것.</p>
+          </div>
+          <div class="ww-topic-row">
+            <span class="ww-topic-num">02</span>
+            <h2 class="ww-topic-title">Cleaning</h2>
+            <p class="ww-topic-desc">가장 효율적이고 영리한 청소 루틴과 세제 활용법.</p>
+          </div>
+          <div class="ww-topic-row">
+            <span class="ww-topic-num">03</span>
+            <h2 class="ww-topic-title">Living</h2>
+            <p class="ww-topic-desc">계절별 관리와 공간의 쾌적함을 유지하는 습관.</p>
+          </div>
+          <div class="ww-topic-row">
+            <span class="ww-topic-num">04</span>
+            <h2 class="ww-topic-title">Checklist</h2>
+            <p class="ww-topic-desc">읽고 바로 실행할 수 있는 요약 중심의 실용 데이터.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ww-section ww-reveal">
+      <div class="ww-container">
+        <span class="ww-label-tag">Method</span>
+        <div class="ww-big-text" style="margin-bottom: 60px;">문제를 <strong>세 가지 단계</strong>로<br>분해하여 설명합니다.</div>
+        <div class="ww-value-grid">
+          <article class="ww-value-card">
+            <h3>01. 원인</h3>
+            <p>왜 냄새가 나는지, 왜 곰팡이가 생기는지 근본적인 이유를 먼저 짚어봅니다.</p>
+          </article>
+          <article class="ww-value-card">
+            <h3>02. 상황</h3>
+            <p>집의 환경과 오염 정도에 따라 가장 적합한 대안을 제시합니다.</p>
+          </article>
+          <article class="ww-value-card">
+            <h3>03. 실행</h3>
+            <p>준비물과 순서를 직관적으로 정리해 읽는 즉시 해결을 돕습니다.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="ww-quote-wrap ww-reveal">
+      <div class="ww-container">
+        <div class="ww-quote-text">
+          작은 습관이<br>불편을 크게 줄입니다.
+        </div>
+      </div>
+    </section>
+
+    <section class="ww-cta ww-reveal">
+      <div class="ww-container">
+        <span class="ww-label-tag">Keep Reading</span><br>
+        <a href="/" class="ww-big-btn">READ MORE TIPS ↗</a>
+        <p class="ww-cta-desc">
+            WackyWiki는 필요한 순간 다시 찾을 수 있는 여러분의 생활 노트를 지향합니다. 오늘 하루, 어제보다 조금 더 쾌적해지길 바랍니다.
+        </p>
+      </div>
     </section>
   </main>
+
+  <footer class="ww-container ww-footer">
+    <div>© 2026 WACKYWIKI. All rights reserved.</div>
+    <div>INSTAGRAM / EMAIL / PRIVACY</div>
+  </footer>
+
+  <script>
+    const wwObserverOptions = { threshold: 0.1 };
+    const wwObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('ww-active');
+      });
+    }, wwObserverOptions);
+
+    document.querySelectorAll('.ww-reveal').forEach(el => wwObserver.observe(el));
+  </script>
 
   <footer class="footer container"><div class="footer__inner"><div>© 2026 Wacky Blog</div></div></footer>
   <script src="/assets/js/admin-ui.js" defer></script>
