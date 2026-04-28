@@ -71,7 +71,7 @@ export async function onRequestGet({ params, env, request }) {
 
       const siteName = "Wacky Blog";
       const siteDescription = "실용적인 생활 정보와 정리된 가이드를 제공하는 블로그";
-      const authorName = "Nerd Verse";
+      const authorName = "W. Archiver";
       const faqItems = parseFaqMarkdown(row.faq_md || "");
       const relatedRows = row.category
         ? (await env.BLOG_DB.prepare(`
@@ -123,7 +123,7 @@ export async function onRequestGet({ params, env, request }) {
       const updatedIso = toIso(row.updated_at);
       const authorCardHtml = `
         <div class="post-author-card" aria-label="작성자 정보">
-          <div class="post-author-card__avatar" aria-hidden="true">NV</div>
+          <img class="post-author-card__avatar" src="/assets/images/favicon-32x32.png" alt="" width="40" height="40" loading="lazy" decoding="async" />
           <div class="post-author-card__body">
             <div class="post-author-card__name">${escapeHtml(authorName)}</div>
             <div class="post-author-card__meta">
