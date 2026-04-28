@@ -1,6 +1,8 @@
 import { escapeHtml, jsonld, okHtml, edgeCache } from "../_utils.js";
 import { renderMarkdown, renderMarkdownBlocks, buildTocItemsFromBlocks, renderTocHtml, parseInlineImages, stripInlineImageTokens } from "../../lib/posts/renderer.js";
 
+const SITE_ORIGIN = "https://wacky-wiki.com";
+
 export async function onRequestGet({ params, env, request }) {
   const slug = decodeURIComponent(String(params.slug || ""));
   if (!slug) return okHtml("Not Found", { status: 404 });
@@ -25,8 +27,7 @@ export async function onRequestGet({ params, env, request }) {
   `).bind(slug).run();
 
   const updatedAt = String(meta.updated_at || "");
-  const url = new URL(request.url);
-  const cacheKeyUrl = `${url.origin}/post/${encodeURIComponent(slug)}?v=${encodeURIComponent(updatedAt)}`;
+  const cacheKeyUrl = `${SITE_ORIGIN}/post/${encodeURIComponent(slug)}?v=${encodeURIComponent(updatedAt)}`;
 
   return edgeCache({
     request,
@@ -63,13 +64,10 @@ export async function onRequestGet({ params, env, request }) {
       }
 
 
-      const origin = url.origin;
-      const canonical = new URL(request.url);
-      canonical.pathname = `/post/${encodeURIComponent(slug)}`;
-      canonical.search = "";
-      canonical.hash = "";
+      const origin = SITE_ORIGIN;
+      const canonical = new URL(`/post/${encodeURIComponent(slug)}`, SITE_ORIGIN);
 
-      const siteName = "Wacky Blog";
+      const siteName = "Wacky Wiki";
       const siteDescription = "실용적인 생활 정보와 정리된 가이드를 제공하는 블로그";
       const authorName = "W. Archiver";
       const faqItems = parseFaqMarkdown(row.faq_md || "");
@@ -117,7 +115,7 @@ export async function onRequestGet({ params, env, request }) {
         titleText
       );
       const pageTitle = `${titleText} | ${siteName}`;
-      const ogImage = row.cover_image || `${origin}/assets/images/og-default.svg`;
+      const ogImage = row.cover_image || `${origin}/assets/images/logo.png`;
       const coverImageAltText = String(row.cover_image_alt || `${titleText} 대표 이미지`).trim();
 
       const publishedDate = formatDate(row.published_at);
@@ -821,7 +819,7 @@ function topbar(mobileCategoryHtml = "") {
 
       <div class="topbar-left-slot"><div class="topbar-admin-status" data-admin-status hidden aria-live="polite">관리자 로그인 중</div></div>
 
-      <a class="brand brand--center" href="/" aria-label="Wacky Blog 홈">
+      <a class="brand brand--center" href="/" aria-label="Wacky Wiki 홈">
         <span class="brand__mark">W</span>
         <span class="brand__text">Wacky Wiki</span>
       </a>

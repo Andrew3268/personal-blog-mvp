@@ -1,5 +1,7 @@
+const SITE_ORIGIN = "https://wacky-wiki.com";
+
 export async function onRequestGet({ env, request }) {
-  const origin = new URL(request.url).origin;
+  const origin = SITE_ORIGIN;
   const rows = await env.BLOG_DB.prepare(`
     SELECT slug, updated_at
     FROM posts

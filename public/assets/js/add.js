@@ -1753,7 +1753,7 @@ function renderPreview() {
   const faqItems = parseFaqMarkdown(faqMd);
   const tags = parseTags($("tags").value);
   const slug = $("slugPreview").value.trim();
-  const snippetUrl = slug ? `https://personal-blog-mvp.pages.dev/post/${slug}` : 'https://personal-blog-mvp.pages.dev/post/slug-example';
+  const snippetUrl = slug ? `https://wacky-wiki.com/post/${slug}` : 'https://wacky-wiki.com/post/slug-example';
 
   previewEl.innerHTML = `
     <article class="preview-article">
