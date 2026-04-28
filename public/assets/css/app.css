@@ -66,7 +66,7 @@ h1 { font-size: 2rem; } h2 { font-size: 1.5rem; } h3 { font-size: 1.2rem; }/* Îç
 .post-title{max-width:900px}
 .post-summary{font-size:16px}
 .post-cover-wrap{margin:0;}
-.post-cover{width:100%;max-height:420px;object-fit:cover;border-radius:20px;border:1px solid var(--border)}
+.post-cover{width:100%;height:auto;object-fit:contain;border-radius:20px}
 .post-grid{display:grid;gap:16px}
 @media (min-width:980px){.post-grid{grid-template-columns:minmax(0,1fr) 320px;align-items:start}}
 .post-body{padding:26px}
