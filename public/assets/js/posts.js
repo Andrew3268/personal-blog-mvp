@@ -426,7 +426,7 @@ function buildPostsHeroNav(categories = []) {
     }
   }
 
-  function renderItems(items, { append = false } = {}) {
+  function renderItems(items, { append = false, pageNumber = currentPage } = {}) {
     const markup = items.map((it, index) => {
       const rawTitle = String(it.title || '(제목 없음)');
       const title = escapeHtml(rawTitle);
@@ -443,7 +443,7 @@ function buildPostsHeroNav(categories = []) {
         ? '<span class="badge badge--draft">초안</span>'
         : '<span class="badge">발행</span>';
       const postHref = itemStatus === 'published' ? `/post/${encodeURIComponent(slug)}` : `/edit.html?slug=${encodeURIComponent(slug)}`;
-      const shouldPrioritizeImage = !append && index === 0 && page === 1;
+      const shouldPrioritizeImage = !append && index === 0 && Number(pageNumber) === 1;
       const imageLoadingAttrs = shouldPrioritizeImage
         ? 'loading="eager" fetchpriority="high" decoding="async" width="627" height="350"'
         : 'loading="lazy" decoding="async" width="627" height="350"';
@@ -525,7 +525,7 @@ function buildPostsHeroNav(categories = []) {
       }
 
       renderSidebar(sidebar);
-      renderItems(items, { append });
+      renderItems(items, { append, pageNumber: page });
       currentPage = Number(pagination.page || page);
       updateLoadMore(pagination);
 
