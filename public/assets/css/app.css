@@ -577,13 +577,13 @@ body.has-preview-open{overflow:hidden}
   flex-direction: column;
   justify-content: center; 
   border-bottom: 1px solid var(--ww-text); 
-  padding: 100px 0;
 }
 .ww-hero-title { 
   font-family: 'Darker Grotesque', sans-serif;
   font-size: clamp(4rem, 16vw, 14rem); 
   line-height: 0.85; letter-spacing: -0.07em; font-weight: 900; 
   text-transform: uppercase;
+  margin:0;
 }
 .ww-hero-title span { display: block; }
 .ww-hero-flex { margin-top: 60px; display: flex; justify-content: flex-end; }
