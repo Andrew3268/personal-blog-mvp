@@ -1984,7 +1984,13 @@ async function save() {
     return;
   }
 
-  statusEl.textContent = "저장 완료! 공개 페이지로 이동합니다…";
+  if (payload.status === "draft") {
+    statusEl.textContent = "초안 저장 완료! 편집 페이지로 이동합니다…";
+    location.href = `/edit.html?slug=${encodeURIComponent(slug)}`;
+    return;
+  }
+
+  statusEl.textContent = "발행 완료! 공개 페이지로 이동합니다…";
   location.href = `/post/${encodeURIComponent(slug)}`;
 }
 
