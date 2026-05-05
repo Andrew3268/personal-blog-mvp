@@ -1657,6 +1657,55 @@ function inlineFormat(text) {
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
 }
 
+function splitMarkdownTableRow(row = "") {
+  let value = String(row || "").trim();
+  if (value.startsWith("|")) value = value.slice(1);
+  if (value.endsWith("|")) value = value.slice(0, -1);
+  return value.split("|").map((cell) => cell.trim());
+}
+
+function isMarkdownTableSeparatorRow(row = "") {
+  const cells = splitMarkdownTableRow(row);
+  if (!cells.length) return false;
+  return cells.every((cell) => /^:?-+:?$/.test(cell));
+}
+
+function getMarkdownTableAlignments(row = "") {
+  return splitMarkdownTableRow(row).map((cell) => {
+    const left = cell.startsWith(":");
+    const right = cell.endsWith(":");
+    if (left && right) return "center";
+    if (right) return "right";
+    if (left) return "left";
+    return "";
+  });
+}
+
+function renderMarkdownTableFromLines(lines = []) {
+  if (lines.length < 2) return "";
+  const headerCells = splitMarkdownTableRow(lines[0]);
+  const alignments = getMarkdownTableAlignments(lines[1]);
+  const bodyRows = lines.slice(2).map((line) => splitMarkdownTableRow(line));
+
+  const thead = `<thead><tr>${headerCells.map((cell, idx) => {
+    const align = alignments[idx] || "";
+    const alignClass = align ? ` table-cell--${align}` : "";
+    return `<th class="table-cell${alignClass}">${inlineFormat(cell)}</th>`;
+  }).join("")}</tr></thead>`;
+
+  const tbody = bodyRows.length
+    ? `<tbody>${bodyRows.map((row) => `<tr>${headerCells.map((_, idx) => {
+        const align = alignments[idx] || "";
+        const alignClass = align ? ` table-cell--${align}` : "";
+        const cell = row[idx] ?? "";
+        return `<td class="table-cell${alignClass}">${inlineFormat(cell)}</td>`;
+      }).join("")}</tr>`).join("")}</tbody>`
+    : "";
+
+  return `<div class="table-wrap"><table>${thead}${tbody}</table></div>`;
+}
+
+
 function getPreviewAdInsertPositions(md, contentLengthWithoutSpaces) {
   const lines = String(md || '').replace(/\r/g, '').split('\n');
   const h2Lines = [];
@@ -1739,7 +1788,8 @@ function markdownToHtml(md, options = {}) {
     contentBlockCount += 1;
   }
 
-  for (const rawLine of lines) {
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const rawLine = lines[lineIndex];
     const line = rawLine.trim();
 
     if (!line) {
@@ -1761,6 +1811,32 @@ function markdownToHtml(md, options = {}) {
       closeLists();
       closeQuote();
       pushContentBlock(`<figure class="preview-figure"><img ${renderOptimizedImageAttrs(imageMatch[2], { widths: [480, 768, 960, 1200], sizes: "(max-width: 760px) 100vw, 760px", fallbackWidth: 960, fit: "scale-down", quality: 85 })} alt="${escapeHtml(imageMatch[1])}" loading="lazy"></figure>`);
+      continue;
+    }
+
+
+    if (
+      line.includes("|") &&
+      lineIndex + 1 < lines.length &&
+      isMarkdownTableSeparatorRow(String(lines[lineIndex + 1] || "").trim())
+    ) {
+      closeLists();
+      closeQuote();
+      const tableLines = [line, String(lines[lineIndex + 1] || "").trim()];
+      let rowIndex = lineIndex + 2;
+      while (rowIndex < lines.length) {
+        const rowTrimmed = String(lines[rowIndex] || "").trim();
+        if (!rowTrimmed || !rowTrimmed.includes("|")) break;
+        if (/^(#{1,6})\s+/.test(rowTrimmed)) break;
+        if (/^>\s?/.test(rowTrimmed)) break;
+        if (/^[-*]\s+/.test(rowTrimmed)) break;
+        if (/^\d+\.\s+/.test(rowTrimmed)) break;
+        if (parseTocModeFromLine(rowTrimmed)) break;
+        tableLines.push(rowTrimmed);
+        rowIndex += 1;
+      }
+      pushContentBlock(renderMarkdownTableFromLines(tableLines));
+      lineIndex = rowIndex - 1;
       continue;
     }
 
