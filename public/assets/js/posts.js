@@ -55,6 +55,18 @@ function isLocalImageOrigin(origin = "") {
   return host === "localhost" || host === "127.0.0.1" || host.endsWith(".localhost");
 }
 
+
+function isImageProxyUrl(url = "") {
+  const value = String(url || "").trim();
+  if (!value) return false;
+  try {
+    const parsed = new URL(value, window.location.origin);
+    return parsed.pathname.startsWith("/img/");
+  } catch (_) {
+    return value.startsWith("/img/") || value.includes("/img/");
+  }
+}
+
 function isR2DevImageUrl(url = "") {
   const raw = String(url || "").toLowerCase();
   const normalized = unwrapCfImageUrl(raw).toLowerCase();
@@ -78,6 +90,12 @@ function buildImageProxyUrl(src = "") {
 
 function canUseCloudflareImageTransform(absolute = "") {
   const normalized = unwrapCfImageUrl(absolute);
+
+  // /img/*는 R2 이미지 캐시용 Pages Function 프록시 경로입니다.
+  // 이 경로를 /cdn-cgi/image 원본으로 다시 넣으면 배포 환경에서 404가 발생할 수 있어
+  // R2 이미지는 프록시 캐시만 사용하고 Cloudflare 이미지 변환은 적용하지 않습니다.
+  if (isImageProxyUrl(normalized)) return false;
+
   const srcHost = getImageHostname(normalized);
   const originHost = getImageHostname(window.location.origin);
   if (!srcHost || !originHost) return false;
