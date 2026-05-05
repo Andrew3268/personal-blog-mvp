@@ -1651,6 +1651,7 @@ function inlineFormat(text) {
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
 }
 
+
 function splitMarkdownTableRow(row = "") {
   let value = String(row || "").trim();
   if (value.startsWith("|")) value = value.slice(1);
@@ -1681,17 +1682,17 @@ function renderMarkdownTableFromLines(lines = []) {
   const alignments = getMarkdownTableAlignments(lines[1]);
   const bodyRows = lines.slice(2).map((line) => splitMarkdownTableRow(line));
 
-  const thead = `<thead><tr>${headerCells.map((cell, idx) => {
-    const align = alignments[idx] || "";
+  const thead = `<thead><tr>${headerCells.map((cell, index) => {
+    const align = alignments[index] || "";
     const alignClass = align ? ` table-cell--${align}` : "";
     return `<th class="table-cell${alignClass}">${inlineFormat(cell)}</th>`;
   }).join("")}</tr></thead>`;
 
   const tbody = bodyRows.length
-    ? `<tbody>${bodyRows.map((row) => `<tr>${headerCells.map((_, idx) => {
-        const align = alignments[idx] || "";
+    ? `<tbody>${bodyRows.map((row) => `<tr>${headerCells.map((_, index) => {
+        const align = alignments[index] || "";
         const alignClass = align ? ` table-cell--${align}` : "";
-        const cell = row[idx] ?? "";
+        const cell = row[index] ?? "";
         return `<td class="table-cell${alignClass}">${inlineFormat(cell)}</td>`;
       }).join("")}</tr>`).join("")}</tbody>`
     : "";
@@ -1699,6 +1700,18 @@ function renderMarkdownTableFromLines(lines = []) {
   return `<div class="table-wrap"><table>${thead}${tbody}</table></div>`;
 }
 
+function isMarkdownTableBodyRow(line = "") {
+  const value = String(line || "").trim();
+  if (!value || !value.includes("|")) return false;
+  if (/^(#{1,6})\s+/.test(value)) return false;
+  if (/^>\s?/.test(value)) return false;
+  if (/^[-*]\s+/.test(value)) return false;
+  if (/^\d+\.\s+/.test(value)) return false;
+  if (parseTocModeFromLine(value)) return false;
+  if (/^!\[[^\]]*\]\([^)]+\)$/.test(value)) return false;
+  if (parseInlineImageToken(value) || parseAffiliateToken(value)) return false;
+  return true;
+}
 
 function getPreviewAdInsertPositions(md, contentLengthWithoutSpaces) {
   const lines = String(md || '').replace(/\r/g, '').split('\n');
@@ -1808,7 +1821,6 @@ function markdownToHtml(md, options = {}) {
       continue;
     }
 
-
     if (
       line.includes("|") &&
       lineIndex + 1 < lines.length &&
@@ -1816,19 +1828,16 @@ function markdownToHtml(md, options = {}) {
     ) {
       closeLists();
       closeQuote();
+
       const tableLines = [line, String(lines[lineIndex + 1] || "").trim()];
       let rowIndex = lineIndex + 2;
       while (rowIndex < lines.length) {
-        const rowTrimmed = String(lines[rowIndex] || "").trim();
-        if (!rowTrimmed || !rowTrimmed.includes("|")) break;
-        if (/^(#{1,6})\s+/.test(rowTrimmed)) break;
-        if (/^>\s?/.test(rowTrimmed)) break;
-        if (/^[-*]\s+/.test(rowTrimmed)) break;
-        if (/^\d+\.\s+/.test(rowTrimmed)) break;
-        if (parseTocModeFromLine(rowTrimmed)) break;
-        tableLines.push(rowTrimmed);
+        const rowLine = String(lines[rowIndex] || "").trim();
+        if (!isMarkdownTableBodyRow(rowLine)) break;
+        tableLines.push(rowLine);
         rowIndex += 1;
       }
+
       pushContentBlock(renderMarkdownTableFromLines(tableLines));
       lineIndex = rowIndex - 1;
       continue;

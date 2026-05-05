@@ -652,3 +652,347 @@ body.has-preview-open{overflow:hidden}
 .posts-sidebar__ad-shell{min-height:300px;contain:layout paint;}
 .posts-sidebar__popular-shell{min-height:190px;contain:layout paint;}
 .post-card__thumb img{aspect-ratio:16/9;}
+
+/* =========================================================
+   Article body readability UI - 0505 v1
+   실제 발행 본문(.post-content)과 add/edit 미리보기(.preview-body)를 동일한 기준으로 정리
+========================================================= */
+.post-body .post-content,
+.preview-body {
+  max-width: 820px;
+  margin: 0 auto;
+  font-size: 16.5px;
+  line-height: 1.9;
+  color: #1f2937;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  counter-reset: article-h2;
+}
+
+.post-body .post-content > p,
+.preview-body > p {
+  margin: 0 0 19px;
+  line-height: 1.9;
+  color: #1f2937;
+  letter-spacing: -0.01em;
+}
+
+.post-body .post-content > p + p,
+.preview-body > p + p {
+  margin-top: 4px;
+}
+
+/* H2: 섹션 번호 배지형 제목 */
+.post-body .post-content > h2,
+.preview-body > h2 {
+  counter-increment: article-h2;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 58px 0 24px;
+  padding: 0 0 16px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 28px;
+  line-height: 1.35;
+  font-weight: 900;
+  letter-spacing: -0.045em;
+  color: #111827;
+  scroll-margin-top: 25px;
+}
+
+.post-body .post-content > h2:first-child,
+.preview-body > h2:first-child {
+  margin-top: 10px;
+}
+
+.post-body .post-content > h2::before,
+.preview-body > h2::before {
+  content: counter(article-h2, decimal-leading-zero);
+  flex: 0 0 auto;
+  min-width: 42px;
+  height: 42px;
+  padding: 0 12px;
+  border-radius: 14px;
+  background: #2f715f;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  box-shadow: 0 8px 18px rgba(47, 113, 95, .18);
+}
+
+/* H3: 세부 주제 구분용 왼쪽 강조선 */
+.post-body .post-content > h3,
+.preview-body > h3 {
+  margin: 38px 0 15px;
+  padding: 0 0 0 15px;
+  border-left: 4px solid #2f715f;
+  font-size: 21px;
+  line-height: 1.45;
+  letter-spacing: -0.035em;
+  font-weight: 900;
+  color: #111827;
+  scroll-margin-top: 25px;
+}
+
+/* H4: 체크 포인트/주의사항 구분 박스 */
+.post-body .post-content > h4,
+.preview-body > h4 {
+  margin: 30px 0 13px;
+  padding: 11px 15px;
+  border-radius: 12px;
+  background: #f5f7f6;
+  border: 1px solid #e7ece9;
+  font-size: 17px;
+  line-height: 1.45;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  color: #111827;
+}
+
+.post-body .post-content > h3 + p,
+.preview-body > h3 + p,
+.post-body .post-content > h4 + p,
+.preview-body > h4 + p {
+  margin-top: 6px;
+}
+
+/* 목록: 들여쓰기, 줄 간격, 블록 간격 개선 */
+.post-body .post-content > ul,
+.post-body .post-content > ol,
+.preview-body > ul,
+.preview-body > ol {
+  margin: 16px 0 28px;
+  padding-left: 27px;
+  line-height: 1.85;
+  color: #1f2937;
+}
+
+.post-body .post-content > ol,
+.preview-body > ol {
+  padding-left: 30px;
+}
+
+.post-body .post-content > ul li,
+.post-body .post-content > ol li,
+.preview-body > ul li,
+.preview-body > ol li {
+  margin: 9px 0;
+  padding-left: 4px;
+  line-height: 1.85;
+}
+
+.post-body .post-content > ul li::marker,
+.post-body .post-content > ol li::marker,
+.preview-body > ul li::marker,
+.preview-body > ol li::marker {
+  color: #2f715f;
+  font-weight: 900;
+}
+
+/* 핵심 요약/주의 박스: 마크다운 > 인용문 활용 */
+.post-body .post-content > blockquote,
+.preview-body > blockquote {
+  margin: 26px 0 30px;
+  padding: 19px 21px;
+  border-left: 5px solid #2f715f;
+  border-radius: 16px;
+  background: #f4f8f6;
+  color: #1f2937;
+  box-shadow: none;
+}
+
+.post-body .post-content > blockquote p,
+.preview-body > blockquote p {
+  margin: 0 0 9px;
+  line-height: 1.8;
+  color: #1f2937;
+}
+
+.post-body .post-content > blockquote p:last-child,
+.preview-body > blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* 표: 실제 발행/미리보기 동일한 카드형 테이블 */
+.post-body .post-content > .table-wrap,
+.preview-body > .table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  margin: 28px 0 36px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, .045);
+  -webkit-overflow-scrolling: touch;
+}
+
+.post-body .post-content > .table-wrap table,
+.preview-body > .table-wrap table,
+.post-body .post-content > table,
+.preview-body > table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: #1f2937;
+  background: #fff;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.post-body .post-content table thead th,
+.preview-body table thead th {
+  background: #f3f6f5;
+  color: #111827;
+  font-weight: 900;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.post-body .post-content table th,
+.post-body .post-content table td,
+.preview-body table th,
+.preview-body table td {
+  padding: 13px 15px;
+  vertical-align: top;
+  border-right: 1px solid #eef2f7;
+}
+
+.post-body .post-content table th:last-child,
+.post-body .post-content table td:last-child,
+.preview-body table th:last-child,
+.preview-body table td:last-child {
+  border-right: 0;
+}
+
+.post-body .post-content table tbody tr + tr td,
+.preview-body table tbody tr + tr td {
+  border-top: 1px solid #eef2f7;
+}
+
+.post-body .post-content table tbody tr:nth-child(even) td,
+.preview-body table tbody tr:nth-child(even) td {
+  background: #fbfcfb;
+}
+
+.post-body .post-content .table-cell--center,
+.preview-body .table-cell--center {
+  text-align: center;
+}
+
+.post-body .post-content .table-cell--right,
+.preview-body .table-cell--right {
+  text-align: right;
+}
+
+/* 코드/링크 기본 가독성 */
+.post-body .post-content code,
+.preview-body code {
+  background: #f1f5f9;
+  color: #0f172a;
+  padding: 3px 7px;
+  border-radius: 8px;
+  font-size: .92em;
+}
+
+.post-body .post-content a,
+.preview-body a {
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 768px) {
+  .post-body {
+    padding: 16px;
+  }
+
+  .post-body .post-content,
+  .preview-body {
+    max-width: 100%;
+    font-size: 15.5px;
+    line-height: 1.85;
+  }
+
+  .post-body .post-content > p,
+  .preview-body > p {
+    margin-bottom: 17px;
+    line-height: 1.85;
+  }
+
+  .post-body .post-content > h2,
+  .preview-body > h2 {
+    gap: 12px;
+    margin: 44px 0 20px;
+    padding-bottom: 13px;
+    font-size: 22px;
+    line-height: 1.4;
+    letter-spacing: -0.04em;
+  }
+
+  .post-body .post-content > h2::before,
+  .preview-body > h2::before {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 12px;
+    font-size: 13px;
+  }
+
+  .post-body .post-content > h3,
+  .preview-body > h3 {
+    margin-top: 32px;
+    padding-left: 12px;
+    font-size: 18.5px;
+  }
+
+  .post-body .post-content > h4,
+  .preview-body > h4 {
+    margin-top: 26px;
+    padding: 10px 13px;
+    font-size: 16px;
+  }
+
+  .post-body .post-content > ul,
+  .post-body .post-content > ol,
+  .preview-body > ul,
+  .preview-body > ol {
+    padding-left: 23px;
+    margin-bottom: 24px;
+  }
+
+  .post-body .post-content > blockquote,
+  .preview-body > blockquote {
+    margin: 22px 0 26px;
+    padding: 16px 17px;
+    border-radius: 14px;
+  }
+
+  .post-body .post-content > .table-wrap,
+  .preview-body > .table-wrap {
+    margin: 24px 0 30px;
+    border-radius: 14px;
+  }
+
+  .post-body .post-content > .table-wrap table,
+  .preview-body > .table-wrap table,
+  .post-body .post-content > table,
+  .preview-body > table {
+    min-width: 560px;
+    font-size: 14px;
+  }
+
+  .post-body .post-content table th,
+  .post-body .post-content table td,
+  .preview-body table th,
+  .preview-body table td {
+    padding: 12px 13px;
+  }
+}
