@@ -9,3 +9,6 @@
 
 /
   Cache-Control: public, max-age=0, must-revalidate
+
+/img/*
+  Cache-Control: public, max-age=31536000, immutable

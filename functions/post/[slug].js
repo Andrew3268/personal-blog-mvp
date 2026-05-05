@@ -229,15 +229,15 @@ export async function onRequestGet({ params, env, request }) {
 
       const coverImage = row.cover_image
         ? buildImageAttrs(row.cover_image, {
-            widths: [640, 960, 1200, 1600],
-            sizes: "(max-width: 900px) 100vw, 1200px",
-            fallbackWidth: 1200,
+            widths: [480, 768, 960, 1200],
+            sizes: "(max-width: 900px) 100vw, 900px",
+            fallbackWidth: 960,
             fit: "cover",
-            quality: 85
+            quality: 82
           }, SITE_ORIGIN)
         : null;
       const coverImagePreload = coverImage
-        ? `<link rel="preload" as="image" href="${escapeHtml(coverImage.src)}" imagesrcset="${escapeHtml(coverImage.srcset)}" imagesizes="${escapeHtml(coverImage.sizes)}" fetchpriority="high" />`
+        ? `<link rel="preload" as="image" href="${escapeHtml(coverImage.src)}"${coverImage.srcset ? ` imagesrcset="${escapeHtml(coverImage.srcset)}"` : ""}${coverImage.sizes ? ` imagesizes="${escapeHtml(coverImage.sizes)}"` : ""} fetchpriority="high" />`
         : "";
       const categoryLink = row.category
         ? `/?category=${encodeURIComponent(String(row.category))}`

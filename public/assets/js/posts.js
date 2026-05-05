@@ -24,7 +24,6 @@ function unwrapCfImageUrl(src = "") {
   const embedded = afterMarker.slice(optionEnd + 1);
   if (!embedded) return value;
   return embedded;
-
 }
 
 function absolutizeImageUrl(src = "") {
@@ -51,6 +50,11 @@ function getImageBaseDomain(hostname = "") {
   return parts.slice(-2).join(".");
 }
 
+function isLocalImageOrigin(origin = "") {
+  const host = getImageHostname(origin);
+  return host === "localhost" || host === "127.0.0.1" || host.endsWith(".localhost");
+}
+
 function isR2DevImageUrl(url = "") {
   const raw = String(url || "").toLowerCase();
   const normalized = unwrapCfImageUrl(raw).toLowerCase();
@@ -58,12 +62,26 @@ function isR2DevImageUrl(url = "") {
   return raw.includes(".r2.dev") || normalized.includes(".r2.dev") || host.endsWith(".r2.dev") || host === "r2.dev";
 }
 
+function encodeImageBase64Url(value = "") {
+  const bytes = new TextEncoder().encode(String(value || ""));
+  let binary = "";
+  bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function buildImageProxyUrl(src = "") {
+  const absolute = absolutizeImageUrl(src);
+  if (!absolute || /^(data|blob):/i.test(absolute)) return absolute;
+  if (!isR2DevImageUrl(absolute)) return absolute;
+  return `${window.location.origin}/img/${encodeImageBase64Url(absolute)}`;
+}
+
 function canUseCloudflareImageTransform(absolute = "") {
   const normalized = unwrapCfImageUrl(absolute);
   const srcHost = getImageHostname(normalized);
   const originHost = getImageHostname(window.location.origin);
   if (!srcHost || !originHost) return false;
-  if (isR2DevImageUrl(normalized)) return false;
+  if (isLocalImageOrigin(window.location.origin)) return false;
   if (srcHost === originHost) return true;
   return getImageBaseDomain(srcHost) === getImageBaseDomain(originHost);
 }
@@ -73,38 +91,41 @@ function buildCfImageUrl(src = "", options = {}) {
   const absolute = absolutizeImageUrl(raw);
   if (!absolute) return "";
   if (/^(data|blob):/i.test(absolute)) return absolute;
-  if (isR2DevImageUrl(raw) || isR2DevImageUrl(absolute)) return absolute;
-  if (!canUseCloudflareImageTransform(absolute)) return absolute;
-  const config = { format: "auto", quality: 85, ...options };
+  const deliveryUrl = buildImageProxyUrl(absolute);
+  if (!deliveryUrl) return "";
+  if (!canUseCloudflareImageTransform(deliveryUrl)) return deliveryUrl;
+  const config = { format: "auto", quality: 82, ...options };
   const params = Object.entries(config)
     .filter(([, value]) => value !== null && value !== undefined && value !== "")
     .map(([key, value]) => `${key}=${value}`)
     .join(",");
-  return `/cdn-cgi/image/${params}/${absolute}`;
+  return `/cdn-cgi/image/${params}/${deliveryUrl}`;
 }
 
 function buildImageAttrs(src = "", config = {}) {
-  const widths = Array.isArray(config.widths) && config.widths.length ? config.widths : [480, 768, 960, 1280];
+  const widths = Array.isArray(config.widths) && config.widths.length ? config.widths : [320, 640, 960, 1200];
   const normalized = [...new Set(widths.map((value) => Math.max(1, parseInt(value, 10) || 0)).filter(Boolean))].sort((a, b) => a - b);
-  const baseOptions = { fit: config.fit || "scale-down", format: config.format || "auto", quality: config.quality || 85 };
+  const baseOptions = { fit: config.fit || "scale-down", format: config.format || "auto", quality: config.quality || 82 };
   const absolute = absolutizeImageUrl(src);
-  const transformed = canUseCloudflareImageTransform(absolute);
+  const deliveryUrl = buildImageProxyUrl(absolute);
+  const transformed = canUseCloudflareImageTransform(deliveryUrl);
   const srcset = transformed ? normalized.map((width) => `${buildCfImageUrl(src, { ...baseOptions, width })} ${width}w`).join(", ") : "";
-  const fallbackWidth = config.fallbackWidth || normalized[Math.min(1, normalized.length - 1)] || 768;
+  const fallbackWidth = config.fallbackWidth || normalized[Math.min(1, normalized.length - 1)] || 640;
   return {
     src: buildCfImageUrl(src, { ...baseOptions, width: fallbackWidth }),
     srcset,
     sizes: config.sizes || "100vw",
-    original: absolute
+    original: deliveryUrl || absolute,
+    directOriginal: absolute
   };
 }
 
 function renderOptimizedImageAttrs(src = "", config = {}) {
   const image = buildImageAttrs(src, config);
   const fallbackSrc = image.original || absolutizeImageUrl(src);
-  return `src="${escapeHtml(image.src)}"${image.srcset ? ` srcset="${escapeHtml(image.srcset)}"` : ""} sizes="${escapeHtml(image.sizes)}" data-original-src="${escapeHtml(fallbackSrc)}" onerror="this.onerror=null;this.removeAttribute('srcset');this.src=this.dataset.originalSrc;"`;
+  const directFallbackSrc = image.directOriginal && image.directOriginal !== fallbackSrc ? image.directOriginal : "";
+  return `src="${escapeHtml(image.src)}"${image.srcset ? ` srcset="${escapeHtml(image.srcset)}"` : ""} sizes="${escapeHtml(image.sizes)}" data-original-src="${escapeHtml(fallbackSrc)}"${directFallbackSrc ? ` data-direct-src="${escapeHtml(directFallbackSrc)}"` : ""} onerror="this.onerror=null;this.removeAttribute('srcset');this.src=this.dataset.originalSrc || this.dataset.directSrc;"`;
 }
-
 function getPostsHeroActiveKey() {
   const path = window.location.pathname.replace(/\/+$/, '') || '/';
   const params = new URLSearchParams(window.location.search);
@@ -452,14 +473,14 @@ function buildPostsHeroNav(categories = []) {
       const postHref = itemStatus === 'published' ? `/post/${encodeURIComponent(slug)}` : `/edit.html?slug=${encodeURIComponent(slug)}`;
       const shouldPrioritizeImage = !append && index === 0 && Number(pageNumber) === 1;
       const imageLoadingAttrs = shouldPrioritizeImage
-        ? 'loading="eager" fetchpriority="high" decoding="async" width="627" height="350"'
-        : 'loading="lazy" decoding="async" width="627" height="350"';
+        ? 'loading="eager" fetchpriority="high" decoding="async" width="640" height="360"'
+        : 'loading="lazy" decoding="async" width="640" height="360"';
 
 
       return `
         <article class="card post-card post-card--row js-post-card" data-href="${postHref}" tabindex="0" aria-label="${title} 글로 이동">
           <div class="post-card__thumb post-card__thumb--row">
-            ${cover ? `<img ${renderOptimizedImageAttrs(cover, { widths: [320, 480, 640, 768], sizes: "(max-width: 760px) 36vw, 260px", fallbackWidth: 480, fit: "cover", quality: 85 })} alt="${title} 대표 이미지" ${imageLoadingAttrs} />` : '<div class="post-card__thumb-placeholder">대표 이미지 없음</div>'}
+            ${cover ? `<img ${renderOptimizedImageAttrs(cover, { widths: [320, 640, 960], sizes: "(max-width: 720px) 100vw, 320px", fallbackWidth: 640, fit: "cover", quality: 82 })} alt="${title} 대표 이미지" ${imageLoadingAttrs} />` : '<div class="post-card__thumb-placeholder">대표 이미지 없음</div>'}
           </div>
           <div class="post-card__body">
             <div class="post-meta post-meta--row">
