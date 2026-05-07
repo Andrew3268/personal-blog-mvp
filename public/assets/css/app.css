@@ -235,7 +235,6 @@ body.has-preview-open{overflow:hidden}
 /*.btn--danger:hover{background:rgba(220,38,38,.14)}*/
 .post-admin-actions .small{white-space:nowrap}
 
-
 .toc-toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:4px 0 0}
 .toc-toolbar__controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .toc-toolbar__controls--checkbox{gap:12px}
@@ -253,12 +252,11 @@ body.has-preview-open{overflow:hidden}
 .post-toc__summary-meta{display:inline-flex;align-items:center;gap:8px;font-size:0;font-weight:800;color:#475569;white-space:nowrap}
 .post-toc__summary-meta::after{content:"접기";display:inline-flex;align-items:center;justify-content:center;min-width:64px;padding:8px 12px;border-radius:999px;background:#333;color:#fff;font-size:13px;transition:.2s ease}
 .post-toc:not([open]) .post-toc__summary-meta::after{content:"펼치기"}
-/*.post-toc__summary:hover .post-toc__summary-meta::after{transform:translateY(-1px)}*/
-.post-toc__body{padding:10px;border-top:1px solid rgba(148,163,184,.16)}
+.post-toc__body{border-top:1px solid rgba(148,163,184,.16)}
 .post-toc__list{margin:0 !important;padding:14px 0 0;list-style:none;display:grid;gap:0;}
 .post-toc__list li{margin:0 !important;}
+.post-toc__item{margin:0 !important;}
 .post-toc__item a{display:grid;grid-template-columns:auto minmax(0,1fr);/*gap:10px;*/align-items:start;padding:10px 12px;border-radius:16px;color:#1e3a8a;text-decoration:none;line-height:1.7;transition:.18s ease}
-/*.post-toc__item a:hover{background:rgba(91,124,255,.08);text-decoration:none}*/
 .post-toc__index{font-weight:900;color:#333;min-width:20px}
 .post-toc__text{min-width:0;color:#1e293b}
 .post-toc__item--h3{margin-left:18px;font-size:15px}
