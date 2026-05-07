@@ -1796,6 +1796,7 @@ function markdownToHtml(md, options = {}) {
   let inUl = false;
   let inOl = false;
   let inBlockquote = false;
+  let currentLiOpen = false;
   const slugCounts = new Map();
   const adPositions = Array.isArray(options.adPositions) ? [...options.adPositions] : [];
   let contentBlockCount = 0;
@@ -1809,7 +1810,15 @@ function markdownToHtml(md, options = {}) {
     }
   }
 
+  function closeCurrentListItem() {
+    if (currentLiOpen) {
+      htmlParts.push("</li>");
+      currentLiOpen = false;
+    }
+  }
+
   function closeLists() {
+    closeCurrentListItem();
     if (inUl) {
       htmlParts.push("</ul>");
       inUl = false;
@@ -1833,11 +1842,24 @@ function markdownToHtml(md, options = {}) {
     contentBlockCount += 1;
   }
 
+  function nextNonEmptyLine(startIndex) {
+    for (let nextIndex = startIndex; nextIndex < lines.length; nextIndex += 1) {
+      const nextLine = String(lines[nextIndex] || "").trim();
+      if (nextLine) return nextLine;
+    }
+    return "";
+  }
+
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
     const rawLine = lines[lineIndex];
     const line = rawLine.trim();
 
     if (!line) {
+      const nextLine = nextNonEmptyLine(lineIndex + 1);
+      if ((inOl && /^\d+\.\s+/.test(nextLine)) || (inUl && /^[-*]\s+/.test(nextLine))) {
+        closeQuote();
+        continue;
+      }
       closeLists();
       closeQuote();
       continue;
@@ -1929,8 +1951,11 @@ function markdownToHtml(md, options = {}) {
         maybeInsertAd();
         htmlParts.push("<ul>");
         inUl = true;
+      } else {
+        closeCurrentListItem();
       }
-      htmlParts.push(`<li>${inlineFormat(ulMatch[1])}</li>`);
+      htmlParts.push(`<li>${inlineFormat(ulMatch[1])}`);
+      currentLiOpen = true;
       contentBlockCount += 1;
       continue;
     }
@@ -1943,9 +1968,18 @@ function markdownToHtml(md, options = {}) {
         maybeInsertAd();
         htmlParts.push("<ol>");
         inOl = true;
+      } else {
+        closeCurrentListItem();
       }
-      htmlParts.push(`<li>${inlineFormat(olMatch[1])}</li>`);
+      htmlParts.push(`<li>${inlineFormat(olMatch[1])}`);
+      currentLiOpen = true;
       contentBlockCount += 1;
+      continue;
+    }
+
+    if (inUl || inOl) {
+      closeQuote();
+      htmlParts.push(`<br />${inlineFormat(line)}`);
       continue;
     }
 
