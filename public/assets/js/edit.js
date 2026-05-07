@@ -2214,12 +2214,12 @@ async function save() {
 
   if (payload.status === "draft") {
     statusEl.textContent = "초안 저장 완료! 편집 페이지에 머무릅니다…";
-    location.href = `/edit.html?slug=${encodeURIComponent(slug)}&v=${Date.now()}`;
+    location.href = `/edit.html?slug=${encodeURIComponent(slug)}`;
     return;
   }
 
   statusEl.textContent = "발행 완료! 공개 페이지로 이동합니다…";
-  location.href = `/post/${encodeURIComponent(slug)}?v=${Date.now()}`;
+  location.href = `/post/${encodeURIComponent(slug)}`;
 }
 
 function handleRealtimeChange() {
