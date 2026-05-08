@@ -921,6 +921,7 @@ body.has-preview-open{overflow:hidden}
   .preview-body > p {
     margin-bottom: 17px;
     line-height: 1.85;
+    font-size:17px;
   }
 
   .post-body .post-content > h2,
