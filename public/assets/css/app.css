@@ -720,7 +720,6 @@ body.has-preview-open{overflow:hidden}
   line-height: 1;
   font-weight: 900;
   letter-spacing: -0.02em;
-  box-shadow: 0 8px 18px rgba(47, 113, 95, .18);
 }
 
 /* H3: 세부 주제 구분용 왼쪽 강조선 */
@@ -936,7 +935,7 @@ body.has-preview-open{overflow:hidden}
 
   .post-body .post-content > h2::before,
   .preview-body > h2::before {
-    min-width: 36px;
+    min-width: 20px;
     height: 36px;
     padding: 0 10px;
     border-radius: 12px;
