@@ -1217,7 +1217,7 @@ body.has-preview-open{overflow:hidden}
 
   .post-body .post-content h2::before,
   .preview-body h2::before {
-    min-width: 36px;
+    min-width: 20px;
     height: 36px;
     padding: 0 10px;
     border-radius: 12px;
