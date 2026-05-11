@@ -267,7 +267,7 @@ body.has-preview-open{overflow:hidden}
 .preview-toc-placeholder{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border:1px dashed #9db4ff;border-radius:18px;background:#f8fbff;color:#1e3a8a;margin:8px 0 24px;font-weight:700}
 .preview-toc-placeholder__meta{font-size:13px;font-weight:600;color:#64748b}
 .post-body h2,.post-body h3{scroll-margin-top:25px}
-@media (max-width:768px){.toc-toolbar{align-items:flex-start}.toc-toolbar .input{min-width:150px;width:100%}.toc-toolbar__controls{width:100%}.post-toc__summary{padding:16px}.post-toc__body{padding:15px;}.post-toc__summary-meta::after{min-width:58px;padding:7px 10px;font-size:12px}.post-body h2,.post-body h3{scroll-margin-top:25px}}
+@media (max-width:768px){.toc-toolbar{align-items:flex-start}.toc-toolbar .input{min-width:150px;width:100%}.toc-toolbar__controls{width:100%}.post-toc__summary{padding:16px}.post-toc__body{padding:15px;}.post-toc ol.post-toc__list{padding-left:0 !important;margin-bottom:0 !important;margin-top:0 !important}.post-toc__summary-meta::after{min-width:58px;padding:7px 10px;font-size:12px}.post-body h2,.post-body h3{scroll-margin-top:25px}}
 
 
 .editor-status-field { width: 100%; max-width: 240px; }
