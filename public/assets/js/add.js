@@ -699,7 +699,7 @@ function renderTocHtml(items, mode = "h2") {
       <div class="post-toc__body">
         <ol class="post-toc__list${includeH3 ? " post-toc__list--with-h3" : ""}">
           ${numberedItems.map((item) => `
-            <li class="post-toc__item post-toc__item--h${item.level}">
+            <li class="post-toc__item post-toc__item--h${item.level === 2 ? 3 : item.level}">
               <a href="#${escapeHtml(item.id)}">
                 <span class="post-toc__index">${escapeHtml(item.indexLabel)}</span>
                 <span class="post-toc__text">${escapeHtml(item.text)}</span>
