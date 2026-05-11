@@ -113,11 +113,19 @@ async function initDashboard() {
       ? popular.map((item, index) => {
           const publishedAt = item.published_at ? String(item.published_at).slice(0, 10) : '-';
           const updatedAt = item.updated_at ? String(item.updated_at).slice(0, 10) : '-';
+          const slug = String(item.slug || '');
+          const title = String(item.title || '제목 없음');
           return `
-          <li class="dashboard-popular__item">
+          <li class="dashboard-popular__item" data-dashboard-popular-item>
             <div class="dashboard-popular__main">
-              <a href="/post/${encodeURIComponent(item.slug)}" target="_blank" rel="noopener noreferrer">${index + 1}. ${escapeHtml(item.title)}</a>
-              <div class="dashboard-popular__meta">작성 ${escapeHtml(publishedAt)} · 수정 ${escapeHtml(updatedAt)}</div>
+              <a href="/post/${encodeURIComponent(slug)}" target="_blank" rel="noopener noreferrer">${index + 1}. ${escapeHtml(title)}</a>
+              <div class="dashboard-popular__meta-row">
+                <div class="dashboard-popular__meta">작성 ${escapeHtml(publishedAt)} · 수정 ${escapeHtml(updatedAt)}</div>
+                <span class="dashboard-popular__actions">
+                  <a class="btn" href="/edit.html?slug=${encodeURIComponent(slug)}">수정</a>
+                  <button class="btn btn--danger js-dashboard-delete-post" type="button" data-slug="${encodeURIComponent(slug)}" data-title="${escapeHtml(title)}">삭제</button>
+                </span>
+              </div>
             </div>
             <span class="dashboard-popular__views">조회수 ${formatNumber(item.view_count)}</span>
           </li>
@@ -136,6 +144,37 @@ async function initDashboard() {
     categoryChipsEl.innerHTML = categories.length
       ? categories.slice(0, 8).map((item) => `<span class="chip">${escapeHtml(item.name)} <strong>${formatNumber(item.count)}</strong></span>`).join('')
       : '<span class="chip">카테고리 없음</span>';
+
+    popularListEl.addEventListener('click', async (event) => {
+      const deleteBtn = event.target.closest('.js-dashboard-delete-post');
+      if (!deleteBtn) return;
+      const slug = decodeURIComponent(String(deleteBtn.dataset.slug || ''));
+      const title = String(deleteBtn.dataset.title || slug || '이 글');
+      if (!slug) return;
+      const confirmed = window.confirm(`'${title}' 글을 삭제할까요? 삭제 후 되돌릴 수 없습니다.`);
+      if (!confirmed) return;
+      deleteBtn.disabled = true;
+      deleteBtn.textContent = '삭제 중…';
+      try {
+        const res = await fetch(`/api/posts/${encodeURIComponent(slug)}`, {
+          method: 'DELETE',
+          credentials: 'same-origin',
+          cache: 'no-store',
+          headers: { Accept: 'application/json' }
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json?.message || `삭제 실패 (${res.status})`);
+        const itemEl = deleteBtn.closest('[data-dashboard-popular-item]');
+        if (itemEl) itemEl.remove();
+        if (!popularListEl.querySelector('[data-dashboard-popular-item]')) {
+          popularListEl.innerHTML = '<li class="small">표시할 인기글이 없습니다.</li>';
+        }
+      } catch (err) {
+        alert(err?.message || '삭제 중 오류가 발생했습니다.');
+        deleteBtn.disabled = false;
+        deleteBtn.textContent = '삭제';
+      }
+    });
   } catch (err) {
     console.error(err);
     totalEl.textContent = '-';

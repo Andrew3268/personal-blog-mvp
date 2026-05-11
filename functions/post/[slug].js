@@ -134,6 +134,10 @@ export async function onRequestGet({ params, env, request }) {
               <time datetime="${escapeHtml(updatedIso || "")}">수정 ${escapeHtml(updatedDate)}</time>
             </div>
           </div>
+          <div class="post-author-card__actions" data-admin-only hidden>
+            <a class="btn post-author-card__btn" href="/edit.html?slug=${encodeURIComponent(slug)}">수정</a>
+            <button class="btn btn--danger post-author-card__btn" id="deletePostBtn" type="button" data-slug="${encodeURIComponent(slug)}" data-title="${escapeHtml(titleText)}">삭제</button>
+          </div>
         </div>
       `;
 
@@ -291,7 +295,7 @@ export async function onRequestGet({ params, env, request }) {
   <meta name="twitter:description" content="${escapeHtml(descriptionText)}" />
   <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
 
-  <link rel="stylesheet" href="/assets/css/app.css?v=20260508v3" />
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260511v1" />
   <link rel="stylesheet" href="/assets/css/components.css?v=20260508v3" />
 
   ${jsonld(blogPostingJsonLd)}
@@ -764,7 +768,7 @@ function renderNotFound(slug) {
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/favicon-192x192.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
   <meta name="theme-color" content="#5B7CFF" />
-  <link rel="stylesheet" href="/assets/css/app.css?v=20260508v3" />
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260511v1" />
   <link rel="stylesheet" href="/assets/css/components.css?v=20260508v3" />
 </head>
 <body>
