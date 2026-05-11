@@ -262,6 +262,7 @@ body.has-preview-open{overflow:hidden}
 .post-toc__index{font-weight:400;color:#333;min-width:20px}
 .post-toc__text{min-width:0;color:#1e293b;font-weight:400}
 .post-toc__item--h3{margin-left:18px;font-size:15px}
+.post-toc .post-toc__item{margin:0 !important;}
 .post-toc__item--h3 .post-toc__index{color:#64748b}
 .preview-toc-placeholder{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border:1px dashed #9db4ff;border-radius:18px;background:#f8fbff;color:#1e3a8a;margin:8px 0 24px;font-weight:700}
 .preview-toc-placeholder__meta{font-size:13px;font-weight:600;color:#64748b}
@@ -481,6 +482,21 @@ body.has-preview-open{overflow:hidden}
 .post-body a[href^="/"]:focus-visible,
 .post-body a[href^="https://wacky-wiki.com"]:focus-visible,
 .post-body a[href^="http://wacky-wiki.com"]:focus-visible { color: #2f715f; text-decoration: underline; text-underline-offset: 3px; outline: 2px solid rgba(47,113,95,.28); outline-offset: 2px; border-radius: 4px; }
+/* 목차/관련글 링크는 본문 내부 링크 강조 스타일에서 제외 */
+.post-body .post-toc .post-toc__item,
+.post-toc .post-toc__item{margin:0 !important;}
+.post-body .post-toc a,
+.post-body .post-toc a[href],
+.post-toc .post-toc__item a{color:#1e293b !important;text-decoration:none !important;font-weight:400 !important;}
+.post-body .post-toc a:hover,
+.post-body .post-toc a:focus{text-decoration:none !important;color:#1e293b !important;}
+.post-body .post-related.post-section-divider.post-section-divider--related a,
+.post-related.post-section-divider.post-section-divider--related a{color:#333 !important;text-decoration:none !important;}
+.post-body .post-related.post-section-divider.post-section-divider--related a:hover,
+.post-body .post-related.post-section-divider.post-section-divider--related a:focus,
+.post-related.post-section-divider.post-section-divider--related a:hover,
+.post-related.post-section-divider.post-section-divider--related a:focus{text-decoration:none !important;color:#333 !important;}
+
 .post-body .table-wrap, .preview-body .table-wrap { width: 100%; overflow-x: auto; margin: 22px 0; border: 1px solid var(--border); border-radius: 18px; background: #fff; box-shadow: 0 10px 28px rgba(15,23,42,.04); }
 .post-body table, .preview-body table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 22px 0; font-size: 14px; line-height: 1.7; color: #1e293b; background: #fff; border: 1px solid var(--border); border-radius: 18px; overflow: hidden; box-shadow: 0 10px 28px rgba(15,23,42,.04); }
 .post-body .table-wrap table, .preview-body .table-wrap table { margin: 0; border: 0; border-radius: 0; box-shadow: none; }
@@ -519,6 +535,8 @@ body.has-preview-open{overflow:hidden}
 .post-related__list{display:grid;gap:10px;margin-top:16px}
 .post-related__list li{margin:0 !important;}
 .post-related-link{display:inline-flex;align-items:flex-start;text-decoration:none;line-height:1.55}
+.post-related.post-section-divider.post-section-divider--related a{color:#333 !important;text-decoration:none !important;}
+.post-related.post-section-divider.post-section-divider--related a:hover,.post-related.post-section-divider.post-section-divider--related a:focus{text-decoration:none !important;color:#333 !important;}
 .post-faq h3{margin-top:7px}
 .post-faq__list{display:grid;gap:14px;margin-top:14px}
 .post-faq__list p{margin:0;}
