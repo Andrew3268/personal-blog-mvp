@@ -268,6 +268,7 @@ export async function onRequestGet({ params, env, request }) {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="naver-site-verification" content="e49bca383d3b342f512aeaaf82017d3705a638b3" />
   <title>${escapeHtml(pageTitle)}</title>
   <meta name="description" content="${escapeHtml(descriptionText)}" />
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
@@ -761,6 +762,7 @@ function renderNotFound(slug) {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="naver-site-verification" content="e49bca383d3b342f512aeaaf82017d3705a638b3" />
   <title>글을 찾을 수 없습니다</title>
   <meta name="robots" content="noindex,nofollow" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
