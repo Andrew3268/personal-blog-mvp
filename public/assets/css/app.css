@@ -1293,3 +1293,23 @@ body.has-preview-open{overflow:hidden}
     padding: 12px 13px !important;
   }
 }
+
+/* TOC mobile/tablet override: keep this after article list styles */
+@media (max-width:1024px){
+  .post-body .post-content .post-toc__body .post-toc__list,
+  .post-body .post-content .post-toc__body ol.post-toc__list,
+  .preview-body .post-toc__body .post-toc__list,
+  .preview-body .post-toc__body ol.post-toc__list{
+    padding-left:0 !important;
+    padding-inline-start:0 !important;
+  }
+}
+@media (max-width:768px){
+  .post-body .post-content .post-toc ol.post-toc__list,
+  .preview-body .post-toc ol.post-toc__list{
+    padding-left:0 !important;
+    padding-inline-start:0 !important;
+    margin-top:0 !important;
+    margin-bottom:0 !important;
+  }
+}
