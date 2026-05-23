@@ -35,7 +35,6 @@ export async function onRequestGet({ env }) {
     const description = buildDescription(item);
     const pubDate = toRssDate(item.published_at || item.updated_at);
     const categories = buildCategories(item);
-    const enclosure = buildImageEnclosure(item.cover_image);
 
     return `
     <item>
@@ -45,7 +44,6 @@ export async function onRequestGet({ env }) {
       ${description ? `<description>${escapeXml(description)}</description>` : ""}
       ${pubDate ? `<pubDate>${escapeXml(pubDate)}</pubDate>` : ""}
       ${categories}
-      ${enclosure}
     </item>`;
   }).join("");
 
@@ -97,12 +95,6 @@ function buildCategories(item) {
   return [...new Set(values)]
     .map((value) => `<category>${escapeXml(value)}</category>`)
     .join("\n      ");
-}
-
-function buildImageEnclosure(value) {
-  const url = toAbsoluteUrl(value);
-  if (!url) return "";
-  return `<enclosure url="${escapeXml(url)}" type="image/jpeg" />`;
 }
 
 function toAbsoluteUrl(value) {
