@@ -279,6 +279,7 @@ export async function onRequestGet({ params, env, request }) {
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
   <meta name="author" content="${escapeHtml(authorName)}" />
   <link rel="canonical" href="${escapeHtml(canonical.toString())}" />
+  <link rel="alternate" type="application/rss+xml" title="Wacky Wiki RSS" href="https://wacky-wiki.com/rss.xml" />
   ${coverImagePreload}
   ${adsenseHeadScript}
 
@@ -764,6 +765,7 @@ function renderNotFound(slug) {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="naver-site-verification" content="e49bca383d3b342f512aeaaf82017d3705a638b3" />
   <title>글을 찾을 수 없습니다</title>
+  <link rel="alternate" type="application/rss+xml" title="Wacky Wiki RSS" href="https://wacky-wiki.com/rss.xml" />
   <meta name="robots" content="noindex,nofollow" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png" />
