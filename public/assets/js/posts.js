@@ -144,10 +144,25 @@ function renderOptimizedImageAttrs(src = "", config = {}) {
   const directFallbackSrc = image.directOriginal && image.directOriginal !== fallbackSrc ? image.directOriginal : "";
   return `src="${escapeHtml(image.src)}"${image.srcset ? ` srcset="${escapeHtml(image.srcset)}"` : ""} sizes="${escapeHtml(image.sizes)}" data-original-src="${escapeHtml(fallbackSrc)}"${directFallbackSrc ? ` data-direct-src="${escapeHtml(directFallbackSrc)}"` : ""} onerror="this.onerror=null;this.removeAttribute('srcset');this.src=this.dataset.originalSrc || this.dataset.directSrc;"`;
 }
+function getPathCategory() {
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  if (parts[0] !== 'category' || !parts[1]) return '';
+  try {
+    return decodeURIComponent(parts[1]).replace(/\s+/g, ' ').trim();
+  } catch (_) {
+    return String(parts[1] || '').replace(/\s+/g, ' ').trim();
+  }
+}
+
+function buildCategoryUrl(name = '') {
+  const safeName = String(name || '').replace(/\s+/g, ' ').trim();
+  return safeName ? `/category/${encodeURIComponent(safeName)}/` : '/';
+}
+
 function getPostsHeroActiveKey() {
   const path = window.location.pathname.replace(/\/+$/, '') || '/';
   const params = new URLSearchParams(window.location.search);
-  const category = (params.get('category') || '').trim();
+  const category = (params.get('category') || getPathCategory() || '').trim();
 
   if (path.includes('/about')) return 'about';
   if (category) return category;
@@ -240,7 +255,7 @@ function buildPostsHeroNav(categories = []) {
     ...unique.map((cat) => {
       const safeName = cat.name;
       const isActive = activeKey === safeName;
-      const href = `/?category=${encodeURIComponent(safeName)}`;
+      const href = buildCategoryUrl(safeName);
       return `<a class="posts-home-hero__category-link ${isActive ? 'is-active' : ''}" data-active-key="${escapeHtml(safeName)}" ${isActive ? 'aria-current="page"' : ''} href="${href}">${escapeHtml(safeName)}</a>`;
     })
   ];
@@ -303,7 +318,7 @@ function buildPostsHeroNav(categories = []) {
   const escapeHtml = (s) => String(s ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
   const url = new URL(window.location.href);
   const status = String(url.searchParams.get('status') || 'published').trim().toLowerCase();
-  const category = String(url.searchParams.get('category') || '').trim();
+  const category = String(url.searchParams.get('category') || getPathCategory() || '').trim();
   const tag = String(url.searchParams.get('tag') || '').trim();
   const initialPage = Math.max(1, Number.parseInt(url.searchParams.get('page') || '1', 10) || 1);
   const perPage = 8;
@@ -326,9 +341,9 @@ function buildPostsHeroNav(categories = []) {
   }
 
   function buildPostsPageUrl(page) {
-    const nextUrl = new URL('/', window.location.origin);
+    const basePath = category ? buildCategoryUrl(category) : '/';
+    const nextUrl = new URL(basePath, window.location.origin);
     if (safeStatus && safeStatus !== 'published') nextUrl.searchParams.set('status', safeStatus);
-    if (category) nextUrl.searchParams.set('category', category);
     if (tag) nextUrl.searchParams.set('tag', tag);
     if (page > 1) nextUrl.searchParams.set('page', String(page));
     return `${nextUrl.pathname}${nextUrl.search}`;
@@ -438,7 +453,7 @@ function buildPostsHeroNav(categories = []) {
     const categoryLinksHtml = navCategories.length
       ? navCategories.map((item) => {
           const name = String(item.name || '').trim();
-          return `<a class="topbar-categories__chip" href="/?category=${encodeURIComponent(name)}">${escapeHtml(name)} <span>${Number(item.count || 0)}</span></a>`;
+          return `<a class="topbar-categories__chip" href="${buildCategoryUrl(name)}">${escapeHtml(name)} <span>${Number(item.count || 0)}</span></a>`;
         }).join('')
       : '<span class="small">표시할 카테고리가 없습니다.</span>';
 
@@ -477,7 +492,7 @@ function buildPostsHeroNav(categories = []) {
       const title = escapeHtml(rawTitle);
       const categoryText = String(it.category || '').trim();
       const categoryHtml = categoryText
-        ? `<a class="badge" href="/?category=${encodeURIComponent(categoryText)}">${escapeHtml(categoryText)}</a>`
+        ? `<a class="badge" href="${buildCategoryUrl(categoryText)}">${escapeHtml(categoryText)}</a>`
         : `<span class="badge">미분류</span>`;
       const summary = escapeHtml(it.summary || '요약이 아직 없습니다.');
       const slug = String(it.slug || '');
@@ -685,6 +700,39 @@ function buildPostsHeroNav(categories = []) {
     if (heroCategoryBarEl && siteCategories.length) {
       heroCategoryBarEl.innerHTML = buildPostsHeroNav(siteCategories);
     }
+
+    const initialData = window.__WACKY_INITIAL_POSTS__;
+    const initialFilters = initialData?.filters || {};
+    const initialPagination = initialData?.pagination || {};
+    const canHydrateInitial = initialData
+      && Number(initialPagination.page || 1) === initialPage
+      && String(initialFilters.category || '') === category
+      && String(initialFilters.tag || '') === tag
+      && String(initialFilters.status || 'published') === safeStatus;
+
+    if (canHydrateInitial) {
+      const items = Array.isArray(initialData.items) ? initialData.items : [];
+      const sidebar = initialData.sidebar || {};
+      renderSidebar(sidebar);
+      if (items.length) {
+        renderItems(items, { append: false, pageNumber: initialPage });
+        show(emptyEl, false);
+      } else {
+        if (listEl) listEl.innerHTML = '';
+        show(emptyEl, true);
+        if (emptyEl) {
+          if (safeStatus === 'draft') emptyEl.textContent = '등록된 초안 글이 없습니다.';
+          else if (category) emptyEl.textContent = `'${category}' 카테고리 글이 없습니다.`;
+          else if (tag) emptyEl.textContent = `'#${tag}' 태그 글이 없습니다.`;
+          else emptyEl.textContent = '등록된 글이 없습니다.';
+        }
+      }
+      currentPage = Number(initialPagination.page || initialPage);
+      updateLoadMore(initialPagination);
+      window.__WACKY_INITIAL_POSTS__ = null;
+      return;
+    }
+
     fetchPage(initialPage, { append: false });
   });
 })();

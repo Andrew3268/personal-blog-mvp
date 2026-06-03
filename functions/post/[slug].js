@@ -4,6 +4,11 @@ import { buildImageAttrs } from "../../lib/image-utils.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
 
+function categoryPath(name = "") {
+  const safeName = String(name || "").replace(/\s+/g, " ").trim();
+  return safeName ? `/category/${encodeURIComponent(safeName)}/` : "/";
+}
+
 export async function onRequestGet({ params, env, request }) {
   const slug = decodeURIComponent(String(params.slug || ""));
   if (!slug) return okHtml("Not Found", { status: 404 });
@@ -134,10 +139,6 @@ export async function onRequestGet({ params, env, request }) {
               <time datetime="${escapeHtml(updatedIso || "")}">수정 ${escapeHtml(updatedDate)}</time>
             </div>
           </div>
-          <div class="post-author-card__actions" data-admin-only hidden>
-            <a class="btn post-author-card__btn" href="/edit.html?slug=${encodeURIComponent(slug)}">수정</a>
-            <button class="btn btn--danger post-author-card__btn" id="deletePostBtn" type="button" data-slug="${encodeURIComponent(slug)}" data-title="${escapeHtml(titleText)}">삭제</button>
-          </div>
         </div>
       `;
 
@@ -148,7 +149,7 @@ export async function onRequestGet({ params, env, request }) {
       if (row.category) {
         breadcrumbItems.push({
           name: String(row.category),
-          url: `${origin}/?category=${encodeURIComponent(String(row.category))}`
+          url: `${origin}${categoryPath(String(row.category))}`
         });
       }
 
@@ -244,7 +245,7 @@ export async function onRequestGet({ params, env, request }) {
         ? `<link rel="preload" as="image" href="${escapeHtml(coverImage.src)}"${coverImage.srcset ? ` imagesrcset="${escapeHtml(coverImage.srcset)}"` : ""}${coverImage.sizes ? ` imagesizes="${escapeHtml(coverImage.sizes)}"` : ""} fetchpriority="high" />`
         : "";
       const categoryLink = row.category
-        ? `/?category=${encodeURIComponent(String(row.category))}`
+        ? categoryPath(String(row.category))
         : "/";
       const coverImageHtml = coverImage
         ? `
@@ -350,32 +351,7 @@ export async function onRequestGet({ params, env, request }) {
     ${footer(siteName, siteDescription)}
   </main>
 
-  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const deleteBtn = document.getElementById('deletePostBtn');
-    if (!deleteBtn) return;
-    deleteBtn.addEventListener('click', async () => {
-      const slug = decodeURIComponent(String(deleteBtn.dataset.slug || ''));
-      const title = String(deleteBtn.dataset.title || slug || '이 글');
-      const confirmed = window.confirm("'" + title + "' 글을 삭제할까요? 삭제 후 되돌릴 수 없습니다.");
-      if (!confirmed) return;
-      deleteBtn.disabled = true;
-      deleteBtn.textContent = '삭제 중…';
-      try {
-        const res = await fetch('/api/posts/' + encodeURIComponent(slug), { method: 'DELETE' });
-        const json = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error((json && json.message) || ('삭제 실패 (' + res.status + ')'));
-        window.location.href = '/';
-      } catch (err) {
-        alert(err?.message || '삭제 중 오류가 발생했습니다.');
-        deleteBtn.disabled = false;
-        deleteBtn.textContent = '삭제';
-      }
-    });
-  });
-</script>
   ${adsenseRuntimeScript}
-  <script src="/assets/js/admin-ui.js" defer></script>
   <script src="/assets/js/nav.js" defer></script>
 </body>
 </html>`;
@@ -669,7 +645,7 @@ function renderRelatedPostsSection(items, category) {
   const categoryText = String(category || "").trim();
   const headingText = categoryText ? `${categoryText} 관련글 더보기` : "관련글 더보기";
   const categoryActionHtml = categoryText
-    ? `<div class="post-related__action"><a class="btn post-related__more-btn" href="/?category=${encodeURIComponent(categoryText)}">카테고리 전체 보기</a></div>`
+    ? `<div class="post-related__action"><a class="btn post-related__more-btn" href="${categoryPath(categoryText)}">카테고리 전체 보기</a></div>`
     : "";
   return `
     <section class="post-related post-section-divider post-section-divider--related" aria-labelledby="post-related-title">
@@ -822,7 +798,7 @@ function renderMobileCategoryLinks(items = []) {
   const links = (items || [])
     .map((item) => String(item?.name || '').trim())
     .filter(Boolean)
-    .map((name) => '<a class="topbar-categories__chip" href="/?category=' + encodeURIComponent(name) + '">' + escapeHtml(name) + '</a>')
+    .map((name) => '<a class="topbar-categories__chip" href="' + categoryPath(name) + '">' + escapeHtml(name) + '</a>')
     .join('');
 
   return '<a class="topbar-categories__chip topbar-categories__chip--utility" href="/">ALL</a>' + links;
@@ -835,16 +811,14 @@ function topbar(mobileCategoryHtml = "") {
         <span></span><span></span><span></span>
       </button>
 
-      <div class="topbar-left-slot"><div class="topbar-admin-status" data-admin-status hidden aria-live="polite">관리자 로그인 중</div></div>
+      <div class="topbar-left-slot"></div>
 
       <a class="brand brand--center" href="/" aria-label="Wacky Wiki 홈">
         <span class="brand__mark">W</span>
         <span class="brand__text">Wacky Wiki</span>
       </a>
 
-      <nav class="nav nav--utility nav--right" aria-label="오른쪽 메뉴">
-        <a href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
-      </nav>
+      <nav class="nav nav--utility nav--right" aria-label="오른쪽 메뉴"></nav>
     </div>
   </header>
 
@@ -859,9 +833,6 @@ function topbar(mobileCategoryHtml = "") {
       </nav>
       <div class="mobile-site-menu__section mobile-site-menu__section--categories">
         <div id="mobileSiteCategoryBar" class="topbar-categories__list topbar-categories__list--mobile">${mobileCategoryHtml}</div>
-      </div>
-      <div class="mobile-site-menu__section mobile-site-menu__section--admin" data-mobile-admin-section hidden>
-        <a class="mobile-site-menu__text-link" href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
       </div>
     </div>
   </aside>`;

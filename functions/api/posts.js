@@ -119,11 +119,12 @@ export async function onRequestGet({ env, request }) {
     env.BLOG_DB.prepare(`
       SELECT TRIM(COALESCE(category, '')) AS category_name, COUNT(*) AS count
       FROM posts
-      ${whereSql}
+      WHERE status = 'published'
+        AND TRIM(COALESCE(category, '')) != ''
       GROUP BY TRIM(COALESCE(category, ''))
       ORDER BY count DESC, category_name COLLATE NOCASE ASC
-      LIMIT 20
-    `).bind(...binds).all(),
+      LIMIT 50
+    `).all(),
     env.BLOG_DB.prepare(`
       SELECT slug, title, view_count, updated_at, published_at
       FROM posts

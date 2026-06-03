@@ -11,10 +11,22 @@
       .replaceAll("'", '&#039;');
   }
 
+  function getPathCategory() {
+    const parts = window.location.pathname.split('/').filter(Boolean);
+    if (parts[0] !== 'category' || !parts[1]) return '';
+    try { return decodeURIComponent(parts[1]).replace(/\s+/g, ' ').trim(); }
+    catch (_) { return String(parts[1] || '').replace(/\s+/g, ' ').trim(); }
+  }
+
+  function buildCategoryUrl(name = '') {
+    const safeName = String(name || '').replace(/\s+/g, ' ').trim();
+    return safeName ? `/category/${encodeURIComponent(safeName)}/` : '/';
+  }
+
   function getActiveKey() {
     const path = window.location.pathname.replace(/\/+$/, '') || '/';
     const params = new URLSearchParams(window.location.search);
-    const category = (params.get('category') || '').trim();
+    const category = (params.get('category') || getPathCategory() || '').trim();
     if (category) return category;
     return 'all';
   }
@@ -40,7 +52,7 @@
 
       const links = [
         '<a class="posts-home-hero__category-link" data-active-key="all" href="/">ALL</a>',
-        ...categories.map((item) => `<a class="posts-home-hero__category-link" data-active-key="${escapeHtml(item.name)}" href="/?category=${encodeURIComponent(item.name)}">${escapeHtml(item.name)}</a>`)
+        ...categories.map((item) => `<a class="posts-home-hero__category-link" data-active-key="${escapeHtml(item.name)}" href="${buildCategoryUrl(item.name)}">${escapeHtml(item.name)}</a>`)
       ];
 
       heroBar.innerHTML = links.join('');

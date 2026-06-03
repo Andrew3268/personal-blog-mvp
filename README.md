@@ -3,12 +3,13 @@
 이 프로젝트는 **글 작성 → D1 저장 → `/post/:slug` SSR 렌더링 → Cloudflare 엣지 캐시** 흐름으로 동작하는 개인 블로그 MVP입니다.
 
 ## 핵심 구조
-- 홈 / 글목록 / 소개: `public/` 아래 정적 페이지
+- 홈 / 글목록 / 카테고리 목록: `functions/index.js`, `functions/category/[category].js`에서 SSR HTML 생성
+- 소개/개인정보 처리방침: `public/` 아래 정적 페이지
 - 개별 글 페이지: `functions/post/[slug].js`에서 SSR HTML 생성
 - 글 등록 / 수정: `public/add.html`, `public/edit.html`
 - 데이터 저장: Cloudflare D1
 - 캐시: `functions/_utils.js`의 `edgeCache()` 사용
-- 사이트맵: `functions/sitemap.xml.js`
+- 사이트맵: `functions/sitemap.xml.js`에서 발행글과 카테고리 URL 자동 포함
 
 ## 작성 방식
 관리자 화면에서 아래 항목을 입력합니다.
@@ -39,7 +40,7 @@ npm run dev
 
 ## 주요 URL
 - 홈: `http://localhost:8788/`
-- 글 목록: `http://localhost:8788/posts/`
+- 카테고리: `http://localhost:8788/category/HEALTH/`
 - 글 작성: `http://localhost:8788/add.html`
 - 글 수정: `http://localhost:8788/edit.html?slug=your-slug`
 - 글 상세(SSR): `http://localhost:8788/post/your-slug`
@@ -61,6 +62,6 @@ npm run dev
 - 관리자 인증 추가
 - 공개/비공개 상태 분리
 - 예약 발행
-- 태그 페이지 / 카테고리 페이지
+- 태그 페이지 고도화
 - RSS 생성
 - OG 이미지 자동 생성
