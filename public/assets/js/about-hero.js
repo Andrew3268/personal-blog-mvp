@@ -15,14 +15,13 @@
     const path = window.location.pathname.replace(/\/+$/, '') || '/';
     const params = new URLSearchParams(window.location.search);
     const category = (params.get('category') || '').trim();
-    if (path.includes('/about')) return 'about';
     if (category) return category;
     return 'all';
   }
 
   function applyActiveState(container) {
     const activeKey = getActiveKey();
-    container.querySelectorAll('.posts-home-hero__category-link, .posts-home-hero__about-link').forEach((link) => {
+    container.querySelectorAll('.posts-home-hero__category-link').forEach((link) => {
       const key = String(link.getAttribute('data-active-key') || '').trim();
       const isActive = key && key === activeKey;
       link.classList.toggle('is-active', isActive);
@@ -41,15 +40,14 @@
 
       const links = [
         '<a class="posts-home-hero__category-link" data-active-key="all" href="/">ALL</a>',
-        ...categories.map((item) => `<a class="posts-home-hero__category-link" data-active-key="${escapeHtml(item.name)}" href="/?category=${encodeURIComponent(item.name)}">${escapeHtml(item.name)}</a>`),
-        '<a class="posts-home-hero__about-link" data-active-key="about" href="/about/">ABOUT</a>'
+        ...categories.map((item) => `<a class="posts-home-hero__category-link" data-active-key="${escapeHtml(item.name)}" href="/?category=${encodeURIComponent(item.name)}">${escapeHtml(item.name)}</a>`)
       ];
 
       heroBar.innerHTML = links.join('');
       applyActiveState(heroBar);
     })
     .catch(() => {
-      heroBar.innerHTML = '<a class="posts-home-hero__category-link" data-active-key="all" href="/">ALL</a><a class="posts-home-hero__about-link" data-active-key="about" href="/about/">ABOUT</a>';
+      heroBar.innerHTML = '<a class="posts-home-hero__category-link" data-active-key="all" href="/">ALL</a>';
       applyActiveState(heroBar);
     });
 })();

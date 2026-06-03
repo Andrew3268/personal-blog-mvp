@@ -13,7 +13,8 @@ export async function onRequestGet({ env, request }) {
   const items = rows.results || [];
   const urls = [
     `${origin}/`,
-    `${origin}/about/`
+    `${origin}/about/`,
+    `${origin}/privacy-policy/`
   ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>

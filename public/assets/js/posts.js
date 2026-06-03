@@ -213,7 +213,7 @@ function mergeCategoryCounts(baseCategories = [], countedCategories = []) {
 function applyPostsHeroActiveState(container) {
   if (!container) return;
   const activeKey = getPostsHeroActiveKey();
-  const links = container.querySelectorAll('.posts-home-hero__category-link, .posts-home-hero__about-link');
+  const links = container.querySelectorAll('.posts-home-hero__category-link');
   links.forEach((link) => {
     const key = String(link.getAttribute('data-active-key') || '').trim();
     const isActive = key && key === activeKey;
@@ -242,8 +242,7 @@ function buildPostsHeroNav(categories = []) {
       const isActive = activeKey === safeName;
       const href = `/?category=${encodeURIComponent(safeName)}`;
       return `<a class="posts-home-hero__category-link ${isActive ? 'is-active' : ''}" data-active-key="${escapeHtml(safeName)}" ${isActive ? 'aria-current="page"' : ''} href="${href}">${escapeHtml(safeName)}</a>`;
-    }),
-    `<a class="posts-home-hero__about-link ${activeKey === 'about' ? 'is-active' : ''}" data-active-key="about" ${activeKey === 'about' ? 'aria-current="page"' : ''} href="/about/">ABOUT</a>`
+    })
   ];
 
   return items.join('');
@@ -443,7 +442,7 @@ function buildPostsHeroNav(categories = []) {
         }).join('')
       : '<span class="small">표시할 카테고리가 없습니다.</span>';
 
-    const categoriesHtml = `<a class="topbar-categories__chip topbar-categories__chip--utility" href="/">ALL</a>${categoryLinksHtml}<a class="topbar-categories__chip topbar-categories__chip--utility" href="/about/">ABOUT</a>`;
+    const categoriesHtml = `<a class="topbar-categories__chip topbar-categories__chip--utility" href="/">ALL</a>${categoryLinksHtml}`;
 
     if (postsCategoriesBarEl) {
       postsCategoriesBarEl.innerHTML = categoriesHtml;

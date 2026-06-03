@@ -298,7 +298,7 @@ export async function onRequestGet({ params, env, request }) {
   <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
 
   <link rel="stylesheet" href="/assets/css/app.css?v=20260523v3" />
-  <link rel="stylesheet" href="/assets/css/components.css?v=20260508v3" />
+  <link rel="stylesheet" href="/assets/css/components.css?v=20260603v1" />
 
   ${jsonld(blogPostingJsonLd)}
   ${jsonld(breadcrumbJsonLd)}
@@ -773,7 +773,7 @@ function renderNotFound(slug) {
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
   <meta name="theme-color" content="#5B7CFF" />
   <link rel="stylesheet" href="/assets/css/app.css?v=20260523v3" />
-  <link rel="stylesheet" href="/assets/css/components.css?v=20260508v3" />
+  <link rel="stylesheet" href="/assets/css/components.css?v=20260603v1" />
 </head>
 <body>
   <main class="container">
@@ -825,7 +825,7 @@ function renderMobileCategoryLinks(items = []) {
     .map((name) => '<a class="topbar-categories__chip" href="/?category=' + encodeURIComponent(name) + '">' + escapeHtml(name) + '</a>')
     .join('');
 
-  return '<a class="topbar-categories__chip topbar-categories__chip--utility" href="/">ALL</a>' + links + '<a class="topbar-categories__chip topbar-categories__chip--utility" href="/about/">ABOUT</a>';
+  return '<a class="topbar-categories__chip topbar-categories__chip--utility" href="/">ALL</a>' + links;
 }
 
 function topbar(mobileCategoryHtml = "") {
@@ -870,8 +870,14 @@ function topbar(mobileCategoryHtml = "") {
 function footer(siteName, siteDescription) {
   return `<footer class="footer container">
     <div class="footer__inner">
-      <div>© 2026 ${escapeHtml(siteName)}</div>
-      <div>${escapeHtml(siteDescription)}</div>
+      <div class="footer__copy">
+        <div>© 2026 ${escapeHtml(siteName)}</div>
+        <div>${escapeHtml(siteDescription)}</div>
+      </div>
+      <nav class="footer__links" aria-label="하단 메뉴">
+        <a class="footer__link" href="/about/">Wacky-Wiki 소개</a>
+        <a class="footer__link" href="/privacy-policy/">개인정보 처리방침</a>
+      </nav>
     </div>
   </footer>`;
 }
