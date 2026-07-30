@@ -440,6 +440,9 @@ export async function renderHomePage({ env, request, category = "" }) {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="naver-site-verification" content="e49bca383d3b342f512aeaaf82017d3705a638b3" />
+  <!-- Google AdSense: 사이트 소유권 확인 및 광고 기능 -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7298667883751711"
+     crossorigin="anonymous"></script>
   <title>${escapeHtml(title)}</title>
   <meta name="description" content="${escapeHtml(truncateText(description, 155))}" />
   <meta name="robots" content="${data.filters.status === "published" ? "index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" : "noindex,nofollow"}" />

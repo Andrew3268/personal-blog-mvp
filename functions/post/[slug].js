@@ -3,6 +3,7 @@ import { renderMarkdown, renderMarkdownBlocks, buildTocItemsFromBlocks, renderTo
 import { buildImageAttrs } from "../../lib/image-utils.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
+const ADSENSE_CLIENT = "ca-pub-7298667883751711";
 
 function categoryPath(name = "") {
   const safeName = String(name || "").replace(/\s+/g, " ").trim();
@@ -110,7 +111,7 @@ export async function onRequestGet({ params, env, request }) {
       const relatedPostsHtml = renderRelatedPostsSection(relatedRows, row.category);
       const popularPostsHtml = renderPopularPosts(popularRows);
       const sidebarAdHtml = shouldShowSidebarAd ? renderSidebarAd(adConfig) : "";
-      const adsenseHeadScript = renderAdsenseHeadScript(adConfig, shouldShowSidebarAd || shouldShowInarticleAds);
+      const adsenseHeadScript = renderAdsenseHeadScript(adConfig);
       const adsenseRuntimeScript = renderAdsenseRuntimeScript(adConfig, shouldShowSidebarAd || shouldShowInarticleAds);
 
       const titleText = String(row.title || "").trim();
@@ -377,15 +378,15 @@ function toBool(value, defaultValue = true) {
 
 function buildAdsenseConfig(env) {
   return {
-    client: String(env.ADSENSE_CLIENT || "").trim(),
+    client: String(env.ADSENSE_CLIENT || ADSENSE_CLIENT).trim(),
     sidebarSlot: String(env.ADSENSE_SLOT_SIDEBAR || "").trim(),
     inArticleSlot1: String(env.ADSENSE_SLOT_INARTICLE_1 || "").trim(),
     inArticleSlot2: String(env.ADSENSE_SLOT_INARTICLE_2 || "").trim()
   };
 }
 
-function renderAdsenseHeadScript(config, shouldLoad) {
-  if (!shouldLoad || !config.client) return "";
+function renderAdsenseHeadScript(config) {
+  if (!config.client) return "";
   return `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${escapeHtml(config.client)}" crossorigin="anonymous"></script>`;
 }
 

@@ -6,9 +6,9 @@ pages_build_output_dir = "public"
 binding = "BLOG_DB"
 database_name = "personal-blog-db"
 database_id = "e57c2488-da7e-4fa2-962f-be0c952a61e2"
-# 아래 값은 실제 운영값으로 채워주세요.
-# [vars]
-# ADSENSE_CLIENT = "ca-pub-xxxxxxxxxxxxxxxx"
+# Google AdSense 게시자 계정. 광고 단위 슬롯은 발급 후 Cloudflare 환경변수로 추가할 수 있습니다.
+[vars]
+ADSENSE_CLIENT = "ca-pub-7298667883751711"
 # ADSENSE_SLOT_SIDEBAR = "1234567890"
 # ADSENSE_SLOT_INARTICLE_1 = "1234567890"
 # ADSENSE_SLOT_INARTICLE_2 = "1234567890"
