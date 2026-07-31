@@ -1,6 +1,6 @@
-import { escapeHtml, jsonld, okHtml, edgeCache } from "../_utils.js";
+import { escapeHtml, jsonld, okHtml, edgeCache, ensurePostSeoColumns } from "../_utils.js";
 import { renderMarkdown, renderMarkdownBlocks, buildTocItemsFromBlocks, renderTocHtml, parseInlineImages, stripInlineImageTokens } from "../../lib/posts/renderer.js";
-import { buildImageAttrs } from "../../lib/image-utils.js";
+import { buildImageAttrs, absolutizeImageUrl } from "../../lib/image-utils.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
 const ADSENSE_CLIENT = "ca-pub-7298667883751711";
@@ -10,12 +10,21 @@ function categoryPath(name = "") {
   return safeName ? `/category/${encodeURIComponent(safeName)}/` : "/";
 }
 
+function safeDecodePathParam(value = "") {
+  try {
+    return decodeURIComponent(String(value || ""));
+  } catch {
+    return "";
+  }
+}
+
 export async function onRequestGet({ params, env, request }) {
-  const slug = decodeURIComponent(String(params.slug || ""));
+  await ensurePostSeoColumns(env.BLOG_DB);
+  const slug = safeDecodePathParam(params.slug).trim();
   if (!slug) return okHtml("Not Found", { status: 404 });
 
   const meta = await env.BLOG_DB.prepare(`
-    SELECT updated_at
+    SELECT updated_at, metadata_updated_at
     FROM posts
     WHERE slug = ? AND status = 'published'
   `).bind(slug).first();
@@ -27,14 +36,10 @@ export async function onRequestGet({ params, env, request }) {
     });
   }
 
-  await env.BLOG_DB.prepare(`
-    UPDATE posts
-    SET view_count = COALESCE(view_count, 0) + 1
-    WHERE slug = ? AND status = 'published'
-  `).bind(slug).run();
-
   const updatedAt = String(meta.updated_at || "");
-  const cacheKeyUrl = `${SITE_ORIGIN}/post/${encodeURIComponent(slug)}?v=${encodeURIComponent(updatedAt)}`;
+  const metadataUpdatedAt = String(meta.metadata_updated_at || updatedAt);
+  const cacheVersion = `${updatedAt}|${metadataUpdatedAt}`;
+  const cacheKeyUrl = `${SITE_ORIGIN}/post/${encodeURIComponent(slug)}?v=${encodeURIComponent(cacheVersion)}`;
 
   return edgeCache({
     request,
@@ -57,7 +62,8 @@ export async function onRequestGet({ params, env, request }) {
           enable_sidebar_ad,
           enable_inarticle_ads,
           status,
-          published_at,
+          COALESCE(first_published_at, published_at) AS published_at,
+          metadata_updated_at,
           updated_at
         FROM posts
         WHERE slug = ? AND status = 'published'
@@ -85,7 +91,7 @@ export async function onRequestGet({ params, env, request }) {
             WHERE status = 'published'
               AND TRIM(COALESCE(category, '')) = ?
               AND slug != ?
-            ORDER BY published_at DESC, updated_at DESC
+            ORDER BY COALESCE(first_published_at, published_at) DESC, updated_at DESC
             LIMIT 5
           `).bind(String(row.category).trim(), slug).all()).results || []
         : [];
@@ -94,7 +100,7 @@ export async function onRequestGet({ params, env, request }) {
         FROM posts
         WHERE status = 'published'
           AND slug != ?
-        ORDER BY COALESCE(view_count, 0) DESC, published_at DESC, updated_at DESC
+        ORDER BY COALESCE(view_count, 0) DESC, COALESCE(first_published_at, published_at) DESC, updated_at DESC
         LIMIT 5
       `).bind(slug).all()).results || [];
 
@@ -122,7 +128,7 @@ export async function onRequestGet({ params, env, request }) {
         titleText
       );
       const pageTitle = `${titleText} | ${siteName}`;
-      const ogImage = row.cover_image || `${origin}/assets/images/logo.png`;
+      const ogImage = absolutizeImageUrl(row.cover_image || `${origin}/assets/images/logo.png`, origin);
       const coverImageAltText = String(row.cover_image_alt || `${titleText} 대표 이미지`).trim();
 
       const publishedDate = formatDate(row.published_at);
@@ -191,8 +197,8 @@ export async function onRequestGet({ params, env, request }) {
           logo: {
             "@type": "ImageObject",
             url: `${origin}/assets/images/logo.png`,
-            width: 512,
-            height: 512
+            width: 520,
+            height: 520
           }
         },
         datePublished: publishedIso || row.published_at || "",
@@ -300,7 +306,7 @@ export async function onRequestGet({ params, env, request }) {
   <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
 
   <link rel="stylesheet" href="/assets/css/app.css?v=20260523v3" />
-  <link rel="stylesheet" href="/assets/css/components.css?v=20260603v1" />
+  <link rel="stylesheet" href="/assets/css/components.css?v=20260731v2" />
 
   ${jsonld(blogPostingJsonLd)}
   ${jsonld(breadcrumbJsonLd)}
@@ -353,6 +359,27 @@ export async function onRequestGet({ params, env, request }) {
   </main>
 
   ${adsenseRuntimeScript}
+  <script>
+    window.addEventListener('load', () => {
+      const encodedSlug = ${JSON.stringify(encodeURIComponent(slug)).replace(/</g, "\\u003c")};
+      const viewKey = 'wacky-post-view:' + encodedSlug;
+      const viewInterval = 6 * 60 * 60 * 1000;
+      try {
+        const lastViewedAt = Number(localStorage.getItem(viewKey) || 0);
+        if (Date.now() - lastViewedAt < viewInterval) return;
+      } catch (_) {}
+      fetch('/api/views/' + encodedSlug, {
+        method: 'POST',
+        credentials: 'same-origin',
+        keepalive: true,
+        headers: { 'content-type': 'application/json' },
+        body: '{}'
+      }).then((response) => {
+        if (!response.ok) return;
+        try { localStorage.setItem(viewKey, String(Date.now())); } catch (_) {}
+      }).catch(() => {});
+    }, { once: true });
+  </script>
   <script src="/assets/js/nav.js" defer></script>
 </body>
 </html>`;
@@ -363,7 +390,7 @@ export async function onRequestGet({ params, env, request }) {
         }
       });
 
-      res.headers.set("x-blog-cache-version", updatedAt);
+      res.headers.set("x-blog-cache-version", cacheVersion);
       return res;
     }
   });
@@ -750,7 +777,7 @@ function renderNotFound(slug) {
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
   <meta name="theme-color" content="#5B7CFF" />
   <link rel="stylesheet" href="/assets/css/app.css?v=20260523v3" />
-  <link rel="stylesheet" href="/assets/css/components.css?v=20260603v1" />
+  <link rel="stylesheet" href="/assets/css/components.css?v=20260731v2" />
 </head>
 <body>
   <main class="container">
@@ -797,6 +824,7 @@ async function getMobileCategoryRows(db) {
 
 function renderMobileCategoryLinks(items = []) {
   const links = (items || [])
+    .filter((item) => Number(item?.count || 0) > 0)
     .map((item) => String(item?.name || '').trim())
     .filter(Boolean)
     .map((name) => '<a class="topbar-categories__chip" href="' + categoryPath(name) + '">' + escapeHtml(name) + '</a>')

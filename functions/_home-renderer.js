@@ -1,10 +1,8 @@
-import { escapeHtml, jsonld, okHtml, edgeCache, getAdminSession } from "./_utils.js";
+import { escapeHtml, jsonld, okHtml, edgeCache, getAdminSession, ensurePostSeoColumns } from "./_utils.js";
 import { buildImageAttrs } from "../lib/image-utils.js";
 
 export const SITE_ORIGIN = "https://wacky-wiki.com";
 const SITE_NAME = "Wacky Wiki";
-const SITE_DESCRIPTION = "실용적인 생활 정보와 정리된 가이드를 제공하는 블로그";
-const AUTHOR_NAME = "W. Archiver";
 const PER_PAGE = 8;
 
 function clampInt(value, fallback, min, max) {
@@ -26,11 +24,13 @@ function postPath(slug = "") {
   return `/post/${encodeURIComponent(String(slug || ""))}`;
 }
 
-function withPage(path, page) {
-  const safePage = Number(page || 1);
-  if (safePage <= 1) return path;
-  const joiner = path.includes("?") ? "&" : "?";
-  return `${path}${joiner}page=${safePage}`;
+
+function buildArchivePath(path, { page = 1, tag = "", status = "published" } = {}) {
+  const url = new URL(path, SITE_ORIGIN);
+  if (normalizeText(tag)) url.searchParams.set("tag", normalizeText(tag));
+  if (status && status !== "published") url.searchParams.set("status", status);
+  if (Number(page) > 1) url.searchParams.set("page", String(page));
+  return `${url.pathname}${url.search}`;
 }
 
 function formatDate(value) {
@@ -49,14 +49,6 @@ function safeJson(data) {
   return JSON.stringify(data).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
 }
 
-function parseTagsJson(raw = "[]") {
-  try {
-    const parsed = JSON.parse(raw || "[]");
-    return Array.isArray(parsed) ? parsed.map((tag) => normalizeText(tag)).filter(Boolean) : [];
-  } catch (_) {
-    return [];
-  }
-}
 
 async function getAllCategoryRows(db) {
   try {
@@ -87,6 +79,7 @@ async function getAllCategoryRows(db) {
 }
 
 async function fetchHomeData({ db, request, category = "", tag = "", page = 1, status = "published" }) {
+  await ensurePostSeoColumns(db);
   const admin = await getAdminSession({ BLOG_DB: db }, request).catch(() => null);
   const requestedStatus = ["published", "draft", "all"].includes(status) ? status : "published";
   const safeStatus = admin ? requestedStatus : "published";
@@ -146,20 +139,21 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
         tags_json,
         status,
         view_count,
-        published_at,
+        COALESCE(first_published_at, published_at) AS published_at,
         updated_at
       FROM posts
       ${whereSql}
-      ORDER BY updated_at DESC, published_at DESC
+      ORDER BY updated_at DESC, COALESCE(first_published_at, published_at) DESC
       LIMIT ? OFFSET ?
     `).bind(...baseBind, PER_PAGE, offset).all(),
     db.prepare(`SELECT COUNT(*) AS total FROM posts ${whereSql}`).bind(...binds).first(),
     getAllCategoryRows(db),
     db.prepare(`
-      SELECT slug, title, view_count, updated_at, published_at
+      SELECT slug, title, view_count, updated_at,
+             COALESCE(first_published_at, published_at) AS published_at
       FROM posts
       ${whereSql}
-      ORDER BY COALESCE(view_count, 0) DESC, updated_at DESC, published_at DESC
+      ORDER BY COALESCE(view_count, 0) DESC, updated_at DESC, COALESCE(first_published_at, published_at) DESC
       LIMIT 10
     `).bind(...binds).all(),
     db.prepare(`
@@ -173,6 +167,7 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
 
   const total = Number(countRow?.total || 0);
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+  const invalidPage = safePage > totalPages && (total > 0 || safePage > 1);
   const statusMap = new Map((statusRows?.results || []).map((row) => [String(row.status || "published").trim().toLowerCase(), Number(row.count || 0)]));
 
   return {
@@ -189,7 +184,8 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
       total,
       total_pages: totalPages,
       has_more: safePage < totalPages,
-      next_page: safePage < totalPages ? safePage + 1 : null
+      next_page: safePage < totalPages ? safePage + 1 : null,
+      invalid_page: invalidPage
     },
     sidebar: {
       settings: {
@@ -206,7 +202,7 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
           count: Number(row.count || 0),
           updated_at: row.updated_at || ""
         }))
-        .filter((row) => row.name),
+        .filter((row) => row.name && row.count > 0),
       popular: (popularRows.results || []).map((row) => ({
         slug: row.slug,
         title: row.title,
@@ -299,6 +295,58 @@ function renderPopularList(items = []) {
   `).join("");
 }
 
+function renderPagination({ path, page, totalPages, tag = "", status = "published", hasMore = false }) {
+  if (totalPages <= 1) return "";
+  const previousUrl = page > 1
+    ? buildArchivePath(path, { page: page - 1, tag, status })
+    : "";
+  const nextUrl = hasMore
+    ? buildArchivePath(path, { page: page + 1, tag, status })
+    : "";
+
+  return `
+    <nav id="postsLoadMoreWrap" class="posts-pagination" aria-label="글 목록 페이지 이동">
+      <div class="posts-pagination__links">
+        ${previousUrl ? `<a class="btn posts-pagination__link" rel="prev" href="${escapeHtml(previousUrl)}">이전 페이지</a>` : `<span class="btn posts-pagination__link is-disabled" aria-disabled="true">이전 페이지</span>`}
+        <span id="postsPaginationCurrent" class="posts-pagination__current" aria-current="page">${Number(page)} / ${Number(totalPages)} 페이지</span>
+        ${nextUrl ? `<a id="postsNextPageLink" class="btn posts-pagination__link" rel="next" href="${escapeHtml(nextUrl)}">다음 페이지</a>` : `<span class="btn posts-pagination__link is-disabled" aria-disabled="true">다음 페이지</span>`}
+      </div>
+      ${nextUrl ? `<button id="postsLoadMoreBtn" class="btn btn--brand posts-load-more__btn" type="button" data-next-url="${escapeHtml(nextUrl)}">현재 화면에서 더보기</button>` : ""}
+    </nav>
+  `;
+}
+
+function renderArchiveNotFound({ title = "페이지를 찾을 수 없습니다", description = "요청한 글 목록 페이지가 존재하지 않습니다." } = {}) {
+  return `<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${escapeHtml(title)} | ${escapeHtml(SITE_NAME)}</title>
+  <meta name="description" content="${escapeHtml(description)}" />
+  <meta name="robots" content="noindex,follow" />
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260523v3" />
+  <link rel="stylesheet" href="/assets/css/components.css?v=20260731v2" />
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <h1 class="h1">${escapeHtml(title)}</h1>
+      <p class="p">${escapeHtml(description)}</p>
+      <a class="btn btn--brand" href="/">블로그 홈으로 이동</a>
+    </section>
+  </main>
+</body>
+</html>`;
+}
+
+export function archiveNotFoundResponse(options = {}) {
+  return okHtml(renderArchiveNotFound(options), {
+    status: 404,
+    headers: { "cache-control": "public, max-age=60, s-maxage=60" }
+  });
+}
+
 function topbar(mobileCategoryHtml = "") {
   return `<header class="topbar topbar--editorial">
     <div class="topbar__inner topbar__inner--editorial">
@@ -375,40 +423,79 @@ export async function renderHomePage({ env, request, category = "" }) {
     status
   });
 
+  if (data.pagination.invalid_page) {
+    return archiveNotFoundResponse({
+      title: "존재하지 않는 목록 페이지입니다",
+      description: "요청한 페이지 번호가 현재 글 목록 범위를 벗어났습니다."
+    });
+  }
+
+  if (tag && data.pagination.total === 0) {
+    return archiveNotFoundResponse({
+      title: "태그 글을 찾을 수 없습니다",
+      description: `‘#${tag}’ 태그가 포함된 공개 글이 없습니다.`
+    });
+  }
+
   const isDefaultHome = !activeCategory && !tag && data.filters.status === "published";
   const path = activeCategory ? categoryPath(activeCategory) : "/";
-  const canonicalPath = withPage(path, page);
+  const canonicalPath = buildArchivePath(path, {
+    page,
+    tag,
+    status: data.filters.status
+  });
   const canonicalUrl = new URL(canonicalPath, SITE_ORIGIN).toString();
+  const pageSuffix = page > 1 ? ` - ${page}페이지` : "";
   const title = activeCategory
-    ? `${activeCategory} 글 목록 | ${SITE_NAME}`
+    ? `${activeCategory} 글 목록${pageSuffix} | ${SITE_NAME}`
     : tag
-      ? `#${tag} 글 목록 | ${SITE_NAME}`
-      : `${SITE_NAME} | 생활 꿀팁 블로그`;
-  const description = activeCategory
+      ? `#${tag} 글 목록${pageSuffix} | ${SITE_NAME}`
+      : `${SITE_NAME} 생활 꿀팁 블로그${pageSuffix}`;
+  const baseDescription = activeCategory
     ? `${activeCategory} 카테고리에 발행된 Wacky Wiki 글을 모아 확인할 수 있습니다.`
     : tag
       ? `#${tag} 태그가 포함된 Wacky Wiki 글을 모아 확인할 수 있습니다.`
       : "실생활에 바로 적용할 수 있는 생활 꿀팁과 정리된 가이드를 전하는 블로그입니다.";
+  const description = page > 1 ? `${baseDescription} 현재 ${page}페이지입니다.` : baseDescription;
+  const pageHeading = activeCategory
+    ? `${activeCategory} 글 모음${pageSuffix}`
+    : tag
+      ? `#${tag} 관련 글${pageSuffix}`
+      : `생활에 바로 쓰는 제품 정보와 실용 가이드${pageSuffix}`;
+  const shouldIndex = data.filters.status === "published" && !tag && (!activeCategory || data.pagination.total > 0);
+  const robotsValue = shouldIndex
+    ? "index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"
+    : data.filters.status === "published"
+      ? "noindex,follow,max-image-preview:large"
+      : "noindex,nofollow";
   const mobileCategoryHtml = renderChipCategories(data.sidebar.categories);
   const heroCategoryHtml = renderCategoryNav(data.sidebar.categories, activeCategory);
   const postsHtml = data.items.length
     ? data.items.map((item, index) => renderPostCard(item, index, page)).join("")
     : "";
   const emptyText = renderEmptyText(data.filters);
-  const loadMoreHidden = data.pagination.has_more ? "" : " hidden";
   const adHidden = data.sidebar.settings.index_sidebar_ad_enabled ? "" : " hidden";
+  const paginationHtml = renderPagination({
+    path,
+    page,
+    totalPages: data.pagination.total_pages,
+    tag,
+    status: data.filters.status,
+    hasMore: data.pagination.has_more
+  });
+  const previousUrl = page > 1
+    ? new URL(buildArchivePath(path, { page: page - 1, tag, status: data.filters.status }), SITE_ORIGIN).toString()
+    : "";
+  const nextUrl = data.pagination.has_more
+    ? new URL(buildArchivePath(path, { page: page + 1, tag, status: data.filters.status }), SITE_ORIGIN).toString()
+    : "";
 
   const websiteJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: SITE_NAME,
     url: `${SITE_ORIGIN}/`,
-    inLanguage: "ko-KR",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: `${SITE_ORIGIN}/?q={search_term_string}`,
-      "query-input": "required name=search_term_string"
-    }
+    inLanguage: "ko-KR"
   };
 
   const collectionJsonLd = {
@@ -445,24 +532,33 @@ export async function renderHomePage({ env, request, category = "" }) {
      crossorigin="anonymous"></script>
   <title>${escapeHtml(title)}</title>
   <meta name="description" content="${escapeHtml(truncateText(description, 155))}" />
-  <meta name="robots" content="${data.filters.status === "published" ? "index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" : "noindex,nofollow"}" />
+  <meta name="robots" content="${robotsValue}" />
   <link rel="alternate" type="application/rss+xml" title="Wacky Wiki RSS" href="${SITE_ORIGIN}/rss.xml" />
   <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />
+  ${previousUrl ? `<link rel="prev" href="${escapeHtml(previousUrl)}" />` : ""}
+  ${nextUrl ? `<link rel="next" href="${escapeHtml(nextUrl)}" />` : ""}
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="${escapeHtml(SITE_NAME)}" />
   <meta property="og:title" content="${escapeHtml(title)}" />
   <meta property="og:description" content="${escapeHtml(description)}" />
   <meta property="og:url" content="${escapeHtml(canonicalUrl)}" />
   <meta property="og:image" content="${SITE_ORIGIN}/assets/images/logo.png" />
+  <meta property="og:image:width" content="520" />
+  <meta property="og:image:height" content="520" />
+  <meta property="og:image:alt" content="Wacky Wiki 로고" />
   <meta property="og:locale" content="ko_KR" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="${escapeHtml(title)}" />
+  <meta name="twitter:description" content="${escapeHtml(description)}" />
+  <meta name="twitter:image" content="${SITE_ORIGIN}/assets/images/logo.png" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/favicon-192x192.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
   <meta name="theme-color" content="#5B7CFF" />
   <link rel="stylesheet" href="/assets/css/app.css?v=20260523v3" />
-  <link rel="preload" href="/assets/css/components.css?v=20260603v2" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-  <noscript><link rel="stylesheet" href="/assets/css/components.css?v=20260603v2" /></noscript>
+  <link rel="preload" href="/assets/css/components.css?v=20260731v2" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="/assets/css/components.css?v=20260731v2" /></noscript>
   ${jsonld(websiteJsonLd)}
   ${jsonld(collectionJsonLd)}
 </head>
@@ -472,6 +568,8 @@ export async function renderHomePage({ env, request, category = "" }) {
   <main class="container posts-page">
     <section id="postsHomeHero" class="posts-home-hero ${isDefaultHome ? "posts-home-hero--index" : "posts-home-hero--category"}" aria-label="카테고리 바로가기">
       <div class="posts-home-hero__content posts-home-hero__content--editorial">
+        <h1 id="postsPageTitle" class="posts-home-hero__title ${isDefaultHome ? "posts-home-hero__title--editorial" : ""}">${escapeHtml(pageHeading)}</h1>
+        <p id="postsPageDescription" class="posts-home-hero__desc ${isDefaultHome ? "posts-home-hero__desc--editorial" : ""}">${escapeHtml(description)}</p>
         <div class="posts-home-hero__category-wrap" aria-label="카테고리 바로가기">
           <div id="heroCategoryBar" class="topbar-categories__list topbar-categories__list--hero">${heroCategoryHtml}</div>
         </div>
@@ -485,9 +583,7 @@ export async function renderHomePage({ env, request, category = "" }) {
         <div id="postsEmpty" class="small"${data.items.length ? " hidden" : ""}>${escapeHtml(emptyText)}</div>
         <div id="postsList" class="grid post-list-grid post-list-grid--rows">${postsHtml}</div>
 
-        <div id="postsLoadMoreWrap" class="posts-load-more"${loadMoreHidden}>
-          <button id="postsLoadMoreBtn" class="btn btn--brand posts-load-more__btn" type="button">더보기</button>
-        </div>
+        ${paginationHtml}
       </section>
 
       <aside class="post-side posts-sidebar posts-sidebar--simple" aria-label="글 목록 사이드바">
@@ -509,7 +605,7 @@ export async function renderHomePage({ env, request, category = "" }) {
   <script>window.__WACKY_INITIAL_POSTS__=${safeJson(data)};</script>
   <script src="/assets/js/nav.js?v=20260428v11" defer></script>
   <script src="/assets/js/site-search.js?v=20260428v10" defer></script>
-  <script src="/assets/js/posts.js?v=20260603v2" defer></script>
+  <script src="/assets/js/posts.js?v=20260731v2" defer></script>
 </body>
 </html>`;
 

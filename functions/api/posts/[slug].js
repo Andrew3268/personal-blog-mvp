@@ -1,9 +1,18 @@
-import { okJson, requireAdmin } from "../../_utils.js";
+import { okJson, requireAdmin, ensurePostSeoColumns } from "../../_utils.js";
+
+function safeDecodePathParam(value = "") {
+  try {
+    return decodeURIComponent(String(value || ""));
+  } catch {
+    return "";
+  }
+}
 
 export async function onRequestGet({ env, params, request }) {
+  await ensurePostSeoColumns(env.BLOG_DB);
   const admin = await requireAdmin(env, request);
   if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
-  const slug = decodeURIComponent(String(params.slug || ""));
+  const slug = safeDecodePathParam(params.slug);
   if (!slug) {
     return okJson({ message: "slug가 필요합니다." }, { status: 400 });
   }
@@ -25,7 +34,9 @@ export async function onRequestGet({ env, params, request }) {
       content_md,
       faq_md,
       status,
-      published_at,
+      COALESCE(first_published_at, published_at) AS published_at,
+      first_published_at,
+      metadata_updated_at,
       updated_at
     FROM posts
     WHERE slug = ?
@@ -39,9 +50,10 @@ export async function onRequestGet({ env, params, request }) {
 }
 
 export async function onRequestPut({ env, params, request }) {
+  await ensurePostSeoColumns(env.BLOG_DB);
   const admin = await requireAdmin(env, request);
   if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
-  const slug = decodeURIComponent(String(params.slug || ""));
+  const slug = safeDecodePathParam(params.slug);
   if (!slug) {
     return okJson({ message: "slug가 필요합니다." }, { status: 400 });
   }
@@ -63,7 +75,8 @@ export async function onRequestPut({ env, params, request }) {
   const faqMd = String(body.faq_md || "").trim();
   const enableSidebarAd = body.enable_sidebar_ad === false ? 0 : 1;
   const enableInarticleAds = body.enable_inarticle_ads === false ? 0 : 1;
-  const status = String(body.status || "published").trim() || "published";
+  const requestedStatus = String(body.status || "published").trim().toLowerCase();
+  const status = requestedStatus === "draft" ? "draft" : "published";
   const tags = Array.isArray(body.tags) ? body.tags : [];
 
   if (!title || !contentMd) {
@@ -74,7 +87,7 @@ export async function onRequestPut({ env, params, request }) {
   }
 
   const current = await env.BLOG_DB
-    .prepare(`SELECT published_at FROM posts WHERE slug = ?`)
+    .prepare(`SELECT status, published_at, first_published_at FROM posts WHERE slug = ?`)
     .bind(slug)
     .first();
 
@@ -84,6 +97,9 @@ export async function onRequestPut({ env, params, request }) {
 
   const now = new Date().toISOString();
   const publishedAt = String(current.published_at || now);
+  const firstPublishedAt = status === "published"
+    ? String(current.first_published_at || (current.status === "published" ? current.published_at : now) || now)
+    : (current.first_published_at || null);
 
   await env.BLOG_DB.prepare(`
     UPDATE posts
@@ -103,6 +119,8 @@ export async function onRequestPut({ env, params, request }) {
       enable_inarticle_ads = ?,
       status = ?,
       published_at = ?,
+      first_published_at = ?,
+      metadata_updated_at = ?,
       updated_at = ?
     WHERE slug = ?
   `).bind(
@@ -121,6 +139,8 @@ export async function onRequestPut({ env, params, request }) {
     enableInarticleAds,
     status,
     publishedAt,
+    firstPublishedAt,
+    now,
     now,
     slug
   ).run();
@@ -131,7 +151,7 @@ export async function onRequestPut({ env, params, request }) {
 export async function onRequestDelete({ env, params, request }) {
   const admin = await requireAdmin(env, request);
   if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
-  const slug = decodeURIComponent(String(params.slug || ""));
+  const slug = safeDecodePathParam(params.slug);
   if (!slug) {
     return okJson({ message: "slug가 필요합니다." }, { status: 400 });
   }

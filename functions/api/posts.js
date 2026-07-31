@@ -1,4 +1,4 @@
-import { okJson, getAdminSession, requireAdmin } from "../_utils.js";
+import { okJson, getAdminSession, requireAdmin, ensurePostSeoColumns } from "../_utils.js";
 
 function clampInt(value, fallback, min, max) {
   const num = Number.parseInt(String(value || ""), 10);
@@ -7,6 +7,7 @@ function clampInt(value, fallback, min, max) {
 }
 
 export async function onRequestGet({ env, request }) {
+  await ensurePostSeoColumns(env.BLOG_DB);
   const url = new URL(request.url);
   const status = String(url.searchParams.get("status") || "published").trim().toLowerCase();
   const category = String(url.searchParams.get("category") || "").trim();
@@ -89,11 +90,12 @@ export async function onRequestGet({ env, request }) {
       tags_json,
       status,
       view_count,
-      published_at,
+      COALESCE(first_published_at, published_at) AS published_at,
+      metadata_updated_at,
       updated_at
     FROM posts
     ${whereSql}
-    ORDER BY updated_at DESC, published_at DESC
+    ORDER BY updated_at DESC, COALESCE(first_published_at, published_at) DESC
     LIMIT ? OFFSET ?
   `;
 
@@ -126,10 +128,11 @@ export async function onRequestGet({ env, request }) {
       LIMIT 50
     `).all(),
     env.BLOG_DB.prepare(`
-      SELECT slug, title, view_count, updated_at, published_at
+      SELECT slug, title, view_count, updated_at,
+             COALESCE(first_published_at, published_at) AS published_at
       FROM posts
       ${whereSql}
-      ORDER BY view_count DESC, updated_at DESC, published_at DESC
+      ORDER BY view_count DESC, updated_at DESC, COALESCE(first_published_at, published_at) DESC
       LIMIT 10
     `).bind(...binds).all(),
     env.BLOG_DB.prepare(`
@@ -143,10 +146,16 @@ export async function onRequestGet({ env, request }) {
 
   const total = Number(countRow?.total || 0);
   const totalPages = Math.max(1, Math.ceil(total / perPage));
-  const statusMap = new Map((statusRows?.results || []).map((row) => [String(row.status || "published").trim().toLowerCase(), Number(row.count || 0)]));
   const publicCacheHeaders = !admin && safeStatus === "published"
     ? { "cache-control": "public, max-age=30, s-maxage=60" }
     : { "cache-control": "private, no-store" };
+  if (page > totalPages && (total > 0 || page > 1)) {
+    return okJson({ message: "존재하지 않는 목록 페이지입니다." }, {
+      status: 404,
+      headers: publicCacheHeaders
+    });
+  }
+  const statusMap = new Map((statusRows?.results || []).map((row) => [String(row.status || "published").trim().toLowerCase(), Number(row.count || 0)]));
 
   return okJson({
     items: itemsRows.results || [],
@@ -189,6 +198,7 @@ export async function onRequestGet({ env, request }) {
 }
 
 export async function onRequestPost({ env, request }) {
+  await ensurePostSeoColumns(env.BLOG_DB);
   const admin = await requireAdmin(env, request);
   if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
   const body = await request.json().catch(() => null);
@@ -209,7 +219,8 @@ export async function onRequestPost({ env, request }) {
   const faqMd = String(body.faq_md || "").trim();
   const enableSidebarAd = body.enable_sidebar_ad === false ? 0 : 1;
   const enableInarticleAds = body.enable_inarticle_ads === false ? 0 : 1;
-  const status = String(body.status || "published").trim() || "published";
+  const requestedStatus = String(body.status || "published").trim().toLowerCase();
+  const status = requestedStatus === "draft" ? "draft" : "published";
   const tags = Array.isArray(body.tags) ? body.tags : [];
 
   if (!slug || !title || !contentMd) {
@@ -220,6 +231,15 @@ export async function onRequestPost({ env, request }) {
   }
 
   const now = new Date().toISOString();
+  const current = await env.BLOG_DB.prepare(`
+    SELECT status, published_at, first_published_at
+    FROM posts
+    WHERE slug = ?
+  `).bind(slug).first();
+  const legacyPublishedAt = String(current?.published_at || now);
+  const firstPublishedAt = status === "published"
+    ? String(current?.first_published_at || (current?.status === "published" ? current?.published_at : now) || now)
+    : (current?.first_published_at || null);
 
   await env.BLOG_DB.prepare(`
     INSERT INTO posts (
@@ -239,8 +259,10 @@ export async function onRequestPost({ env, request }) {
       enable_inarticle_ads,
       status,
       published_at,
+      first_published_at,
+      metadata_updated_at,
       updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(slug) DO UPDATE SET
       title = excluded.title,
       category = excluded.category,
@@ -257,6 +279,8 @@ export async function onRequestPost({ env, request }) {
       enable_inarticle_ads = excluded.enable_inarticle_ads,
       status = excluded.status,
       published_at = excluded.published_at,
+      first_published_at = excluded.first_published_at,
+      metadata_updated_at = excluded.metadata_updated_at,
       updated_at = excluded.updated_at
   `).bind(
     slug,
@@ -274,6 +298,8 @@ export async function onRequestPost({ env, request }) {
     enableSidebarAd,
     enableInarticleAds,
     status,
+    legacyPublishedAt,
+    firstPublishedAt,
     now,
     now
   ).run();

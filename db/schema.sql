@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS posts (
   enable_inarticle_ads INTEGER DEFAULT 1,
   status TEXT DEFAULT 'published',
   published_at TEXT NOT NULL,
+  first_published_at TEXT DEFAULT NULL,
+  metadata_updated_at TEXT DEFAULT NULL,
   updated_at TEXT NOT NULL
 );
 
@@ -32,6 +34,12 @@ ON posts(status, category, published_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_posts_status_view_count
 ON posts(status, view_count DESC, published_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_posts_first_published_at
+ON posts(first_published_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_posts_metadata_updated_at
+ON posts(metadata_updated_at DESC);
 
 
 CREATE TABLE IF NOT EXISTS categories (
@@ -60,6 +68,14 @@ CREATE TABLE IF NOT EXISTS admin_sessions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_admin_sessions_admin_id ON admin_sessions(admin_id, expires_at DESC);
+
+CREATE TABLE IF NOT EXISTS admin_login_attempts (
+  attempt_key TEXT PRIMARY KEY,
+  failed_count INTEGER NOT NULL DEFAULT 0,
+  window_started_at TEXT NOT NULL,
+  locked_until TEXT,
+  updated_at TEXT NOT NULL
+);
 
 
 CREATE TABLE IF NOT EXISTS site_settings (

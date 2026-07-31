@@ -1,9 +1,12 @@
+import { ensurePostSeoColumns } from "./_utils.js";
+
 const SITE_ORIGIN = "https://wacky-wiki.com";
 const SITE_TITLE = "Wacky Wiki";
 const SITE_DESCRIPTION = "실용적인 생활 정보와 정리된 가이드를 제공하는 블로그";
 const RSS_PATH = "/rss.xml";
 
 export async function onRequestGet({ env }) {
+  await ensurePostSeoColumns(env.BLOG_DB);
   const origin = SITE_ORIGIN;
   const feedUrl = `${origin}${RSS_PATH}`;
 
@@ -16,11 +19,11 @@ export async function onRequestGet({ env }) {
       summary,
       cover_image,
       tags_json,
-      published_at,
+      COALESCE(first_published_at, published_at) AS published_at,
       updated_at
     FROM posts
     WHERE status = 'published'
-    ORDER BY published_at DESC, updated_at DESC
+    ORDER BY COALESCE(first_published_at, published_at) DESC, updated_at DESC
     LIMIT 50
   `).all();
 

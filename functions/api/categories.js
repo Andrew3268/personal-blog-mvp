@@ -1,4 +1,4 @@
-import { okJson, requireAdmin } from "../_utils.js";
+import { okJson, requireAdmin, getAdminSession, ensurePostSeoColumns } from "../_utils.js";
 
 const DEFAULT_CATEGORIES = [
   "생활 꿀팁",
@@ -51,14 +51,36 @@ async function getCategories(db) {
   return rows.results || [];
 }
 
-export async function onRequestGet({ env }) {
+export async function onRequestGet({ env, request }) {
+  await ensurePostSeoColumns(env.BLOG_DB);
+  await ensureCategoriesTable(env.BLOG_DB);
+  const admin = await getAdminSession(env, request).catch(() => null);
+  const rows = await env.BLOG_DB.prepare(`
+    SELECT
+      c.name,
+      c.sort_order,
+      c.created_at,
+      c.updated_at,
+      COUNT(p.slug) AS count
+    FROM categories c
+    LEFT JOIN posts p
+      ON TRIM(COALESCE(p.category, '')) = TRIM(c.name)
+     AND p.status = 'published'
+    GROUP BY c.name, c.sort_order, c.created_at, c.updated_at
+    ${admin ? "" : "HAVING COUNT(p.slug) > 0"}
+    ORDER BY c.sort_order ASC, c.name COLLATE NOCASE ASC
+  `).all();
   return okJson(
-    { items: await getCategories(env.BLOG_DB) },
-    { headers: { "cache-control": "public, max-age=60, s-maxage=3600" } }
+    { items: rows.results || [] },
+    { headers: admin
+      ? { "cache-control": "private, no-store" }
+      : { "cache-control": "public, max-age=60, s-maxage=3600" }
+    }
   );
 }
 
 export async function onRequestPost({ env, request }) {
+  await ensurePostSeoColumns(env.BLOG_DB);
   const admin = await requireAdmin(env, request);
   if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
   await ensureCategoriesTable(env.BLOG_DB);
@@ -80,6 +102,7 @@ export async function onRequestPost({ env, request }) {
 }
 
 export async function onRequestPut({ env, request }) {
+  await ensurePostSeoColumns(env.BLOG_DB);
   const admin = await requireAdmin(env, request);
   if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
   await ensureCategoriesTable(env.BLOG_DB);
@@ -109,7 +132,7 @@ export async function onRequestPut({ env, request }) {
   if (currentName !== newName) {
     await env.BLOG_DB.prepare(`
       UPDATE posts
-      SET category = ?, updated_at = ?
+      SET category = ?, metadata_updated_at = ?
       WHERE TRIM(COALESCE(category, '')) = ?
     `).bind(newName, now, currentName).run();
   }
@@ -118,6 +141,7 @@ export async function onRequestPut({ env, request }) {
 }
 
 export async function onRequestDelete({ env, request }) {
+  await ensurePostSeoColumns(env.BLOG_DB);
   const admin = await requireAdmin(env, request);
   if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
   await ensureCategoriesTable(env.BLOG_DB);
@@ -128,11 +152,11 @@ export async function onRequestDelete({ env, request }) {
   const current = await env.BLOG_DB.prepare(`SELECT name FROM categories WHERE name = ?`).bind(name).first();
   if (!current) return okJson({ message: "삭제할 카테고리를 찾지 못했습니다." }, { status: 404 });
 
-  const now = new Date().toISOString();
   await env.BLOG_DB.prepare(`DELETE FROM categories WHERE name = ?`).bind(name).run();
+  const now = new Date().toISOString();
   await env.BLOG_DB.prepare(`
     UPDATE posts
-    SET category = '', updated_at = ?
+    SET category = '', metadata_updated_at = ?
     WHERE TRIM(COALESCE(category, '')) = ?
   `).bind(now, name).run();
 

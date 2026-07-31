@@ -1,8 +1,66 @@
+import { getAdminSession, okJson } from "./_utils.js";
+
 const SITE_ORIGIN = "https://wacky-wiki.com";
+const PROTECTED_ADMIN_PATHS = new Set([
+  "/admin/dashboard",
+  "/admin/dashboard.html",
+  "/add",
+  "/add.html",
+  "/edit",
+  "/edit.html",
+]);
+const CANONICAL_STATIC_PATHS = new Map([
+  ["/index.html", "/"],
+  ["/about/index.html", "/about/"],
+  ["/privacy-policy/index.html", "/privacy-policy/"],
+  ["/admin/index.html", "/admin/"],
+]);
 
 function normalizeCategoryPath(name = "") {
   const safeName = String(name || "").replace(/\s+/g, " ").trim();
   return safeName ? `/category/${encodeURIComponent(safeName)}/` : "/";
+}
+
+function isSameOriginMutation(request, url) {
+  if (["GET", "HEAD", "OPTIONS"].includes(request.method.toUpperCase())) return true;
+  const origin = request.headers.get("origin");
+  if (origin) {
+    try {
+      return new URL(origin).origin === url.origin;
+    } catch {
+      return false;
+    }
+  }
+  const fetchSite = String(request.headers.get("sec-fetch-site") || "").toLowerCase();
+  return !fetchSite || fetchSite === "same-origin" || fetchSite === "same-site" || fetchSite === "none";
+}
+
+function applyResponseHeaders(response, pathname) {
+  const headers = new Headers(response.headers);
+  headers.set("x-content-type-options", "nosniff");
+  headers.set("referrer-policy", "strict-origin-when-cross-origin");
+  headers.set("permissions-policy", "camera=(), microphone=(), geolocation=(), payment=()");
+  headers.set("x-frame-options", "SAMEORIGIN");
+  headers.set("content-security-policy", "frame-ancestors 'self'");
+
+  if (pathname.startsWith("/api/")) {
+    headers.set("x-robots-tag", "noindex, nofollow");
+  }
+  if (response.status === 404) {
+    headers.set("x-robots-tag", "noindex, follow");
+  }
+  if (pathname === "/admin/" || pathname === "/admin/index.html" || PROTECTED_ADMIN_PATHS.has(pathname)) {
+    headers.set("x-robots-tag", "noindex, nofollow");
+  }
+  if (pathname.startsWith("/api/admin/")) {
+    headers.set("cache-control", "private, no-store");
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }
 
 export async function onRequest(context) {
@@ -11,6 +69,22 @@ export async function onRequest(context) {
 
   if (host === "www.wacky-wiki.com" || host.endsWith(".pages.dev")) {
     const redirectUrl = new URL(url.pathname + url.search, SITE_ORIGIN);
+    return Response.redirect(redirectUrl.toString(), 301);
+  }
+
+  const canonicalStaticPath = CANONICAL_STATIC_PATHS.get(url.pathname);
+  if (canonicalStaticPath) {
+    const redirectUrl = new URL(canonicalStaticPath + url.search, url.origin);
+    return Response.redirect(redirectUrl.toString(), 301);
+  }
+
+  if (url.pathname.startsWith("/category/") && !url.pathname.endsWith("/")) {
+    const redirectUrl = new URL(`${url.pathname}/${url.search}`, url.origin);
+    return Response.redirect(redirectUrl.toString(), 301);
+  }
+
+  if (url.pathname.startsWith("/post/") && url.pathname.length > "/post/".length && url.pathname.endsWith("/")) {
+    const redirectUrl = new URL(`${url.pathname.replace(/\/+$/, "")}${url.search}`, url.origin);
     return Response.redirect(redirectUrl.toString(), 301);
   }
 
@@ -26,5 +100,43 @@ export async function onRequest(context) {
     }
   }
 
-  return context.next();
+  if (url.pathname === "/" || url.pathname.startsWith("/category/")) {
+    const rawPage = url.searchParams.get("page");
+    if (rawPage !== null) {
+      const parsedPage = Number.parseInt(rawPage, 10);
+      const normalizedPage = Number.isFinite(parsedPage) && parsedPage > 1 ? String(parsedPage) : "";
+      if (rawPage !== normalizedPage) {
+        const redirectUrl = new URL(url.toString());
+        if (normalizedPage) redirectUrl.searchParams.set("page", normalizedPage);
+        else redirectUrl.searchParams.delete("page");
+        return Response.redirect(redirectUrl.toString(), 301);
+      }
+    }
+    if (url.searchParams.get("status") === "published") {
+      const redirectUrl = new URL(url.toString());
+      redirectUrl.searchParams.delete("status");
+      return Response.redirect(redirectUrl.toString(), 301);
+    }
+    if (url.searchParams.has("tag") && !String(url.searchParams.get("tag") || "").trim()) {
+      const redirectUrl = new URL(url.toString());
+      redirectUrl.searchParams.delete("tag");
+      return Response.redirect(redirectUrl.toString(), 301);
+    }
+  }
+
+  if (url.pathname.startsWith("/api/") && !isSameOriginMutation(context.request, url)) {
+    return applyResponseHeaders(okJson({ message: "허용되지 않은 요청 출처입니다." }, { status: 403 }), url.pathname);
+  }
+
+  if (PROTECTED_ADMIN_PATHS.has(url.pathname)) {
+    const admin = await getAdminSession(context.env, context.request).catch(() => null);
+    if (!admin) {
+      const loginUrl = new URL("/admin/", url.origin);
+      loginUrl.searchParams.set("next", url.pathname + url.search);
+      return Response.redirect(loginUrl.toString(), 302);
+    }
+  }
+
+  const response = await context.next();
+  return applyResponseHeaders(response, url.pathname);
 }

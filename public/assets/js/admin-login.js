@@ -8,16 +8,23 @@ function setMode(mode) {
   const desc = document.getElementById('adminAuthDesc');
   const button = document.getElementById('adminAuthSubmit');
   const password = document.getElementById('adminPassword');
+  const setupTokenField = document.getElementById('adminSetupTokenField');
+  const setupToken = document.getElementById('adminSetupToken');
   if (mode === 'setup') {
     title.textContent = '관리자 계정 만들기';
     desc.textContent = '최초 1회만 관리자 이메일과 비밀번호를 만들 수 있습니다. 이 계정이 유일한 관리자 계정이 됩니다.';
     button.textContent = '관리자 계정 생성';
     password.autocomplete = 'new-password';
+    setupTokenField.hidden = false;
+    setupToken.required = true;
   } else {
     title.textContent = '관리자 로그인';
     desc.textContent = '이 페이지에서는 관리자 계정만 로그인할 수 있습니다. 일반 회원가입은 제공하지 않습니다.';
     button.textContent = '로그인';
     password.autocomplete = 'current-password';
+    setupTokenField.hidden = true;
+    setupToken.required = false;
+    setupToken.value = '';
   }
   document.body.dataset.adminMode = mode;
 }
@@ -37,12 +44,16 @@ async function submitAuth(event) {
   const email = document.getElementById('adminEmail').value.trim();
   const password = document.getElementById('adminPassword').value;
   const mode = document.body.dataset.adminMode || 'login';
+  const setupToken = document.getElementById('adminSetupToken')?.value.trim() || '';
   const endpoint = mode === 'setup' ? '/api/admin/setup' : '/api/admin/login';
   statusEl.textContent = mode === 'setup' ? '관리자 계정 생성 중…' : '로그인 중…';
 
   const res = await fetch(endpoint, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: {
+      'content-type': 'application/json',
+      ...(mode === 'setup' ? { 'x-admin-setup-token': setupToken } : {})
+    },
     credentials: 'same-origin',
     body: JSON.stringify({ email, password })
   });

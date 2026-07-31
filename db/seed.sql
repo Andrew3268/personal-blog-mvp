@@ -1,5 +1,5 @@
 INSERT OR REPLACE INTO posts (
-  slug, title, category, summary, cover_image, template_name, tags_json, content_md, status, published_at, updated_at
+  slug, title, category, summary, cover_image, template_name, tags_json, content_md, status, published_at, first_published_at, metadata_updated_at, updated_at
 ) VALUES (
   'expired-shampoo-bottle-reuse',
   '유통기한 지난 샴푸통, 버리면 손해입니다',
@@ -35,6 +35,8 @@ INSERT OR REPLACE INTO posts (
 
 무조건 새 세제를 꺼내기보다, 집에 이미 있는 것을 한 번 더 활용하면 정리도 쉬워지고 버리는 양도 줄일 수 있습니다.',
   'published',
+  '2026-03-25T09:00:00.000Z',
+  '2026-03-25T09:00:00.000Z',
   '2026-03-25T09:00:00.000Z',
   '2026-03-25T09:00:00.000Z'
 );

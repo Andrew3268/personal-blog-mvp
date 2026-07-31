@@ -1,3 +1,5 @@
+import { ensurePostSeoColumns } from "./_utils.js";
+
 const SITE_ORIGIN = "https://wacky-wiki.com";
 
 function escapeXml(value = "") {
@@ -26,6 +28,7 @@ function renderUrl(loc, lastmod = "") {
 }
 
 export async function onRequestGet({ env }) {
+  await ensurePostSeoColumns(env.BLOG_DB);
   const origin = SITE_ORIGIN;
   const [postRows, categoryRows] = await Promise.all([
     env.BLOG_DB.prepare(`
@@ -33,7 +36,6 @@ export async function onRequestGet({ env }) {
       FROM posts
       WHERE status = 'published'
       ORDER BY updated_at DESC
-      LIMIT 5000
     `).all(),
     env.BLOG_DB.prepare(`
       SELECT TRIM(COALESCE(category, '')) AS name, MAX(updated_at) AS updated_at
@@ -42,7 +44,6 @@ export async function onRequestGet({ env }) {
         AND TRIM(COALESCE(category, '')) != ''
       GROUP BY TRIM(COALESCE(category, ''))
       ORDER BY name COLLATE NOCASE ASC
-      LIMIT 500
     `).all()
   ]);
 

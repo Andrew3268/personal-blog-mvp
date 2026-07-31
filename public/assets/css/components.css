@@ -1490,3 +1490,12 @@ body.search-open::before{display:none !important;}
     font-size:20px;
   }
 }
+
+/* SEO 친화적 페이지네이션: 실제 href 링크를 제공하면서 기존 더보기 UX를 유지합니다. */
+.posts-pagination{display:grid;gap:14px;justify-items:center;margin-top:28px}
+.posts-pagination__links{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+.posts-pagination__link.is-disabled{opacity:.45;pointer-events:none}
+.posts-pagination__current{font-size:14px;color:#667085;min-width:92px;text-align:center}
+.posts-home-hero__content--editorial{display:grid;gap:10px}
+.posts-home-hero__category-wrap{margin-top:6px}
+@media (max-width:720px){.posts-pagination__links{gap:8px}.posts-pagination__link{padding-left:14px;padding-right:14px}.posts-pagination__current{order:-1;width:100%}}

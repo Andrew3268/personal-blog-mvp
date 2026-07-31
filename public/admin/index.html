@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
   <meta name="theme-color" content="#5B7CFF" />
   <link rel="stylesheet" href="/assets/css/app.css?v=20260523v3" />
-  <link rel="stylesheet" href="/assets/css/components.css?v=20260603v1" />
+  <link rel="stylesheet" href="/assets/css/components.css?v=20260731v2" />
 </head>
 <body>
   <header class="topbar topbar--editorial">
@@ -67,6 +67,11 @@
         <div>
           <div class="label-row"><label class="small" for="adminPassword">비밀번호</label></div>
           <input class="input" id="adminPassword" type="password" autocomplete="current-password" minlength="8" required />
+        </div>
+        <div id="adminSetupTokenField" hidden>
+          <div class="label-row"><label class="small" for="adminSetupToken">초기 설정 토큰</label></div>
+          <input class="input" id="adminSetupToken" type="password" autocomplete="off" />
+          <p class="small">Cloudflare 환경변수 <code>ADMIN_SETUP_TOKEN</code>에 등록한 값과 동일하게 입력하세요.</p>
         </div>
         <button id="adminAuthSubmit" class="btn btn--brand" type="submit">로그인</button>
         <div id="adminAuthStatus" class="small"></div>

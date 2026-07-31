@@ -81,19 +81,33 @@ function encodeImageBase64Url(value = "") {
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
-function buildImageProxyUrl(src = "") {
+function addProxyTransformParams(urlValue, options = {}) {
+  if (!urlValue || !options || !Object.keys(options).length) return urlValue;
+  try {
+    const url = new URL(urlValue, window.location.origin);
+    const width = Math.max(0, Math.min(2400, Number.parseInt(options.width, 10) || 0));
+    const quality = Math.max(40, Math.min(95, Number.parseInt(options.quality, 10) || 82));
+    const allowedFits = new Set(["scale-down", "contain", "cover", "crop", "pad"]);
+    const fit = allowedFits.has(String(options.fit || "")) ? String(options.fit) : "scale-down";
+    if (width) url.searchParams.set("width", String(width));
+    if (quality) url.searchParams.set("quality", String(quality));
+    url.searchParams.set("fit", fit);
+    url.searchParams.set("format", String(options.format || "auto"));
+    return url.toString();
+  } catch (_) {
+    return urlValue;
+  }
+}
+
+function buildImageProxyUrl(src = "", options = {}) {
   const absolute = absolutizeImageUrl(src);
   if (!absolute || /^(data|blob):/i.test(absolute)) return absolute;
   if (!isR2DevImageUrl(absolute)) return absolute;
-  return `${window.location.origin}/img/${encodeImageBase64Url(absolute)}`;
+  return addProxyTransformParams(`${window.location.origin}/img/${encodeImageBase64Url(absolute)}`, options);
 }
 
 function canUseCloudflareImageTransform(absolute = "") {
   const normalized = unwrapCfImageUrl(absolute);
-
-  // /img/*는 R2 이미지 캐시용 Pages Function 프록시 경로입니다.
-  // 이 경로를 /cdn-cgi/image 원본으로 다시 넣으면 배포 환경에서 404가 발생할 수 있어
-  // R2 이미지는 프록시 캐시만 사용하고 Cloudflare 이미지 변환은 적용하지 않습니다.
   if (isImageProxyUrl(normalized)) return false;
 
   const srcHost = getImageHostname(normalized);
@@ -109,15 +123,14 @@ function buildCfImageUrl(src = "", options = {}) {
   const absolute = absolutizeImageUrl(raw);
   if (!absolute) return "";
   if (/^(data|blob):/i.test(absolute)) return absolute;
-  const deliveryUrl = buildImageProxyUrl(absolute);
-  if (!deliveryUrl) return "";
-  if (!canUseCloudflareImageTransform(deliveryUrl)) return deliveryUrl;
+  if (isR2DevImageUrl(absolute)) return buildImageProxyUrl(absolute, options);
+  if (!canUseCloudflareImageTransform(absolute)) return absolute;
   const config = { format: "auto", quality: 82, ...options };
   const params = Object.entries(config)
     .filter(([, value]) => value !== null && value !== undefined && value !== "")
     .map(([key, value]) => `${key}=${value}`)
     .join(",");
-  return `/cdn-cgi/image/${params}/${deliveryUrl}`;
+  return `/cdn-cgi/image/${params}/${absolute}`;
 }
 
 function buildImageAttrs(src = "", config = {}) {
@@ -125,15 +138,16 @@ function buildImageAttrs(src = "", config = {}) {
   const normalized = [...new Set(widths.map((value) => Math.max(1, parseInt(value, 10) || 0)).filter(Boolean))].sort((a, b) => a - b);
   const baseOptions = { fit: config.fit || "scale-down", format: config.format || "auto", quality: config.quality || 82 };
   const absolute = absolutizeImageUrl(src);
-  const deliveryUrl = buildImageProxyUrl(absolute);
-  const transformed = canUseCloudflareImageTransform(deliveryUrl);
+  const isR2 = isR2DevImageUrl(absolute);
+  const original = isR2 ? buildImageProxyUrl(absolute) : absolute;
+  const transformed = isR2 || canUseCloudflareImageTransform(absolute);
   const srcset = transformed ? normalized.map((width) => `${buildCfImageUrl(src, { ...baseOptions, width })} ${width}w`).join(", ") : "";
   const fallbackWidth = config.fallbackWidth || normalized[Math.min(1, normalized.length - 1)] || 640;
   return {
     src: buildCfImageUrl(src, { ...baseOptions, width: fallbackWidth }),
     srcset,
     sizes: config.sizes || "100vw",
-    original: deliveryUrl || absolute,
+    original,
     directOriginal: absolute
   };
 }
@@ -142,7 +156,11 @@ function renderOptimizedImageAttrs(src = "", config = {}) {
   const image = buildImageAttrs(src, config);
   const fallbackSrc = image.original || absolutizeImageUrl(src);
   const directFallbackSrc = image.directOriginal && image.directOriginal !== fallbackSrc ? image.directOriginal : "";
-  return `src="${escapeHtml(image.src)}"${image.srcset ? ` srcset="${escapeHtml(image.srcset)}"` : ""} sizes="${escapeHtml(image.sizes)}" data-original-src="${escapeHtml(fallbackSrc)}"${directFallbackSrc ? ` data-direct-src="${escapeHtml(directFallbackSrc)}"` : ""} onerror="this.onerror=null;this.removeAttribute('srcset');this.src=this.dataset.originalSrc || this.dataset.directSrc;"`;
+  const needsFallback = (image.src && image.src !== fallbackSrc) || directFallbackSrc;
+  const onError = needsFallback
+    ? ` onerror="this.removeAttribute('srcset');if(this.dataset.fallbackStep!=='proxy'&&this.dataset.originalSrc&&this.src!==this.dataset.originalSrc){this.dataset.fallbackStep='proxy';this.src=this.dataset.originalSrc;return;}if(this.dataset.directSrc&&this.src!==this.dataset.directSrc){this.dataset.fallbackStep='direct';this.src=this.dataset.directSrc;return;}this.onerror=null;"`
+    : "";
+  return `src="${escapeHtml(image.src)}"${image.srcset ? ` srcset="${escapeHtml(image.srcset)}"` : ""} sizes="${escapeHtml(image.sizes)}" data-original-src="${escapeHtml(fallbackSrc)}"${directFallbackSrc ? ` data-direct-src="${escapeHtml(directFallbackSrc)}"` : ""}${onError}`;
 }
 function getPathCategory() {
   const parts = window.location.pathname.split('/').filter(Boolean);
@@ -184,7 +202,7 @@ async function loadSiteCategories() {
           count: Number(item?.count || 0)
         };
       })
-      .filter((item) => item.name);
+      .filter((item) => item.name && item.count > 0);
   } catch (_) {
     return [];
   }
@@ -294,13 +312,15 @@ function buildPostsHeroNav(categories = []) {
 
     if (pageTitleEl) {
       pageTitleEl.classList.toggle('posts-home-hero__title--editorial', isHomeDefault);
-      pageTitleEl.textContent = isHomeDefault ? 'Wacky Wiki' : getPageTitle();
+      pageTitleEl.textContent = getPageTitle();
     }
 
     if (pageDescEl) {
       pageDescEl.classList.toggle('posts-home-hero__desc--editorial', isHomeDefault);
       if (isHomeDefault) {
-        pageDescEl.textContent = '정리된 생활 팁과 가이드를 빠르게 살펴보세요.';
+        pageDescEl.textContent = initialPage > 1
+          ? `실생활에 바로 적용할 수 있는 생활 정보 글 목록의 ${initialPage}페이지입니다.`
+          : '실생활에 바로 적용할 수 있는 생활 꿀팁과 정리된 가이드를 전하는 블로그입니다.';
       } else {
         pageDescEl.innerHTML = getPageDescription();
       }
@@ -311,8 +331,9 @@ function buildPostsHeroNav(categories = []) {
     if (kickerEl) kickerEl.hidden = !isHomeDefault;
     if (heroCategoryWrap) heroCategoryWrap.hidden = false;
   }
-  const loadMoreWrap = $('#postsLoadMoreWrap');
   const loadMoreBtn = $('#postsLoadMoreBtn');
+  const nextPageLink = $('#postsNextPageLink');
+  const paginationCurrentEl = $('#postsPaginationCurrent');
 
   const show = (el, on) => { if (el) el.hidden = !on; };
   const escapeHtml = (s) => String(s ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
@@ -350,11 +371,12 @@ function buildPostsHeroNav(categories = []) {
   }
 
   function getPageTitle() {
-    if (safeStatus === 'draft') return '초안 글 목록';
-    if (safeStatus === 'all') return '전체 글 목록';
-    if (category) return `카테고리: ${category}`;
-    if (tag) return `태그: #${tag}`;
-    return 'Wacky Wiki';
+    const pageSuffix = initialPage > 1 ? ` - ${initialPage}페이지` : '';
+    if (safeStatus === 'draft') return `초안 글 목록${pageSuffix}`;
+    if (safeStatus === 'all') return `전체 글 목록${pageSuffix}`;
+    if (category) return `${category} 글 모음${pageSuffix}`;
+    if (tag) return `#${tag} 관련 글${pageSuffix}`;
+    return `생활에 바로 쓰는 제품 정보와 실용 가이드${pageSuffix}`;
   }
 
   function getPageDescription() {
@@ -498,6 +520,7 @@ function buildPostsHeroNav(categories = []) {
       const slug = String(it.slug || '');
       const updated = escapeHtml(String(it.updated_at || '').slice(0, 10));
       const cover = String(it.cover_image || '').trim();
+      const coverAlt = escapeHtml(String(it.cover_image_alt || `${rawTitle} 대표 이미지`).trim());
       const itemStatus = String(it.status || 'published').trim().toLowerCase();
       const statusBadge = itemStatus === 'draft'
         ? '<span class="badge badge--draft">초안</span>'
@@ -512,7 +535,7 @@ function buildPostsHeroNav(categories = []) {
       return `
         <article class="card post-card post-card--row js-post-card" data-href="${postHref}" tabindex="0" aria-label="${title} 글로 이동">
           <div class="post-card__thumb post-card__thumb--row">
-            ${cover ? `<img ${renderOptimizedImageAttrs(cover, { widths: [320, 640, 960], sizes: "(max-width: 720px) 100vw, 320px", fallbackWidth: 640, fit: "cover", quality: 82 })} alt="${title} 대표 이미지" ${imageLoadingAttrs} />` : '<div class="post-card__thumb-placeholder">대표 이미지 없음</div>'}
+            ${cover ? `<img ${renderOptimizedImageAttrs(cover, { widths: [320, 640, 960], sizes: "(max-width: 720px) 100vw, 320px", fallbackWidth: 640, fit: "cover", quality: 82 })} alt="${coverAlt}" ${imageLoadingAttrs} />` : '<div class="post-card__thumb-placeholder">대표 이미지 없음</div>'}
           </div>
           <div class="post-card__body">
             <div class="post-meta post-meta--row">
@@ -522,8 +545,8 @@ function buildPostsHeroNav(categories = []) {
               </div>
               <div class="small">${updated}</div>
             </div>
-            <div class="post-card__title">${title}</div>
-            <div class="post-card__summary">${summary}</div>
+            <h2 class="post-card__title"><a href="${postHref}">${title}</a></h2>
+            <p class="post-card__summary">${summary}</p>
             <div class="row post-admin-actions post-admin-actions--wrap">
               ${itemStatus === 'published' ? `<a class="post-card__readmore" href="/post/${encodeURIComponent(slug)}"><span class="post-card__readmore-text">Read more</span><svg class="post-card__readmore-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h11"></path><path d="M13 7l5 5-5 5"></path></svg></a>` : ''}
               ${isAdmin ? `<span class="post-admin-actions__controls"><a class="btn" href="/edit.html?slug=${encodeURIComponent(slug)}">수정</a><button class="btn btn--danger js-delete-post" type="button" data-slug="${encodeURIComponent(slug)}" data-title="${escapeHtml(rawTitle)}">삭제</button></span>` : ''}
@@ -539,11 +562,16 @@ function buildPostsHeroNav(categories = []) {
 
   function updateLoadMore(pagination = {}) {
     hasMore = Boolean(pagination.has_more);
-    show(loadMoreWrap, hasMore);
     if (loadMoreBtn) {
+      show(loadMoreBtn, hasMore);
       loadMoreBtn.disabled = !hasMore || isLoading;
-      loadMoreBtn.textContent = isLoading ? '불러오는 중…' : '더보기';
+      loadMoreBtn.textContent = isLoading ? '불러오는 중…' : '현재 화면에서 더보기';
+      if (pagination.next_page) loadMoreBtn.dataset.nextUrl = buildPostsPageUrl(Number(pagination.next_page));
     }
+    if (nextPageLink && pagination.next_page) {
+      nextPageLink.href = buildPostsPageUrl(Number(pagination.next_page));
+    }
+    if (nextPageLink) show(nextPageLink, hasMore);
   }
 
   async function fetchPage(page, { append = false } = {}) {
@@ -589,10 +617,9 @@ function buildPostsHeroNav(categories = []) {
       currentPage = Number(pagination.page || page);
       updateLoadMore(pagination);
 
-      const nextUrl = new URL(window.location.href);
-      if (currentPage > 1) nextUrl.searchParams.set('page', String(currentPage));
-      else nextUrl.searchParams.delete('page');
-      window.history.replaceState({ page: currentPage }, '', `${nextUrl.pathname}${nextUrl.search}`);
+      if (paginationCurrentEl && append) {
+        paginationCurrentEl.textContent = `1–${currentPage}페이지 불러옴`;
+      }
     } catch (err) {
       clearAppendSkeleton();
       if (!append) {
@@ -715,7 +742,10 @@ function buildPostsHeroNav(categories = []) {
       const sidebar = initialData.sidebar || {};
       renderSidebar(sidebar);
       if (items.length) {
-        renderItems(items, { append: false, pageNumber: initialPage });
+        const hasServerRenderedCards = Boolean(listEl?.querySelector('.js-post-card'));
+        if (!hasServerRenderedCards || isAdmin || safeStatus !== 'published') {
+          renderItems(items, { append: false, pageNumber: initialPage });
+        }
         show(emptyEl, false);
       } else {
         if (listEl) listEl.innerHTML = '';

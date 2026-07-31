@@ -9,6 +9,9 @@ database_id = "e57c2488-da7e-4fa2-962f-be0c952a61e2"
 # Google AdSense 게시자 계정. 광고 단위 슬롯은 발급 후 Cloudflare 환경변수로 추가할 수 있습니다.
 [vars]
 ADSENSE_CLIENT = "ca-pub-7298667883751711"
+# 새 데이터베이스에서 최초 관리자 계정을 만들 때 반드시 필요한 초기 설정 토큰입니다.
+# 운영 환경에서는 Cloudflare 대시보드의 암호화된 환경변수로 등록하세요.
+# ADMIN_SETUP_TOKEN = "충분히-긴-임의-문자열"
 # ADSENSE_SLOT_SIDEBAR = "1234567890"
 # ADSENSE_SLOT_INARTICLE_1 = "1234567890"
 # ADSENSE_SLOT_INARTICLE_2 = "1234567890"
