@@ -1,4 +1,6 @@
 import { okJson, getAdminSession, requireAdmin } from "../_utils.js";
+import { normalizeTags, buildPostTagReplaceStatements, parseStoredTags } from "../_post-tags.js";
+import { scheduleContentCacheInvalidation } from "../_cache-invalidation.js";
 
 function normalizeText(value = "") {
   return String(value || "").replace(/\s+/g, " ").trim();
@@ -48,8 +50,8 @@ export async function onRequestGet({ env, request }) {
   }
 
   if (tag) {
-    where.push("EXISTS (SELECT 1 FROM json_each(COALESCE(tags_json, '[]')) WHERE TRIM(json_each.value) = ?)");
-    binds.push(tag);
+    where.push("EXISTS (SELECT 1 FROM post_tags pt WHERE pt.post_slug = posts.slug AND pt.normalized_tag = ?)");
+    binds.push(tag.replace(/^#+/, "").toLowerCase());
   }
 
   if (query) {
@@ -68,8 +70,9 @@ export async function onRequestGet({ env, request }) {
       queryParts.push(`LOWER(COALESCE(content_md, '')) LIKE ?`);
       queryParts.push(`EXISTS (
         SELECT 1
-        FROM json_each(COALESCE(tags_json, '[]'))
-        WHERE LOWER(TRIM(json_each.value)) LIKE ?
+        FROM post_tags pt
+        WHERE pt.post_slug = posts.slug
+          AND pt.normalized_tag LIKE ?
       )`);
       binds.push(qLike, qLike, qLike, qLike, qLike);
     }
@@ -211,7 +214,8 @@ export async function onRequestGet({ env, request }) {
   }, { headers: publicCacheHeaders });
 }
 
-export async function onRequestPost({ env, request }) {
+export async function onRequestPost(context) {
+  const { env, request } = context;
   const admin = await requireAdmin(env, request);
   if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
   const body = await request.json().catch(() => null);
@@ -234,7 +238,8 @@ export async function onRequestPost({ env, request }) {
   const enableInarticleAds = body.enable_inarticle_ads === false ? 0 : 1;
   const requestedStatus = String(body.status || "published").trim().toLowerCase();
   const status = requestedStatus === "draft" ? "draft" : "published";
-  const tags = Array.isArray(body.tags) ? body.tags : [];
+  const normalizedTags = normalizeTags(body.tags);
+  const tags = normalizedTags.map((item) => item.tag);
 
   if (!slug || !title || !contentMd) {
     return okJson(
@@ -245,7 +250,7 @@ export async function onRequestPost({ env, request }) {
 
   const now = new Date().toISOString();
   const current = await env.BLOG_DB.prepare(`
-    SELECT status, published_at, first_published_at
+    SELECT status, category, tags_json, published_at, first_published_at
     FROM posts
     WHERE slug = ?
   `).bind(slug).first();
@@ -255,7 +260,7 @@ export async function onRequestPost({ env, request }) {
     ? (existingFirstPublishedAt || (current?.status === "published" ? legacyPublishedAt : now))
     : (existingFirstPublishedAt || null);
 
-  await env.BLOG_DB.prepare(`
+  const upsertPostStatement = env.BLOG_DB.prepare(`
     INSERT INTO posts (
       slug,
       title,
@@ -316,7 +321,20 @@ export async function onRequestPost({ env, request }) {
     firstPublishedAt,
     now,
     now
-  ).run();
+  );
+
+  await env.BLOG_DB.batch([
+    upsertPostStatement,
+    ...buildPostTagReplaceStatements(env.BLOG_DB, slug, normalizedTags, now)
+  ]);
+
+  const previousTags = parseStoredTags(current?.tags_json).map((item) => item.tag);
+  scheduleContentCacheInvalidation({
+    waitUntil: (promise) => context.waitUntil(promise),
+    slugs: [slug],
+    categories: [current?.category, category],
+    tags: [...previousTags, ...tags]
+  });
 
   return okJson({ ok: true, slug });
 }

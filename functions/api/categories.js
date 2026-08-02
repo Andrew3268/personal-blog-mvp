@@ -1,4 +1,5 @@
 import { okJson, requireAdmin, getAdminSession } from "../_utils.js";
+import { scheduleContentCacheInvalidation } from "../_cache-invalidation.js";
 
 function normalizeCategoryName(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
@@ -39,7 +40,8 @@ export async function onRequestGet({ env, request }) {
   );
 }
 
-export async function onRequestPost({ env, request }) {
+export async function onRequestPost(context) {
+  const { env, request } = context;
   const admin = await requireAdmin(env, request);
   if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
   const body = await request.json().catch(() => null);
@@ -56,10 +58,15 @@ export async function onRequestPost({ env, request }) {
     VALUES (?, ?, ?, ?)
   `).bind(name, Number(maxRow?.max_sort || 0) + 1, now, now).run();
 
+  scheduleContentCacheInvalidation({
+    waitUntil: (promise) => context.waitUntil(promise),
+    categories: [name]
+  });
   return okJson({ ok: true, item: { name }, items: await getCategories(env.BLOG_DB) });
 }
 
-export async function onRequestPut({ env, request }) {
+export async function onRequestPut(context) {
+  const { env, request } = context;
   const admin = await requireAdmin(env, request);
   if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
   const body = await request.json().catch(() => null);
@@ -78,6 +85,11 @@ export async function onRequestPut({ env, request }) {
     if (duplicate) return okJson({ message: "같은 이름의 카테고리가 이미 있습니다." }, { status: 409 });
   }
 
+  const affectedRows = currentName !== newName
+    ? await env.BLOG_DB.prepare(`SELECT slug FROM posts WHERE category = ?`).bind(currentName).all()
+    : { results: [] };
+  const affectedSlugs = (affectedRows.results || []).map((row) => String(row.slug || "")).filter(Boolean);
+
   const now = new Date().toISOString();
   await env.BLOG_DB.prepare(`
     UPDATE categories
@@ -93,10 +105,16 @@ export async function onRequestPut({ env, request }) {
     `).bind(newName, now, currentName).run();
   }
 
+  scheduleContentCacheInvalidation({
+    waitUntil: (promise) => context.waitUntil(promise),
+    slugs: affectedSlugs,
+    categories: [currentName, newName]
+  });
   return okJson({ ok: true, item: { name: newName }, items: await getCategories(env.BLOG_DB) });
 }
 
-export async function onRequestDelete({ env, request }) {
+export async function onRequestDelete(context) {
+  const { env, request } = context;
   const admin = await requireAdmin(env, request);
   if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
   const body = await request.json().catch(() => null);
@@ -106,6 +124,9 @@ export async function onRequestDelete({ env, request }) {
   const current = await env.BLOG_DB.prepare(`SELECT name FROM categories WHERE name = ?`).bind(name).first();
   if (!current) return okJson({ message: "삭제할 카테고리를 찾지 못했습니다." }, { status: 404 });
 
+  const affectedRows = await env.BLOG_DB.prepare(`SELECT slug FROM posts WHERE category = ?`).bind(name).all();
+  const affectedSlugs = (affectedRows.results || []).map((row) => String(row.slug || "")).filter(Boolean);
+
   await env.BLOG_DB.prepare(`DELETE FROM categories WHERE name = ?`).bind(name).run();
   const now = new Date().toISOString();
   await env.BLOG_DB.prepare(`
@@ -114,5 +135,10 @@ export async function onRequestDelete({ env, request }) {
     WHERE category = ?
   `).bind(now, name).run();
 
+  scheduleContentCacheInvalidation({
+    waitUntil: (promise) => context.waitUntil(promise),
+    slugs: affectedSlugs,
+    categories: [name]
+  });
   return okJson({ ok: true, items: await getCategories(env.BLOG_DB) });
 }

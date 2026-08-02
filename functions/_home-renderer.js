@@ -4,6 +4,7 @@ import { buildImageAttrs } from "../lib/image-utils.js";
 export const SITE_ORIGIN = "https://wacky-wiki.com";
 const SITE_NAME = "Wacky Wiki";
 const PER_PAGE = 8;
+const ARCHIVE_CACHE_VERSION = "3";
 
 function clampInt(value, fallback, min, max) {
   const num = Number.parseInt(String(value || ""), 10);
@@ -13,6 +14,10 @@ function clampInt(value, fallback, min, max) {
 
 function normalizeText(value = "") {
   return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function normalizeTagKey(value = "") {
+  return normalizeText(value).replace(/^#+/, "").toLowerCase();
 }
 
 export function categoryPath(name = "") {
@@ -75,8 +80,8 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
   }
 
   if (safeTag) {
-    where.push("EXISTS (SELECT 1 FROM json_each(COALESCE(tags_json, '[]')) WHERE TRIM(json_each.value) = ?)");
-    binds.push(safeTag);
+    where.push("EXISTS (SELECT 1 FROM post_tags pt WHERE pt.post_slug = posts.slug AND pt.normalized_tag = ?)");
+    binds.push(normalizeTagKey(safeTag));
   }
 
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
@@ -157,8 +162,12 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
   const statusMap = admin
     ? new Map((statusRows?.results || []).map((row) => [String(row.status || "published").trim().toLowerCase(), Number(row.count || 0)]))
     : new Map([["published", total], ["draft", 0]]);
+  const categoryExists = !safeCategory || (categoryRows?.results || []).some((row) => normalizeText(row.name) === safeCategory);
 
   return {
+    archive: {
+      category_exists: categoryExists
+    },
     viewer: {
       is_admin: Boolean(admin)
     },
@@ -414,6 +423,13 @@ export async function renderHomePage({ env, request, category = "" }) {
     status
   });
 
+  if (activeCategory && !data.archive?.category_exists) {
+    return archiveNotFoundResponse({
+      title: "카테고리를 찾을 수 없습니다",
+      description: `‘${activeCategory}’ 카테고리는 존재하지 않거나 삭제되었습니다.`
+    });
+  }
+
   if (data.pagination.invalid_page) {
     return archiveNotFoundResponse({
       title: "존재하지 않는 목록 페이지입니다",
@@ -480,6 +496,10 @@ export async function renderHomePage({ env, request, category = "" }) {
   const nextUrl = data.pagination.has_more
     ? new URL(buildArchivePath(path, { page: page + 1, tag, status: data.filters.status }), SITE_ORIGIN).toString()
     : "";
+  const homeAdsenseClient = String(env.ADSENSE_CLIENT || "ca-pub-7298667883751711").trim();
+  const homeAdsenseHeadScript = data.sidebar.settings.index_sidebar_ad_enabled && homeAdsenseClient
+    ? `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${escapeHtml(homeAdsenseClient)}" crossorigin="anonymous"></script>`
+    : "";
 
   const websiteJsonLd = {
     "@context": "https://schema.org",
@@ -518,9 +538,7 @@ export async function renderHomePage({ env, request, category = "" }) {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="naver-site-verification" content="e49bca383d3b342f512aeaaf82017d3705a638b3" />
-  <!-- Google AdSense: 사이트 소유권 확인 및 광고 기능 -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7298667883751711"
-     crossorigin="anonymous"></script>
+  ${homeAdsenseHeadScript}
   <title>${escapeHtml(title)}</title>
   <meta name="description" content="${escapeHtml(truncateText(description, 155))}" />
   <meta name="robots" content="${robotsValue}" />
@@ -607,7 +625,7 @@ export async function renderHomePage({ env, request, category = "" }) {
   });
 }
 
-export async function renderHomePageCached({ env, request, category = "" }) {
+export async function renderHomePageCached({ env, request, category = "", waitUntil }) {
   const url = new URL(request.url);
   const page = clampInt(url.searchParams.get("page"), 1, 1, 9999);
   const tag = normalizeText(url.searchParams.get("tag"));
@@ -618,11 +636,16 @@ export async function renderHomePageCached({ env, request, category = "" }) {
     return renderHomePage({ env, request, category: activeCategory });
   }
 
-  const cacheKeyUrl = `${SITE_ORIGIN}${activeCategory ? categoryPath(activeCategory) : "/"}?page=${page}${tag ? `&tag=${encodeURIComponent(tag)}` : ""}`;
+  const cacheUrl = new URL(activeCategory ? categoryPath(activeCategory) : "/", SITE_ORIGIN);
+  cacheUrl.searchParams.set("__cv", ARCHIVE_CACHE_VERSION);
+  cacheUrl.searchParams.set("page", String(page));
+  if (tag) cacheUrl.searchParams.set("tag", tag);
+  const cacheKeyUrl = cacheUrl.toString();
   return edgeCache({
     request,
     cacheKeyUrl,
     ttlSeconds: 300,
+    waitUntil,
     buildResponse: () => renderHomePage({ env, request, category: activeCategory })
   });
 }

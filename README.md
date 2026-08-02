@@ -33,18 +33,20 @@ Cloudflare Pages + Pages Functions + D1 기반의 SSR 블로그입니다. 공개
 - `2026-07-31-seo-hardening.sql`: `posts.first_published_at`, 관련 인덱스
 - `2026-07-31-add-metadata-updated-at.sql`: `posts.metadata_updated_at`, 관련 인덱스
 - `2026-08-02-runtime-schema-initialization.sql`: 관리자·카테고리·사이트 설정 테이블과 기본값
-- `2026-08-02-query-normalization-and-indexes.sql`: 게시글 카테고리·발행일·조회수 정규화와 조회 패턴별 복합 인덱스
+- `2026-08-02-query-normalization-and-indexes.sql`: 게시글 데이터 정규화와 조회 패턴별 복합 인덱스
+- `2026-08-02-cache-tags-view-aggregation.sql`: 관계형 태그 테이블과 조회수 누적 테이블
 
-이번 성능 개선 배포 전에는 다음 순서로 실행합니다.
+각 단계가 아직 적용되지 않은 DB라면 다음 순서대로 실행합니다.
 
 ```bash
 npm run d1:migrate:runtime-init:remote
 npm run d1:migrate:query-optimization:remote
+npm run d1:migrate:performance-phase3:remote
 ```
 
-이미 1차 마이그레이션을 적용했다면 두 번째 명령만 실행하면 됩니다. 반드시 D1 마이그레이션이 성공한 뒤 코드를 배포하세요.
+1차와 2차 마이그레이션을 이미 적용했다면 이번 배포에서는 `d1:migrate:performance-phase3:remote`만 실행합니다.
 
-1차 마이그레이션은 기존 관리자·카테고리·사이트 설정 값을 덮어쓰지 않습니다. 2차 마이그레이션은 게시글 본문을 변경하지 않고 카테고리 공백, 발행일 형식, 조회수 NULL·음수만 정규화한 뒤 인덱스를 교체합니다. 운영 데이터를 유지하려면 **`db/seed.sql`을 다시 실행하지 마세요.**
+이 마이그레이션은 `CREATE TABLE IF NOT EXISTS`와 `INSERT OR IGNORE`를 사용하므로 기존 관리자, 카테고리, 사이트 설정 값을 덮어쓰지 않습니다. 운영 데이터를 유지하려면 **`db/seed.sql`을 다시 실행하지 마세요.**
 
 ## 최초 관리자 계정 생성
 

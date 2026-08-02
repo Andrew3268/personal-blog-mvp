@@ -1,4 +1,5 @@
 import { okJson, requireAdmin } from "../_utils.js";
+import { scheduleContentCacheInvalidation } from "../_cache-invalidation.js";
 
 async function readSettings(db) {
   const rows = await db.prepare(`SELECT key, value FROM site_settings`).all();
@@ -15,7 +16,8 @@ export async function onRequestGet({ env }) {
   });
 }
 
-export async function onRequestPut({ env, request }) {
+export async function onRequestPut(context) {
+  const { env, request } = context;
   const admin = await requireAdmin(env, request);
   if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
 
@@ -38,6 +40,9 @@ export async function onRequestPut({ env, request }) {
   }
 
   const settings = await readSettings(env.BLOG_DB);
+  scheduleContentCacheInvalidation({
+    waitUntil: (promise) => context.waitUntil(promise)
+  });
   return okJson({ ok: true, settings }, { headers: { "cache-control": "private, no-store" } });
 }
 

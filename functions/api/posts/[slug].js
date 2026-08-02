@@ -1,4 +1,6 @@
 import { okJson, requireAdmin } from "../../_utils.js";
+import { normalizeTags, buildPostTagReplaceStatements, parseStoredTags } from "../../_post-tags.js";
+import { scheduleContentCacheInvalidation } from "../../_cache-invalidation.js";
 
 function normalizeText(value = "") {
   return String(value || "").replace(/\s+/g, " ").trim();
@@ -59,7 +61,8 @@ export async function onRequestGet({ env, params, request }) {
   return okJson({ item: row });
 }
 
-export async function onRequestPut({ env, params, request }) {
+export async function onRequestPut(context) {
+  const { env, params, request } = context;
   const admin = await requireAdmin(env, request);
   if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
   const slug = safeDecodePathParam(params.slug);
@@ -86,7 +89,8 @@ export async function onRequestPut({ env, params, request }) {
   const enableInarticleAds = body.enable_inarticle_ads === false ? 0 : 1;
   const requestedStatus = String(body.status || "published").trim().toLowerCase();
   const status = requestedStatus === "draft" ? "draft" : "published";
-  const tags = Array.isArray(body.tags) ? body.tags : [];
+  const normalizedTags = normalizeTags(body.tags);
+  const tags = normalizedTags.map((item) => item.tag);
 
   if (!title || !contentMd) {
     return okJson(
@@ -96,7 +100,7 @@ export async function onRequestPut({ env, params, request }) {
   }
 
   const current = await env.BLOG_DB
-    .prepare(`SELECT status, published_at, first_published_at FROM posts WHERE slug = ?`)
+    .prepare(`SELECT status, category, tags_json, published_at, first_published_at FROM posts WHERE slug = ?`)
     .bind(slug)
     .first();
 
@@ -111,7 +115,7 @@ export async function onRequestPut({ env, params, request }) {
     ? (existingFirstPublishedAt || (current.status === "published" ? publishedAt : now))
     : (existingFirstPublishedAt || null);
 
-  await env.BLOG_DB.prepare(`
+  const updatePostStatement = env.BLOG_DB.prepare(`
     UPDATE posts
     SET
       title = ?,
@@ -153,12 +157,26 @@ export async function onRequestPut({ env, params, request }) {
     now,
     now,
     slug
-  ).run();
+  );
+
+  await env.BLOG_DB.batch([
+    updatePostStatement,
+    ...buildPostTagReplaceStatements(env.BLOG_DB, slug, normalizedTags, now)
+  ]);
+
+  const previousTags = parseStoredTags(current.tags_json).map((item) => item.tag);
+  scheduleContentCacheInvalidation({
+    waitUntil: (promise) => context.waitUntil(promise),
+    slugs: [slug],
+    categories: [current.category, category],
+    tags: [...previousTags, ...tags]
+  });
 
   return okJson({ ok: true, slug });
 }
 
-export async function onRequestDelete({ env, params, request }) {
+export async function onRequestDelete(context) {
+  const { env, params, request } = context;
   const admin = await requireAdmin(env, request);
   if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
   const slug = safeDecodePathParam(params.slug);
@@ -166,11 +184,23 @@ export async function onRequestDelete({ env, params, request }) {
     return okJson({ message: "slug가 필요합니다." }, { status: 400 });
   }
 
-  const existing = await env.BLOG_DB.prepare(`SELECT slug FROM posts WHERE slug = ?`).bind(slug).first();
+  const existing = await env.BLOG_DB.prepare(`SELECT slug, category, tags_json FROM posts WHERE slug = ?`).bind(slug).first();
   if (!existing) {
     return okJson({ message: "not_found" }, { status: 404 });
   }
 
-  await env.BLOG_DB.prepare(`DELETE FROM posts WHERE slug = ?`).bind(slug).run();
+  await env.BLOG_DB.batch([
+    env.BLOG_DB.prepare(`DELETE FROM post_tags WHERE post_slug = ?`).bind(slug),
+    env.BLOG_DB.prepare(`DELETE FROM post_view_accumulator WHERE post_slug = ?`).bind(slug),
+    env.BLOG_DB.prepare(`DELETE FROM posts WHERE slug = ?`).bind(slug)
+  ]);
+
+  scheduleContentCacheInvalidation({
+    waitUntil: (promise) => context.waitUntil(promise),
+    slugs: [slug],
+    categories: [existing.category],
+    tags: parseStoredTags(existing.tags_json).map((item) => item.tag)
+  });
+
   return okJson({ ok: true, slug });
 }

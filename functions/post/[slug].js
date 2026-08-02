@@ -18,32 +18,18 @@ function safeDecodePathParam(value = "") {
   }
 }
 
-export async function onRequestGet({ params, env, request }) {
+export async function onRequestGet(context) {
+  const { params, env, request } = context;
   const slug = safeDecodePathParam(params.slug).trim();
   if (!slug) return okHtml("Not Found", { status: 404 });
 
-  const meta = await env.BLOG_DB.prepare(`
-    SELECT updated_at, metadata_updated_at
-    FROM posts
-    WHERE slug = ? AND status = 'published'
-  `).bind(slug).first();
-
-  if (!meta) {
-    return okHtml(renderNotFound(slug), {
-      status: 404,
-      headers: { "cache-control": "no-store" }
-    });
-  }
-
-  const updatedAt = String(meta.updated_at || "");
-  const metadataUpdatedAt = String(meta.metadata_updated_at || updatedAt);
-  const cacheVersion = `${updatedAt}|${metadataUpdatedAt}`;
-  const cacheKeyUrl = `${SITE_ORIGIN}/post/${encodeURIComponent(slug)}?v=${encodeURIComponent(cacheVersion)}`;
+  const cacheKeyUrl = `${SITE_ORIGIN}/post/${encodeURIComponent(slug)}`;
 
   return edgeCache({
     request,
     cacheKeyUrl,
     ttlSeconds: 600,
+    waitUntil: (promise) => context.waitUntil(promise),
     buildResponse: async () => {
       const row = await env.BLOG_DB.prepare(`
         SELECT
@@ -118,14 +104,17 @@ export async function onRequestGet({ params, env, request }) {
       const contentTextLength = stripMarkdown(stripInlineImageTokens(row.content_md || "")).replace(/\s+/g, "").length;
       const shouldShowSidebarAd = toBool(row.enable_sidebar_ad, true);
       const shouldShowInarticleAds = toBool(row.enable_inarticle_ads, true);
+      const hasRenderableSidebarAd = shouldShowSidebarAd && Boolean(adConfig.client && adConfig.sidebarSlot);
+      const hasRenderableInarticleAd = shouldShowInarticleAds && Boolean(adConfig.client && (adConfig.inArticleSlot1 || adConfig.inArticleSlot2));
+      const shouldLoadAdsense = hasRenderableSidebarAd || hasRenderableInarticleAd;
       const inArticleAds = shouldShowInarticleAds ? buildInArticleAds(adConfig, 2) : [];
       const bodyHtml = buildArticleBodyHtml(row.content_md || "", inArticleAds, contentTextLength, env);
       const faqSectionHtml = renderFaqSection(faqItems);
       const relatedPostsHtml = renderRelatedPostsSection(relatedRows, row.category);
       const popularPostsHtml = renderPopularPosts(popularRows);
       const sidebarAdHtml = shouldShowSidebarAd ? renderSidebarAd(adConfig) : "";
-      const adsenseHeadScript = renderAdsenseHeadScript(adConfig);
-      const adsenseRuntimeScript = renderAdsenseRuntimeScript(adConfig, shouldShowSidebarAd || shouldShowInarticleAds);
+      const adsenseHeadScript = renderAdsenseHeadScript(adConfig, shouldLoadAdsense);
+      const adsenseRuntimeScript = renderAdsenseRuntimeScript(adConfig, shouldLoadAdsense);
 
       const titleText = String(row.title || "").trim();
       const descriptionText = buildDescription(
@@ -397,7 +386,6 @@ export async function onRequestGet({ params, env, request }) {
         }
       });
 
-      res.headers.set("x-blog-cache-version", cacheVersion);
       return res;
     }
   });
@@ -419,8 +407,8 @@ function buildAdsenseConfig(env) {
   };
 }
 
-function renderAdsenseHeadScript(config) {
-  if (!config.client) return "";
+function renderAdsenseHeadScript(config, shouldLoad) {
+  if (!shouldLoad || !config.client) return "";
   return `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${escapeHtml(config.client)}" crossorigin="anonymous"></script>`;
 }
 

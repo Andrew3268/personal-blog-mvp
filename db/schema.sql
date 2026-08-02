@@ -52,6 +52,33 @@ CREATE INDEX IF NOT EXISTS idx_posts_metadata_updated_at
 ON posts(metadata_updated_at DESC);
 
 
+CREATE TABLE IF NOT EXISTS post_tags (
+  post_slug TEXT NOT NULL,
+  tag TEXT NOT NULL,
+  normalized_tag TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (post_slug, normalized_tag),
+  FOREIGN KEY (post_slug) REFERENCES posts(slug) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_post_tags_normalized_tag_slug
+ON post_tags(normalized_tag, post_slug);
+
+CREATE INDEX IF NOT EXISTS idx_post_tags_post_slug_tag
+ON post_tags(post_slug, tag);
+
+CREATE TABLE IF NOT EXISTS post_view_accumulator (
+  post_slug TEXT PRIMARY KEY,
+  pending_count INTEGER NOT NULL DEFAULT 0,
+  window_started_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY (post_slug) REFERENCES posts(slug) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_post_view_accumulator_updated
+ON post_view_accumulator(updated_at ASC, pending_count DESC);
+
+
 CREATE TABLE IF NOT EXISTS categories (
   name TEXT PRIMARY KEY,
   sort_order INTEGER DEFAULT 0,

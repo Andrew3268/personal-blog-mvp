@@ -37,13 +37,15 @@ function setMode(mode) {
 }
 
 async function init() {
-  const state = await fetchSession().catch(() => ({ authenticated: false }));
+  const [state, setupState] = await Promise.all([
+    fetchSession().catch(() => ({ authenticated: false })),
+    fetchSetupStatus().catch(() => ({ has_admin: true }))
+  ]);
   if (state.authenticated) {
     location.href = '/admin/dashboard.html';
     return;
   }
 
-  const setupState = await fetchSetupStatus().catch(() => ({ has_admin: true }));
   setMode(setupState.has_admin ? 'login' : 'setup');
 }
 

@@ -2123,8 +2123,17 @@ async function load() {
 
   if (statusEl) statusEl.textContent = "불러오는 중…";
 
-  const res = await fetch(`/api/posts/${encodeURIComponent(slug)}`);
-  const json = await res.json().catch(() => ({}));
+  const postPromise = fetch(`/api/posts/${encodeURIComponent(slug)}`)
+    .then(async (res) => ({ res, json: await res.json().catch(() => ({})) }));
+  const categoryPromise = requestCategoryApi('GET');
+  const [postResult, categoryResult] = await Promise.allSettled([postPromise, categoryPromise]);
+
+  if (postResult.status === 'rejected') {
+    if (statusEl) statusEl.textContent = "글 정보를 불러오지 못했습니다.";
+    return;
+  }
+
+  const { res, json } = postResult.value;
   if (!res.ok) {
     if (statusEl) statusEl.textContent = json?.message || "불러오기 실패";
     return;
@@ -2159,8 +2168,14 @@ async function load() {
   $("tags").value = Array.isArray(tags) ? tags.join(", ") : "";
   if ($("viewBtn")) $("viewBtn").href = `/post/${encodeURIComponent($("slug").value)}`;
 
-  $("category").value = loadedCategory;
-  await loadCategories(loadedCategory);
+  if (categoryResult.status === 'fulfilled') {
+    categoryItems = Array.isArray(categoryResult.value.items) ? categoryResult.value.items : [];
+    renderCategoryOptions(loadedCategory);
+    renderCategoryManagerList();
+  } else {
+    setCategoryManagerStatus(categoryResult.reason?.message || '카테고리를 불러오지 못했습니다.', true);
+    $("category").value = loadedCategory;
+  }
   updateSlugPreview();
   syncTocControlsFromContent();
   updateAllCounts();

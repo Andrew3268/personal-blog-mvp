@@ -1,6 +1,7 @@
 import { renderHomePageCached, categoryPath } from "./_home-renderer.js";
 
-export async function onRequestGet({ env, request }) {
+export async function onRequestGet(context) {
+  const { env, request } = context;
   const url = new URL(request.url);
   const category = String(url.searchParams.get("category") || "").replace(/\s+/g, " ").trim();
 
@@ -13,5 +14,9 @@ export async function onRequestGet({ env, request }) {
     return Response.redirect(target.toString(), 301);
   }
 
-  return renderHomePageCached({ env, request });
+  return renderHomePageCached({
+    env,
+    request,
+    waitUntil: (promise) => context.waitUntil(promise)
+  });
 }
