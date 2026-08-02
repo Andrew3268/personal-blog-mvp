@@ -1,5 +1,16 @@
 import { okJson, getAdminSession, requireAdmin } from "../_utils.js";
 
+function normalizeText(value = "") {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function normalizeIsoDate(value, fallback = "") {
+  const raw = String(value || "").trim();
+  if (!raw) return fallback;
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? fallback : date.toISOString();
+}
+
 function clampInt(value, fallback, min, max) {
   const num = Number.parseInt(String(value || ""), 10);
   if (!Number.isFinite(num)) return fallback;
@@ -9,8 +20,8 @@ function clampInt(value, fallback, min, max) {
 export async function onRequestGet({ env, request }) {
   const url = new URL(request.url);
   const status = String(url.searchParams.get("status") || "published").trim().toLowerCase();
-  const category = String(url.searchParams.get("category") || "").trim();
-  const tag = String(url.searchParams.get("tag") || "").trim();
+  const category = normalizeText(url.searchParams.get("category"));
+  const tag = normalizeText(url.searchParams.get("tag"));
   const query = String(url.searchParams.get("q") || "").trim().toLowerCase();
   const searchTitle = String(url.searchParams.get("search_title") || "1").trim() !== "0";
   const searchContent = String(url.searchParams.get("search_content") || "0").trim() === "1";
@@ -32,7 +43,7 @@ export async function onRequestGet({ env, request }) {
   }
 
   if (category) {
-    where.push("TRIM(COALESCE(category, '')) = ?");
+    where.push("category = ?");
     binds.push(category);
   }
 
@@ -53,7 +64,7 @@ export async function onRequestGet({ env, request }) {
     if (searchContent) {
       queryParts.push(`LOWER(COALESCE(summary, '')) LIKE ?`);
       queryParts.push(`LOWER(COALESCE(meta_description, '')) LIKE ?`);
-      queryParts.push(`LOWER(COALESCE(category, '')) LIKE ?`);
+      queryParts.push(`LOWER(category) LIKE ?`);
       queryParts.push(`LOWER(COALESCE(content_md, '')) LIKE ?`);
       queryParts.push(`EXISTS (
         SELECT 1
@@ -72,64 +83,76 @@ export async function onRequestGet({ env, request }) {
   }
 
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
-
-  const itemsSql = `
-    SELECT
-      slug,
-      title,
-      category,
-      meta_description,
-      summary,
-      cover_image,
-      cover_image_alt,
-      focus_keyword,
-      longtail_keywords_json,
-      enable_sidebar_ad,
-      enable_inarticle_ads,
-      tags_json,
-      status,
-      view_count,
-      COALESCE(first_published_at, published_at) AS published_at,
-      metadata_updated_at,
-      updated_at
-    FROM posts
-    ${whereSql}
-    ORDER BY updated_at DESC, COALESCE(first_published_at, published_at) DESC
-    LIMIT ? OFFSET ?
-  `;
-
-  const countSql = `SELECT COUNT(*) AS total FROM posts ${whereSql}`;
-
   const baseBind = [...binds];
-  const [itemsRows, countRow, categoryRows, popularRows, statusRows, settingsRows] = await Promise.all([
-    env.BLOG_DB.prepare(itemsSql).bind(...baseBind, perPage, offset).all(),
-    env.BLOG_DB.prepare(countSql).bind(...binds).first(),
+  const statements = [
     env.BLOG_DB.prepare(`
-      SELECT TRIM(COALESCE(category, '')) AS category_name, COUNT(*) AS count
-      FROM posts
-      WHERE status = 'published'
-        AND TRIM(COALESCE(category, '')) != ''
-      GROUP BY TRIM(COALESCE(category, ''))
-      ORDER BY count DESC, category_name COLLATE NOCASE ASC
-      LIMIT 50
-    `).all(),
-    env.BLOG_DB.prepare(`
-      SELECT slug, title, view_count, updated_at,
-             COALESCE(first_published_at, published_at) AS published_at
+      SELECT
+        slug,
+        title,
+        category,
+        meta_description,
+        summary,
+        cover_image,
+        cover_image_alt,
+        focus_keyword,
+        longtail_keywords_json,
+        enable_sidebar_ad,
+        enable_inarticle_ads,
+        tags_json,
+        status,
+        view_count,
+        CASE WHEN status = 'published' THEN first_published_at ELSE published_at END AS published_at,
+        metadata_updated_at,
+        updated_at
       FROM posts
       ${whereSql}
-      ORDER BY view_count DESC, updated_at DESC, COALESCE(first_published_at, published_at) DESC
-      LIMIT 10
-    `).bind(...binds).all(),
+      ORDER BY updated_at DESC, first_published_at DESC
+      LIMIT ? OFFSET ?
+    `).bind(...baseBind, perPage, offset),
+    env.BLOG_DB.prepare(`SELECT COUNT(*) AS total FROM posts ${whereSql}`).bind(...binds),
     env.BLOG_DB.prepare(`
+      SELECT
+        c.name AS category_name,
+        COUNT(p.slug) AS count
+      FROM categories c
+      LEFT JOIN posts p
+        ON p.category = c.name
+       AND p.status = 'published'
+      GROUP BY c.name, c.sort_order
+      HAVING COUNT(p.slug) > 0
+      ORDER BY c.sort_order ASC, c.name COLLATE NOCASE ASC
+      LIMIT 50
+    `),
+    env.BLOG_DB.prepare(`
+      SELECT
+        slug,
+        title,
+        view_count,
+        updated_at,
+        CASE WHEN status = 'published' THEN first_published_at ELSE published_at END AS published_at
+      FROM posts
+      ${whereSql}
+      ORDER BY view_count DESC, updated_at DESC, first_published_at DESC
+      LIMIT 10
+    `).bind(...binds),
+    env.BLOG_DB.prepare(`
+      SELECT key, value
+      FROM site_settings
+      WHERE key = 'index_sidebar_ad_enabled'
+    `)
+  ];
+  if (admin) {
+    statements.push(env.BLOG_DB.prepare(`
       SELECT status, COUNT(*) AS count
       FROM posts
       ${whereSql}
       GROUP BY status
-    `).bind(...binds).all(),
-    env.BLOG_DB.prepare(`SELECT key, value FROM site_settings WHERE key = 'index_sidebar_ad_enabled'`).all()
-  ]);
+    `).bind(...binds));
+  }
 
+  const batchResults = await env.BLOG_DB.batch(statements);
+  const [itemsRows, countRows, categoryRows, popularRows, settingsRows, statusRows] = batchResults;
+  const countRow = countRows?.results?.[0] || null;
   const total = Number(countRow?.total || 0);
   const totalPages = Math.max(1, Math.ceil(total / perPage));
   const publicCacheHeaders = !admin && safeStatus === "published"
@@ -141,13 +164,15 @@ export async function onRequestGet({ env, request }) {
       headers: publicCacheHeaders
     });
   }
-  const statusMap = new Map((statusRows?.results || []).map((row) => [String(row.status || "published").trim().toLowerCase(), Number(row.count || 0)]));
+  const statusMap = admin
+    ? new Map((statusRows?.results || []).map((row) => [String(row.status || "published").trim().toLowerCase(), Number(row.count || 0)]))
+    : new Map([["published", total], ["draft", 0]]);
 
   return okJson({
     viewer: {
       is_admin: Boolean(admin)
     },
-    items: itemsRows.results || [],
+    items: itemsRows?.results || [],
     filters: {
       status: safeStatus,
       category,
@@ -164,18 +189,18 @@ export async function onRequestGet({ env, request }) {
     },
     sidebar: {
       settings: {
-        index_sidebar_ad_enabled: (settingsRows.results || []).some((row) => row.key === "index_sidebar_ad_enabled" && String(row.value) === "1")
+        index_sidebar_ad_enabled: (settingsRows?.results || []).some((row) => row.key === "index_sidebar_ad_enabled" && String(row.value) === "1")
       },
       counts: {
         total,
         published: statusMap.get("published") || 0,
         draft: statusMap.get("draft") || 0
       },
-      categories: (categoryRows.results || []).map((row) => ({
-        name: String(row.category_name || "").trim() || "미분류",
+      categories: (categoryRows?.results || []).map((row) => ({
+        name: normalizeText(row.category_name) || "미분류",
         count: Number(row.count || 0)
       })),
-      popular: (popularRows.results || []).map((row) => ({
+      popular: (popularRows?.results || []).map((row) => ({
         slug: row.slug,
         title: row.title,
         view_count: Number(row.view_count || 0),
@@ -196,7 +221,7 @@ export async function onRequestPost({ env, request }) {
 
   const slug = String(body.slug || "").trim();
   const title = String(body.title || "").trim();
-  const category = String(body.category || "").trim();
+  const category = normalizeText(body.category);
   const metaDescription = String(body.meta_description || "").trim();
   const summary = String(body.summary || "").trim();
   const coverImage = String(body.cover_image || "").trim();
@@ -224,10 +249,11 @@ export async function onRequestPost({ env, request }) {
     FROM posts
     WHERE slug = ?
   `).bind(slug).first();
-  const legacyPublishedAt = String(current?.published_at || now);
+  const legacyPublishedAt = normalizeIsoDate(current?.published_at, now);
+  const existingFirstPublishedAt = normalizeIsoDate(current?.first_published_at);
   const firstPublishedAt = status === "published"
-    ? String(current?.first_published_at || (current?.status === "published" ? current?.published_at : now) || now)
-    : (current?.first_published_at || null);
+    ? (existingFirstPublishedAt || (current?.status === "published" ? legacyPublishedAt : now))
+    : (existingFirstPublishedAt || null);
 
   await env.BLOG_DB.prepare(`
     INSERT INTO posts (

@@ -61,7 +61,7 @@ export async function onRequestGet({ params, env, request }) {
           enable_sidebar_ad,
           enable_inarticle_ads,
           status,
-          COALESCE(first_published_at, published_at) AS published_at,
+          first_published_at AS published_at,
           metadata_updated_at,
           updated_at
         FROM posts
@@ -83,28 +83,36 @@ export async function onRequestGet({ params, env, request }) {
       const siteDescription = "실용적인 생활 정보와 정리된 가이드를 제공하는 블로그";
       const authorName = "W. Archiver";
       const faqItems = parseFaqMarkdown(row.faq_md || "");
-      const relatedRows = row.category
-        ? (await env.BLOG_DB.prepare(`
+      const relatedStatement = row.category
+        ? env.BLOG_DB.prepare(`
             SELECT slug, title
             FROM posts
             WHERE status = 'published'
-              AND TRIM(COALESCE(category, '')) = ?
+              AND category = ?
               AND slug != ?
-            ORDER BY COALESCE(first_published_at, published_at) DESC, updated_at DESC
+            ORDER BY first_published_at DESC, updated_at DESC
             LIMIT 5
-          `).bind(String(row.category).trim(), slug).all()).results || []
-        : [];
-      const popularRows = (await env.BLOG_DB.prepare(`
-        SELECT slug, title, view_count
-        FROM posts
-        WHERE status = 'published'
-          AND slug != ?
-        ORDER BY COALESCE(view_count, 0) DESC, COALESCE(first_published_at, published_at) DESC, updated_at DESC
-        LIMIT 5
-      `).bind(slug).all()).results || [];
-
-      const categoryRows = await getMobileCategoryRows(env.BLOG_DB);
-      const mobileCategoryHtml = renderMobileCategoryLinks(categoryRows);
+          `).bind(String(row.category).trim(), slug)
+        : env.BLOG_DB.prepare(`
+            SELECT slug, title
+            FROM posts
+            WHERE 1 = 0
+          `);
+      const [relatedResult, popularResult, categoryResult] = await env.BLOG_DB.batch([
+        relatedStatement,
+        env.BLOG_DB.prepare(`
+          SELECT slug, title, view_count
+          FROM posts
+          WHERE status = 'published'
+            AND slug != ?
+          ORDER BY view_count DESC, updated_at DESC, first_published_at DESC
+          LIMIT 5
+        `).bind(slug),
+        getMobileCategoryStatement(env.BLOG_DB)
+      ]);
+      const relatedRows = relatedResult?.results || [];
+      const popularRows = popularResult?.results || [];
+      const mobileCategoryHtml = renderMobileCategoryLinks(categoryResult?.results || []);
 
       const adConfig = buildAdsenseConfig(env);
       const contentTextLength = stripMarkdown(stripInlineImageTokens(row.content_md || "")).replace(/\s+/g, "").length;
@@ -793,32 +801,16 @@ function renderNotFound(slug) {
 </html>`;
 }
 
-async function getMobileCategoryRows(db) {
-  try {
-    const rows = await db.prepare(`
-      SELECT c.name, COUNT(p.slug) AS count
-      FROM categories c
-      LEFT JOIN posts p
-        ON TRIM(COALESCE(p.category, '')) = TRIM(c.name)
-       AND p.status = 'published'
-      GROUP BY c.name, c.sort_order
-      ORDER BY c.sort_order ASC, c.name COLLATE NOCASE ASC
-    `).all();
-    const items = rows.results || [];
-    if (items.length) return items;
-  } catch (err) {
-    // categories 테이블이 아직 마이그레이션되지 않은 배포 환경을 위한 안전장치
-  }
-
-  const fallback = await db.prepare(`
-    SELECT TRIM(COALESCE(category, '')) AS name, COUNT(*) AS count
-    FROM posts
-    WHERE status = 'published'
-      AND TRIM(COALESCE(category, '')) != ''
-    GROUP BY TRIM(COALESCE(category, ''))
-    ORDER BY name COLLATE NOCASE ASC
-  `).all();
-  return fallback.results || [];
+function getMobileCategoryStatement(db) {
+  return db.prepare(`
+    SELECT c.name, COUNT(p.slug) AS count
+    FROM categories c
+    LEFT JOIN posts p
+      ON p.category = c.name
+     AND p.status = 'published'
+    GROUP BY c.name, c.sort_order
+    ORDER BY c.sort_order ASC, c.name COLLATE NOCASE ASC
+  `);
 }
 
 function renderMobileCategoryLinks(items = []) {

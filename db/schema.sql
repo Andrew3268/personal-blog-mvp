@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS posts (
   slug TEXT PRIMARY KEY,
   title TEXT NOT NULL,
-  category TEXT DEFAULT '',
+  category TEXT NOT NULL DEFAULT '',
   meta_description TEXT DEFAULT '',
   summary TEXT DEFAULT '',
   cover_image TEXT DEFAULT '',
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS posts (
   tags_json TEXT DEFAULT '[]',
   content_md TEXT DEFAULT '',
   faq_md TEXT DEFAULT '',
-  view_count INTEGER DEFAULT 0,
+  view_count INTEGER NOT NULL DEFAULT 0,
   enable_sidebar_ad INTEGER DEFAULT 0,
   enable_inarticle_ads INTEGER DEFAULT 1,
   status TEXT DEFAULT 'published',
@@ -27,13 +27,23 @@ CREATE INDEX IF NOT EXISTS idx_posts_updated_at ON posts(updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_posts_category ON posts(category);
 CREATE INDEX IF NOT EXISTS idx_posts_status ON posts(status);
 
-CREATE INDEX IF NOT EXISTS idx_posts_status_updated
-ON posts(status, updated_at DESC, published_at DESC);
-CREATE INDEX IF NOT EXISTS idx_posts_status_category_published
-ON posts(status, category, published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_posts_status_updated_first_published
+ON posts(status, updated_at DESC, first_published_at DESC);
 
-CREATE INDEX IF NOT EXISTS idx_posts_status_view_count
-ON posts(status, view_count DESC, published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_posts_status_first_published_updated
+ON posts(status, first_published_at DESC, updated_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_posts_status_category_updated_first_published
+ON posts(status, category, updated_at DESC, first_published_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_posts_status_category_first_published_updated
+ON posts(status, category, first_published_at DESC, updated_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_posts_status_view_updated_first_published
+ON posts(status, view_count DESC, updated_at DESC, first_published_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_posts_status_category_view_updated_first_published
+ON posts(status, category, view_count DESC, updated_at DESC, first_published_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_posts_first_published_at
 ON posts(first_published_at DESC);

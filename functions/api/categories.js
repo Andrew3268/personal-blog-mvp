@@ -24,7 +24,7 @@ export async function onRequestGet({ env, request }) {
       COUNT(p.slug) AS count
     FROM categories c
     LEFT JOIN posts p
-      ON TRIM(COALESCE(p.category, '')) = TRIM(c.name)
+      ON p.category = c.name
      AND p.status = 'published'
     GROUP BY c.name, c.sort_order, c.created_at, c.updated_at
     ${admin ? "" : "HAVING COUNT(p.slug) > 0"}
@@ -89,7 +89,7 @@ export async function onRequestPut({ env, request }) {
     await env.BLOG_DB.prepare(`
       UPDATE posts
       SET category = ?, metadata_updated_at = ?
-      WHERE TRIM(COALESCE(category, '')) = ?
+      WHERE category = ?
     `).bind(newName, now, currentName).run();
   }
 
@@ -111,7 +111,7 @@ export async function onRequestDelete({ env, request }) {
   await env.BLOG_DB.prepare(`
     UPDATE posts
     SET category = '', metadata_updated_at = ?
-    WHERE TRIM(COALESCE(category, '')) = ?
+    WHERE category = ?
   `).bind(now, name).run();
 
   return okJson({ ok: true, items: await getCategories(env.BLOG_DB) });

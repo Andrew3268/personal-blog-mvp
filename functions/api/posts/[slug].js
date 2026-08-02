@@ -1,5 +1,16 @@
 import { okJson, requireAdmin } from "../../_utils.js";
 
+function normalizeText(value = "") {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function normalizeIsoDate(value, fallback = "") {
+  const raw = String(value || "").trim();
+  if (!raw) return fallback;
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? fallback : date.toISOString();
+}
+
 function safeDecodePathParam(value = "") {
   try {
     return decodeURIComponent(String(value || ""));
@@ -33,7 +44,7 @@ export async function onRequestGet({ env, params, request }) {
       content_md,
       faq_md,
       status,
-      COALESCE(first_published_at, published_at) AS published_at,
+      CASE WHEN status = 'published' THEN first_published_at ELSE published_at END AS published_at,
       first_published_at,
       metadata_updated_at,
       updated_at
@@ -62,7 +73,7 @@ export async function onRequestPut({ env, params, request }) {
   }
 
   const title = String(body.title || "").trim();
-  const category = String(body.category || "").trim();
+  const category = normalizeText(body.category);
   const metaDescription = String(body.meta_description || "").trim();
   const summary = String(body.summary || "").trim();
   const coverImage = String(body.cover_image || "").trim();
@@ -94,10 +105,11 @@ export async function onRequestPut({ env, params, request }) {
   }
 
   const now = new Date().toISOString();
-  const publishedAt = String(current.published_at || now);
+  const publishedAt = normalizeIsoDate(current.published_at, now);
+  const existingFirstPublishedAt = normalizeIsoDate(current.first_published_at);
   const firstPublishedAt = status === "published"
-    ? String(current.first_published_at || (current.status === "published" ? current.published_at : now) || now)
-    : (current.first_published_at || null);
+    ? (existingFirstPublishedAt || (current.status === "published" ? publishedAt : now))
+    : (existingFirstPublishedAt || null);
 
   await env.BLOG_DB.prepare(`
     UPDATE posts

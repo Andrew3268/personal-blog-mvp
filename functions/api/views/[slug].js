@@ -21,7 +21,7 @@ export async function onRequestPost({ env, params, request }) {
 
   const result = await env.BLOG_DB.prepare(`
     UPDATE posts
-    SET view_count = COALESCE(view_count, 0) + 1
+    SET view_count = view_count + 1
     WHERE slug = ? AND status = 'published'
   `).bind(slug).run();
 

@@ -8,7 +8,9 @@
     "d1:exec": "wrangler d1 execute personal-blog-db --file=./db/schema.sql",
     "d1:seed": "wrangler d1 execute personal-blog-db --file=./db/seed.sql",
     "d1:migrate:runtime-init:local": "wrangler d1 execute personal-blog-db --local --file=./db/migrations/2026-08-02-runtime-schema-initialization.sql",
-    "d1:migrate:runtime-init:remote": "wrangler d1 execute personal-blog-db --remote --file=./db/migrations/2026-08-02-runtime-schema-initialization.sql"
+    "d1:migrate:runtime-init:remote": "wrangler d1 execute personal-blog-db --remote --file=./db/migrations/2026-08-02-runtime-schema-initialization.sql",
+    "d1:migrate:query-optimization:local": "wrangler d1 execute personal-blog-db --local --file=./db/migrations/2026-08-02-query-normalization-and-indexes.sql",
+    "d1:migrate:query-optimization:remote": "wrangler d1 execute personal-blog-db --remote --file=./db/migrations/2026-08-02-query-normalization-and-indexes.sql"
   },
   "devDependencies": {
     "wrangler": "^4.77.0"

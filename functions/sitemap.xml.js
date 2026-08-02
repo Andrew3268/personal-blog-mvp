@@ -28,21 +28,21 @@ function renderUrl(loc, lastmod = "") {
 
 export async function onRequestGet({ env }) {
   const origin = SITE_ORIGIN;
-  const [postRows, categoryRows] = await Promise.all([
+  const [postRows, categoryRows] = await env.BLOG_DB.batch([
     env.BLOG_DB.prepare(`
       SELECT slug, updated_at
       FROM posts
       WHERE status = 'published'
       ORDER BY updated_at DESC
-    `).all(),
+    `),
     env.BLOG_DB.prepare(`
-      SELECT TRIM(COALESCE(category, '')) AS name, MAX(updated_at) AS updated_at
+      SELECT category AS name, MAX(updated_at) AS updated_at
       FROM posts
       WHERE status = 'published'
-        AND TRIM(COALESCE(category, '')) != ''
-      GROUP BY TRIM(COALESCE(category, ''))
-      ORDER BY name COLLATE NOCASE ASC
-    `).all()
+        AND category <> ''
+      GROUP BY category
+      ORDER BY category COLLATE NOCASE ASC
+    `)
   ]);
 
   const staticUrls = [

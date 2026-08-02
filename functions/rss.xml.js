@@ -17,11 +17,11 @@ export async function onRequestGet({ env }) {
       summary,
       cover_image,
       tags_json,
-      COALESCE(first_published_at, published_at) AS published_at,
+      first_published_at AS published_at,
       updated_at
     FROM posts
     WHERE status = 'published'
-    ORDER BY COALESCE(first_published_at, published_at) DESC, updated_at DESC
+    ORDER BY first_published_at DESC, updated_at DESC
     LIMIT 50
   `).all();
 

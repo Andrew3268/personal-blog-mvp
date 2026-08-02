@@ -9,7 +9,7 @@ async function categoryExists(db, category) {
     const row = await db.prepare(`
       SELECT name
       FROM categories
-      WHERE TRIM(name) = ?
+      WHERE name = ?
       LIMIT 1
     `).bind(category).first();
     if (row) return true;
@@ -20,7 +20,7 @@ async function categoryExists(db, category) {
   const postRow = await db.prepare(`
     SELECT slug
     FROM posts
-    WHERE TRIM(COALESCE(category, '')) = ?
+    WHERE category = ?
     LIMIT 1
   `).bind(category).first();
   return !!postRow;

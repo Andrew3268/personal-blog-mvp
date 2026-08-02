@@ -50,34 +50,6 @@ function safeJson(data) {
 }
 
 
-async function getAllCategoryRows(db) {
-  try {
-    const rows = await db.prepare(`
-      SELECT c.name, COUNT(p.slug) AS count, MAX(p.updated_at) AS updated_at
-      FROM categories c
-      LEFT JOIN posts p
-        ON TRIM(COALESCE(p.category, '')) = TRIM(c.name)
-       AND p.status = 'published'
-      GROUP BY c.name, c.sort_order
-      ORDER BY c.sort_order ASC, c.name COLLATE NOCASE ASC
-    `).all();
-    const items = rows.results || [];
-    if (items.length) return items;
-  } catch (_) {
-    // categories 테이블이 없는 초기 배포 환경에서도 홈 SSR이 실패하지 않도록 fallback 사용
-  }
-
-  const fallback = await db.prepare(`
-    SELECT TRIM(COALESCE(category, '')) AS name, COUNT(*) AS count, MAX(updated_at) AS updated_at
-    FROM posts
-    WHERE status = 'published'
-      AND TRIM(COALESCE(category, '')) != ''
-    GROUP BY TRIM(COALESCE(category, ''))
-    ORDER BY name COLLATE NOCASE ASC
-  `).all();
-  return fallback.results || [];
-}
-
 async function fetchHomeData({ db, request, category = "", tag = "", page = 1, status = "published" }) {
   const admin = hasAdminSessionCookie(request)
     ? await getAdminSession({ BLOG_DB: db }, request).catch(() => null)
@@ -98,7 +70,7 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
   }
 
   if (safeCategory) {
-    where.push("TRIM(COALESCE(category, '')) = ?");
+    where.push("category = ?");
     binds.push(safeCategory);
   }
 
@@ -109,60 +81,88 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
 
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
   const baseBind = [...binds];
+  const itemsStatement = db.prepare(`
+    SELECT
+      slug,
+      title,
+      category,
+      meta_description,
+      summary,
+      cover_image,
+      cover_image_alt,
+      focus_keyword,
+      longtail_keywords_json,
+      enable_sidebar_ad,
+      enable_inarticle_ads,
+      tags_json,
+      status,
+      view_count,
+      CASE WHEN status = 'published' THEN first_published_at ELSE published_at END AS published_at,
+      updated_at
+    FROM posts
+    ${whereSql}
+    ORDER BY updated_at DESC, first_published_at DESC
+    LIMIT ? OFFSET ?
+  `).bind(...baseBind, PER_PAGE, offset);
+  const countStatement = db.prepare(`SELECT COUNT(*) AS total FROM posts ${whereSql}`).bind(...binds);
+  const categoryStatement = db.prepare(`
+    SELECT c.name, COUNT(p.slug) AS count, MAX(p.updated_at) AS updated_at
+    FROM categories c
+    LEFT JOIN posts p
+      ON p.category = c.name
+     AND p.status = 'published'
+    GROUP BY c.name, c.sort_order
+    ORDER BY c.sort_order ASC, c.name COLLATE NOCASE ASC
+  `);
+  const popularStatement = db.prepare(`
+    SELECT
+      slug,
+      title,
+      view_count,
+      updated_at,
+      CASE WHEN status = 'published' THEN first_published_at ELSE published_at END AS published_at
+    FROM posts
+    ${whereSql}
+    ORDER BY view_count DESC, updated_at DESC, first_published_at DESC
+    LIMIT 10
+  `).bind(...binds);
+  const settingsStatement = db.prepare(`
+    SELECT key, value
+    FROM site_settings
+    WHERE key = 'index_sidebar_ad_enabled'
+  `);
 
-  const [itemsRows, countRow, categoryRows, popularRows, statusRows, settingsRows] = await Promise.all([
-    db.prepare(`
-      SELECT
-        slug,
-        title,
-        category,
-        meta_description,
-        summary,
-        cover_image,
-        cover_image_alt,
-        focus_keyword,
-        longtail_keywords_json,
-        enable_sidebar_ad,
-        enable_inarticle_ads,
-        tags_json,
-        status,
-        view_count,
-        COALESCE(first_published_at, published_at) AS published_at,
-        updated_at
-      FROM posts
-      ${whereSql}
-      ORDER BY updated_at DESC, COALESCE(first_published_at, published_at) DESC
-      LIMIT ? OFFSET ?
-    `).bind(...baseBind, PER_PAGE, offset).all(),
-    db.prepare(`SELECT COUNT(*) AS total FROM posts ${whereSql}`).bind(...binds).first(),
-    getAllCategoryRows(db),
-    db.prepare(`
-      SELECT slug, title, view_count, updated_at,
-             COALESCE(first_published_at, published_at) AS published_at
-      FROM posts
-      ${whereSql}
-      ORDER BY COALESCE(view_count, 0) DESC, updated_at DESC, COALESCE(first_published_at, published_at) DESC
-      LIMIT 10
-    `).bind(...binds).all(),
-    db.prepare(`
+  const statements = [
+    itemsStatement,
+    countStatement,
+    categoryStatement,
+    popularStatement,
+    settingsStatement
+  ];
+  if (admin) {
+    statements.push(db.prepare(`
       SELECT status, COUNT(*) AS count
       FROM posts
       ${whereSql}
       GROUP BY status
-    `).bind(...binds).all(),
-    db.prepare(`SELECT key, value FROM site_settings WHERE key = 'index_sidebar_ad_enabled'`).all()
-  ]);
+    `).bind(...binds));
+  }
 
+  const batchResults = await db.batch(statements);
+  const [itemsRows, countRows, categoryRows, popularRows, settingsRows, statusRows] = batchResults;
+  const countRow = countRows?.results?.[0] || null;
   const total = Number(countRow?.total || 0);
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
   const invalidPage = safePage > totalPages && (total > 0 || safePage > 1);
-  const statusMap = new Map((statusRows?.results || []).map((row) => [String(row.status || "published").trim().toLowerCase(), Number(row.count || 0)]));
+  const statusMap = admin
+    ? new Map((statusRows?.results || []).map((row) => [String(row.status || "published").trim().toLowerCase(), Number(row.count || 0)]))
+    : new Map([["published", total], ["draft", 0]]);
 
   return {
     viewer: {
       is_admin: Boolean(admin)
     },
-    items: itemsRows.results || [],
+    items: itemsRows?.results || [],
     filters: {
       status: safeStatus,
       category: safeCategory,
@@ -180,21 +180,21 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
     },
     sidebar: {
       settings: {
-        index_sidebar_ad_enabled: (settingsRows.results || []).some((row) => row.key === "index_sidebar_ad_enabled" && String(row.value) === "1")
+        index_sidebar_ad_enabled: (settingsRows?.results || []).some((row) => row.key === "index_sidebar_ad_enabled" && String(row.value) === "1")
       },
       counts: {
         total,
         published: statusMap.get("published") || 0,
         draft: statusMap.get("draft") || 0
       },
-      categories: (categoryRows || [])
+      categories: (categoryRows?.results || [])
         .map((row) => ({
-          name: normalizeText(row.name || row.category_name),
+          name: normalizeText(row.name),
           count: Number(row.count || 0),
           updated_at: row.updated_at || ""
         }))
         .filter((row) => row.name && row.count > 0),
-      popular: (popularRows.results || []).map((row) => ({
+      popular: (popularRows?.results || []).map((row) => ({
         slug: row.slug,
         title: row.title,
         view_count: Number(row.view_count || 0),
