@@ -1,4 +1,3 @@
-import { ensurePostSeoColumns } from "./_utils.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
 const SITE_TITLE = "Wacky Wiki";
@@ -6,7 +5,6 @@ const SITE_DESCRIPTION = "실용적인 생활 정보와 정리된 가이드를 �
 const RSS_PATH = "/rss.xml";
 
 export async function onRequestGet({ env }) {
-  await ensurePostSeoColumns(env.BLOG_DB);
   const origin = SITE_ORIGIN;
   const feedUrl = `${origin}${RSS_PATH}`;
 

@@ -26,13 +26,21 @@ Cloudflare Pages + Pages Functions + D1 기반의 SSR 블로그입니다. 공개
 
 ## 기존 D1 데이터베이스
 
-코드가 최초 요청 시 다음 컬럼과 인덱스의 존재 여부를 확인하고 누락된 항목을 자동 보완합니다.
+페이지 요청 중에는 테이블 생성, 컬럼 추가, 기본 데이터 입력을 실행하지 않습니다. 배포 전에 `db/migrations/`의 SQL을 D1에 적용해야 합니다.
 
-- `posts.first_published_at`
-- `posts.metadata_updated_at`
-- `admin_login_attempts`
+현재 운영 DB에는 다음 마이그레이션이 적용되어 있어야 합니다.
 
-수동 적용용 SQL도 `db/migrations/`에 포함되어 있습니다. 기존 운영 데이터를 유지하려면 **`db/seed.sql`을 다시 실행하지 마세요.**
+- `2026-07-31-seo-hardening.sql`: `posts.first_published_at`, 관련 인덱스
+- `2026-07-31-add-metadata-updated-at.sql`: `posts.metadata_updated_at`, 관련 인덱스
+- `2026-08-02-runtime-schema-initialization.sql`: 관리자·카테고리·사이트 설정 테이블과 기본값
+
+이번 성능 개선 배포 전에는 다음 명령을 실행합니다.
+
+```bash
+npm run d1:migrate:runtime-init:remote
+```
+
+이 마이그레이션은 `CREATE TABLE IF NOT EXISTS`와 `INSERT OR IGNORE`를 사용하므로 기존 관리자, 카테고리, 사이트 설정 값을 덮어쓰지 않습니다. 운영 데이터를 유지하려면 **`db/seed.sql`을 다시 실행하지 마세요.**
 
 ## 최초 관리자 계정 생성
 

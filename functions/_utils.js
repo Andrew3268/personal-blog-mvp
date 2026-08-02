@@ -57,7 +57,6 @@ const ADMIN_COOKIE = "admin_session";
 const SESSION_MAX_AGE = 60 * 60 * 24 * 14;
 const PASSWORD_HASH_ITERATIONS = 210000;
 
-let postSeoMigrationPromise = null;
 
 function normalizeEmail(value) {
   return String(value || "").trim().toLowerCase();
@@ -158,96 +157,12 @@ async function verifyStoredPassword(email, password, storedHash) {
   return false;
 }
 
-export async function ensurePostSeoColumns(db) {
-  if (postSeoMigrationPromise) return postSeoMigrationPromise;
-  postSeoMigrationPromise = (async () => {
-    const tableInfo = await db.prepare(`PRAGMA table_info(posts)`).all();
-    const columnNames = new Set((tableInfo.results || []).map((row) => String(row.name || "")));
-
-    if (!columnNames.has("first_published_at")) {
-      try {
-        await db.prepare(`ALTER TABLE posts ADD COLUMN first_published_at TEXT`).run();
-      } catch (_) {
-        // 동시에 실행된 다른 요청이 먼저 컬럼을 추가한 경우 그대로 진행합니다.
-      }
-    }
-
-    if (!columnNames.has("metadata_updated_at")) {
-      try {
-        await db.prepare(`ALTER TABLE posts ADD COLUMN metadata_updated_at TEXT`).run();
-      } catch (_) {
-        // 동시에 실행된 다른 요청이 먼저 컬럼을 추가한 경우 그대로 진행합니다.
-      }
-    }
-
-    await db.prepare(`
-      UPDATE posts
-      SET first_published_at = published_at
-      WHERE status = 'published'
-        AND (first_published_at IS NULL OR TRIM(first_published_at) = '')
-    `).run();
-    await db.prepare(`
-      UPDATE posts
-      SET metadata_updated_at = updated_at
-      WHERE metadata_updated_at IS NULL OR TRIM(metadata_updated_at) = ''
-    `).run();
-    await db.prepare(`
-      CREATE INDEX IF NOT EXISTS idx_posts_first_published_at
-      ON posts(first_published_at DESC)
-    `).run();
-    await db.prepare(`
-      CREATE INDEX IF NOT EXISTS idx_posts_metadata_updated_at
-      ON posts(metadata_updated_at DESC)
-    `).run();
-  })().catch((error) => {
-    postSeoMigrationPromise = null;
-    throw error;
-  });
-  return postSeoMigrationPromise;
-}
-
-export async function ensureAdminTables(db) {
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS admin_users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      email TEXT NOT NULL UNIQUE,
-      password_hash TEXT NOT NULL,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    )
-  `).run();
-
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS admin_sessions (
-      token_hash TEXT PRIMARY KEY,
-      admin_id INTEGER NOT NULL,
-      expires_at TEXT NOT NULL,
-      created_at TEXT NOT NULL,
-      FOREIGN KEY (admin_id) REFERENCES admin_users(id) ON DELETE CASCADE
-    )
-  `).run();
-
-  await db.prepare(`CREATE INDEX IF NOT EXISTS idx_admin_sessions_admin_id ON admin_sessions(admin_id, expires_at DESC)`).run();
-
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS admin_login_attempts (
-      attempt_key TEXT PRIMARY KEY,
-      failed_count INTEGER NOT NULL DEFAULT 0,
-      window_started_at TEXT NOT NULL,
-      locked_until TEXT,
-      updated_at TEXT NOT NULL
-    )
-  `).run();
-}
-
 export async function getAdminCount(db) {
-  await ensureAdminTables(db);
   const row = await db.prepare(`SELECT COUNT(*) AS count FROM admin_users`).first();
   return Number(row?.count || 0);
 }
 
 export async function createAdminAccount(db, email, password) {
-  await ensureAdminTables(db);
   const safeEmail = normalizeEmail(email);
   const safePassword = String(password || "");
   if (!safeEmail || !safePassword || safePassword.length < 8) {
@@ -268,7 +183,6 @@ export async function createAdminAccount(db, email, password) {
 }
 
 export async function verifyAdminCredentials(db, email, password) {
-  await ensureAdminTables(db);
   const safeEmail = normalizeEmail(email);
   const safePassword = String(password || "");
   const user = await db.prepare(`SELECT id, email, password_hash FROM admin_users WHERE email = ?`).bind(safeEmail).first();
@@ -286,7 +200,6 @@ export async function verifyAdminCredentials(db, email, password) {
 }
 
 export async function createAdminSession(db, adminId) {
-  await ensureAdminTables(db);
   const token = `${crypto.randomUUID()}-${crypto.randomUUID()}`;
   const tokenHash = await sha256Hex(token);
   const now = new Date();
@@ -306,26 +219,27 @@ export function buildAdminLogoutCookie() {
   return `${ADMIN_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
 }
 
+export function hasAdminSessionCookie(request) {
+  return Boolean(parseCookies(request)[ADMIN_COOKIE]);
+}
+
 export async function getAdminSession(env, request) {
   const cookies = parseCookies(request);
   const token = cookies[ADMIN_COOKIE];
   if (!token) return null;
 
-  await ensureAdminTables(env.BLOG_DB);
   const tokenHash = await sha256Hex(token);
+  const now = new Date().toISOString();
   const row = await env.BLOG_DB.prepare(`
-    SELECT s.token_hash, s.expires_at, u.id, u.email
+    SELECT s.expires_at, u.id, u.email
     FROM admin_sessions s
     JOIN admin_users u ON u.id = s.admin_id
     WHERE s.token_hash = ?
-  `).bind(tokenHash).first();
+      AND s.expires_at > ?
+    LIMIT 1
+  `).bind(tokenHash, now).first();
 
   if (!row) return null;
-  if (new Date(row.expires_at).getTime() <= Date.now()) {
-    await env.BLOG_DB.prepare(`DELETE FROM admin_sessions WHERE token_hash = ?`).bind(tokenHash).run();
-    return null;
-  }
-
   return { id: Number(row.id), email: row.email, expires_at: row.expires_at };
 }
 

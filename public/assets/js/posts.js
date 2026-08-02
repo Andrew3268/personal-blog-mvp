@@ -188,26 +188,6 @@ function getPostsHeroActiveKey() {
 }
 
 
-async function loadSiteCategories() {
-  try {
-    const res = await fetch('/api/categories', { headers: { Accept: 'application/json' } });
-    if (!res.ok) throw new Error('Failed to load categories');
-    const data = await res.json().catch(() => ({}));
-    const rawItems = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
-    return rawItems
-      .map((item) => {
-        if (typeof item === 'string') return { name: item.trim(), count: 0 };
-        return {
-          name: String(item?.name || '').trim(),
-          count: Number(item?.count || 0)
-        };
-      })
-      .filter((item) => item.name && item.count > 0);
-  } catch (_) {
-    return [];
-  }
-}
-
 function mergeCategoryCounts(baseCategories = [], countedCategories = []) {
   const countMap = new Map(
     (Array.isArray(countedCategories) ? countedCategories : []).map((item) => [
@@ -385,12 +365,6 @@ function buildPostsHeroNav(categories = []) {
     if (category) return `<b>${escapeHtml(category)}</b> 카테고리의 글만 모아 보여드립니다.`;
     if (tag) return `<b>#${escapeHtml(tag)}</b> 태그가 포함된 글만 모아 보여드립니다.`;
     return '정리된 생활 팁과 가이드를 빠르게 둘러보고 필요한 글만 골라 읽어보세요.';
-  }
-
-  async function loadAdminState() {
-    const state = await (window.__adminSessionPromise || fetch('/api/admin/session', { credentials: 'same-origin' }).then((res) => res.ok ? res.json() : { authenticated: false }));
-    isAdmin = Boolean(state && state.authenticated);
-    return state;
   }
 
   function renderPostsSkeleton(count = 5, append = false) {
@@ -595,6 +569,10 @@ function buildPostsHeroNav(categories = []) {
       const items = Array.isArray(data?.items) ? data.items : [];
       const pagination = data?.pagination || {};
       const sidebar = data?.sidebar || {};
+      isAdmin = Boolean(data?.viewer?.is_admin);
+      if (!siteCategories.length && Array.isArray(sidebar.categories)) {
+        siteCategories = sidebar.categories;
+      }
 
       clearAppendSkeleton();
 
@@ -719,50 +697,46 @@ function buildPostsHeroNav(categories = []) {
     window.location.href = href;
   });
 
-  Promise.all([
-    loadAdminState().catch(() => ({ authenticated: false })),
-    loadSiteCategories().catch(() => [])
-  ]).then(([_, categoriesResult]) => {
-    siteCategories = Array.isArray(categoriesResult) ? categoriesResult : [];
-    if (heroCategoryBarEl && siteCategories.length) {
-      heroCategoryBarEl.innerHTML = buildPostsHeroNav(siteCategories);
-    }
+  const initialData = window.__WACKY_INITIAL_POSTS__;
+  const initialFilters = initialData?.filters || {};
+  const initialPagination = initialData?.pagination || {};
+  const initialSidebar = initialData?.sidebar || {};
+  isAdmin = Boolean(initialData?.viewer?.is_admin);
+  siteCategories = Array.isArray(initialSidebar.categories) ? initialSidebar.categories : [];
 
-    const initialData = window.__WACKY_INITIAL_POSTS__;
-    const initialFilters = initialData?.filters || {};
-    const initialPagination = initialData?.pagination || {};
-    const canHydrateInitial = initialData
-      && Number(initialPagination.page || 1) === initialPage
-      && String(initialFilters.category || '') === category
-      && String(initialFilters.tag || '') === tag
-      && String(initialFilters.status || 'published') === safeStatus;
+  if (heroCategoryBarEl && siteCategories.length) {
+    heroCategoryBarEl.innerHTML = buildPostsHeroNav(siteCategories);
+  }
 
-    if (canHydrateInitial) {
-      const items = Array.isArray(initialData.items) ? initialData.items : [];
-      const sidebar = initialData.sidebar || {};
-      renderSidebar(sidebar);
-      if (items.length) {
-        const hasServerRenderedCards = Boolean(listEl?.querySelector('.js-post-card'));
-        if (!hasServerRenderedCards || isAdmin || safeStatus !== 'published') {
-          renderItems(items, { append: false, pageNumber: initialPage });
-        }
-        show(emptyEl, false);
-      } else {
-        if (listEl) listEl.innerHTML = '';
-        show(emptyEl, true);
-        if (emptyEl) {
-          if (safeStatus === 'draft') emptyEl.textContent = '등록된 초안 글이 없습니다.';
-          else if (category) emptyEl.textContent = `'${category}' 카테고리 글이 없습니다.`;
-          else if (tag) emptyEl.textContent = `'#${tag}' 태그 글이 없습니다.`;
-          else emptyEl.textContent = '등록된 글이 없습니다.';
-        }
+  const canHydrateInitial = initialData
+    && Number(initialPagination.page || 1) === initialPage
+    && String(initialFilters.category || '') === category
+    && String(initialFilters.tag || '') === tag
+    && String(initialFilters.status || 'published') === safeStatus;
+
+  if (canHydrateInitial) {
+    const items = Array.isArray(initialData.items) ? initialData.items : [];
+    renderSidebar(initialSidebar);
+    if (items.length) {
+      const hasServerRenderedCards = Boolean(listEl?.querySelector('.js-post-card'));
+      if (!hasServerRenderedCards || isAdmin || safeStatus !== 'published') {
+        renderItems(items, { append: false, pageNumber: initialPage });
       }
-      currentPage = Number(initialPagination.page || initialPage);
-      updateLoadMore(initialPagination);
-      window.__WACKY_INITIAL_POSTS__ = null;
-      return;
+      show(emptyEl, false);
+    } else {
+      if (listEl) listEl.innerHTML = '';
+      show(emptyEl, true);
+      if (emptyEl) {
+        if (safeStatus === 'draft') emptyEl.textContent = '등록된 초안 글이 없습니다.';
+        else if (category) emptyEl.textContent = `'${category}' 카테고리 글이 없습니다.`;
+        else if (tag) emptyEl.textContent = `'#${tag}' 태그 글이 없습니다.`;
+        else emptyEl.textContent = '등록된 글이 없습니다.';
+      }
     }
-
+    currentPage = Number(initialPagination.page || initialPage);
+    updateLoadMore(initialPagination);
+    window.__WACKY_INITIAL_POSTS__ = null;
+  } else {
     fetchPage(initialPage, { append: false });
-  });
+  }
 })();

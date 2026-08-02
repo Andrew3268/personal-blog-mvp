@@ -1,5 +1,12 @@
 async function fetchSession() {
-  const res = await fetch('/api/admin/session', { credentials: 'same-origin' });
+  const res = await fetch('/api/admin/session', { credentials: 'same-origin', cache: 'no-store' });
+  if (!res.ok) throw new Error(`세션 확인 실패 (${res.status})`);
+  return res.json();
+}
+
+async function fetchSetupStatus() {
+  const res = await fetch('/api/admin/setup-status', { credentials: 'same-origin', cache: 'no-store' });
+  if (!res.ok) throw new Error(`초기 설정 상태 확인 실패 (${res.status})`);
   return res.json();
 }
 
@@ -30,12 +37,14 @@ function setMode(mode) {
 }
 
 async function init() {
-  const state = await fetchSession().catch(() => ({ has_admin: true, authenticated: false }));
+  const state = await fetchSession().catch(() => ({ authenticated: false }));
   if (state.authenticated) {
     location.href = '/admin/dashboard.html';
     return;
   }
-  setMode(state.has_admin ? 'login' : 'setup');
+
+  const setupState = await fetchSetupStatus().catch(() => ({ has_admin: true }));
+  setMode(setupState.has_admin ? 'login' : 'setup');
 }
 
 async function submitAuth(event) {

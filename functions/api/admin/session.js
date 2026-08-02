@@ -1,14 +1,12 @@
-import { okJson, getAdminCount, getAdminSession } from "../../_utils.js";
+import { okJson, getAdminSession } from "../../_utils.js";
 
 export async function onRequestGet({ env, request }) {
-  const [adminCount, admin] = await Promise.all([
-    getAdminCount(env.BLOG_DB),
-    getAdminSession(env, request)
-  ]);
+  const admin = await getAdminSession(env, request);
 
   return okJson({
-    has_admin: adminCount > 0,
-    authenticated: !!admin,
+    authenticated: Boolean(admin),
     admin: admin ? { email: admin.email } : null
+  }, {
+    headers: { "cache-control": "private, no-store" }
   });
 }

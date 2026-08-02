@@ -1,45 +1,7 @@
-import { okJson, requireAdmin, getAdminSession, ensurePostSeoColumns } from "../_utils.js";
-
-const DEFAULT_CATEGORIES = [
-  "생활 꿀팁",
-  "살림 노하우",
-  "청소",
-  "주방",
-  "욕실",
-  "세탁",
-  "정리수납",
-  "리뷰",
-  "쇼핑",
-  "반려동물",
-  "건강",
-  "디지털"
-];
+import { okJson, requireAdmin, getAdminSession } from "../_utils.js";
 
 function normalizeCategoryName(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
-}
-
-async function ensureCategoriesTable(db) {
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS categories (
-      name TEXT PRIMARY KEY,
-      sort_order INTEGER DEFAULT 0,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    )
-  `).run();
-
-  const countRow = await db.prepare(`SELECT COUNT(*) AS count FROM categories`).first();
-  const count = Number(countRow?.count || 0);
-  if (count > 0) return;
-
-  const now = new Date().toISOString();
-  for (const [index, name] of DEFAULT_CATEGORIES.entries()) {
-    await db.prepare(`
-      INSERT OR IGNORE INTO categories (name, sort_order, created_at, updated_at)
-      VALUES (?, ?, ?, ?)
-    `).bind(name, index + 1, now, now).run();
-  }
 }
 
 async function getCategories(db) {
@@ -52,8 +14,6 @@ async function getCategories(db) {
 }
 
 export async function onRequestGet({ env, request }) {
-  await ensurePostSeoColumns(env.BLOG_DB);
-  await ensureCategoriesTable(env.BLOG_DB);
   const admin = await getAdminSession(env, request).catch(() => null);
   const rows = await env.BLOG_DB.prepare(`
     SELECT
@@ -80,10 +40,8 @@ export async function onRequestGet({ env, request }) {
 }
 
 export async function onRequestPost({ env, request }) {
-  await ensurePostSeoColumns(env.BLOG_DB);
   const admin = await requireAdmin(env, request);
   if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
-  await ensureCategoriesTable(env.BLOG_DB);
   const body = await request.json().catch(() => null);
   const name = normalizeCategoryName(body?.name);
   if (!name) return okJson({ message: "카테고리 이름을 입력하세요." }, { status: 400 });
@@ -102,10 +60,8 @@ export async function onRequestPost({ env, request }) {
 }
 
 export async function onRequestPut({ env, request }) {
-  await ensurePostSeoColumns(env.BLOG_DB);
   const admin = await requireAdmin(env, request);
   if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
-  await ensureCategoriesTable(env.BLOG_DB);
   const body = await request.json().catch(() => null);
   const currentName = normalizeCategoryName(body?.current_name);
   const newName = normalizeCategoryName(body?.new_name);
@@ -141,10 +97,8 @@ export async function onRequestPut({ env, request }) {
 }
 
 export async function onRequestDelete({ env, request }) {
-  await ensurePostSeoColumns(env.BLOG_DB);
   const admin = await requireAdmin(env, request);
   if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
-  await ensureCategoriesTable(env.BLOG_DB);
   const body = await request.json().catch(() => null);
   const name = normalizeCategoryName(body?.name);
   if (!name) return okJson({ message: "삭제할 카테고리 이름이 필요합니다." }, { status: 400 });

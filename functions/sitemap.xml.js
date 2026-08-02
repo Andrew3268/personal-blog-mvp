@@ -1,4 +1,3 @@
-import { ensurePostSeoColumns } from "./_utils.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
 
@@ -28,7 +27,6 @@ function renderUrl(loc, lastmod = "") {
 }
 
 export async function onRequestGet({ env }) {
-  await ensurePostSeoColumns(env.BLOG_DB);
   const origin = SITE_ORIGIN;
   const [postRows, categoryRows] = await Promise.all([
     env.BLOG_DB.prepare(`

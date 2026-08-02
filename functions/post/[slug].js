@@ -1,4 +1,4 @@
-import { escapeHtml, jsonld, okHtml, edgeCache, ensurePostSeoColumns } from "../_utils.js";
+import { escapeHtml, jsonld, okHtml, edgeCache } from "../_utils.js";
 import { renderMarkdown, renderMarkdownBlocks, buildTocItemsFromBlocks, renderTocHtml, parseInlineImages, stripInlineImageTokens } from "../../lib/posts/renderer.js";
 import { buildImageAttrs, absolutizeImageUrl } from "../../lib/image-utils.js";
 
@@ -19,7 +19,6 @@ function safeDecodePathParam(value = "") {
 }
 
 export async function onRequestGet({ params, env, request }) {
-  await ensurePostSeoColumns(env.BLOG_DB);
   const slug = safeDecodePathParam(params.slug).trim();
   if (!slug) return okHtml("Not Found", { status: 404 });
 

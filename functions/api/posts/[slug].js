@@ -1,4 +1,4 @@
-import { okJson, requireAdmin, ensurePostSeoColumns } from "../../_utils.js";
+import { okJson, requireAdmin } from "../../_utils.js";
 
 function safeDecodePathParam(value = "") {
   try {
@@ -9,7 +9,6 @@ function safeDecodePathParam(value = "") {
 }
 
 export async function onRequestGet({ env, params, request }) {
-  await ensurePostSeoColumns(env.BLOG_DB);
   const admin = await requireAdmin(env, request);
   if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
   const slug = safeDecodePathParam(params.slug);
@@ -50,7 +49,6 @@ export async function onRequestGet({ env, params, request }) {
 }
 
 export async function onRequestPut({ env, params, request }) {
-  await ensurePostSeoColumns(env.BLOG_DB);
   const admin = await requireAdmin(env, request);
   if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
   const slug = safeDecodePathParam(params.slug);

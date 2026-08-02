@@ -3,7 +3,6 @@ import {
   verifyAdminCredentials,
   createAdminSession,
   buildAdminSessionCookie,
-  ensureAdminTables,
   sha256Hex,
 } from "../../_utils.js";
 
@@ -20,7 +19,6 @@ function getClientIp(request) {
 }
 
 async function getAttemptState(db, attemptKey) {
-  await ensureAdminTables(db);
   return db.prepare(`
     SELECT failed_count, window_started_at, locked_until
     FROM admin_login_attempts

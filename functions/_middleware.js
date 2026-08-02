@@ -35,6 +35,26 @@ function isSameOriginMutation(request, url) {
   return !fetchSite || fetchSite === "same-origin" || fetchSite === "same-site" || fetchSite === "none";
 }
 
+function injectAdminSessionState(response, admin) {
+  const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+  if (!admin || !contentType.includes("text/html")) return response;
+
+  const stateJson = JSON.stringify({
+    authenticated: true,
+    admin: { email: admin.email }
+  }).replace(/</g, "\\u003c")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+
+  return new HTMLRewriter()
+    .on("head", {
+      element(element) {
+        element.append(`<script>window.__ADMIN_SESSION__=${stateJson};</script>`, { html: true });
+      }
+    })
+    .transform(response);
+}
+
 function applyResponseHeaders(response, pathname) {
   const headers = new Headers(response.headers);
   headers.set("x-content-type-options", "nosniff");
@@ -128,15 +148,17 @@ export async function onRequest(context) {
     return applyResponseHeaders(okJson({ message: "허용되지 않은 요청 출처입니다." }, { status: 403 }), url.pathname);
   }
 
+  let authenticatedAdmin = null;
   if (PROTECTED_ADMIN_PATHS.has(url.pathname)) {
-    const admin = await getAdminSession(context.env, context.request).catch(() => null);
-    if (!admin) {
+    authenticatedAdmin = await getAdminSession(context.env, context.request).catch(() => null);
+    if (!authenticatedAdmin) {
       const loginUrl = new URL("/admin/", url.origin);
       loginUrl.searchParams.set("next", url.pathname + url.search);
       return Response.redirect(loginUrl.toString(), 302);
     }
   }
 
-  const response = await context.next();
+  let response = await context.next();
+  response = injectAdminSessionState(response, authenticatedAdmin);
   return applyResponseHeaders(response, url.pathname);
 }

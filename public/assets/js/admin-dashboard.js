@@ -41,8 +41,9 @@ async function initDashboard() {
     return Boolean(json?.settings?.index_sidebar_ad_enabled);
   }
 
-  const sessionRes = await fetch('/api/admin/session', { credentials: 'same-origin', cache: 'no-store' });
-  const sessionJson = await sessionRes.json().catch(() => ({}));
+  const sessionJson = await (window.__adminSessionPromise || Promise.resolve(
+    window.__ADMIN_SESSION__ || { authenticated: false, admin: null }
+  ));
   if (!sessionJson.authenticated) {
     location.href = '/admin/';
     return;

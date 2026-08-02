@@ -1,4 +1,4 @@
-import { okJson, getAdminSession, requireAdmin, ensurePostSeoColumns } from "../_utils.js";
+import { okJson, getAdminSession, requireAdmin } from "../_utils.js";
 
 function clampInt(value, fallback, min, max) {
   const num = Number.parseInt(String(value || ""), 10);
@@ -7,7 +7,6 @@ function clampInt(value, fallback, min, max) {
 }
 
 export async function onRequestGet({ env, request }) {
-  await ensurePostSeoColumns(env.BLOG_DB);
   const url = new URL(request.url);
   const status = String(url.searchParams.get("status") || "published").trim().toLowerCase();
   const category = String(url.searchParams.get("category") || "").trim();
@@ -102,19 +101,6 @@ export async function onRequestGet({ env, request }) {
   const countSql = `SELECT COUNT(*) AS total FROM posts ${whereSql}`;
 
   const baseBind = [...binds];
-  await env.BLOG_DB.prepare(`
-    CREATE TABLE IF NOT EXISTS site_settings (
-      key TEXT PRIMARY KEY,
-      value TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    )
-  `).run();
-
-  await env.BLOG_DB.prepare(`
-    INSERT OR IGNORE INTO site_settings (key, value, updated_at)
-    VALUES ('index_sidebar_ad_enabled', '0', ?)
-  `).bind(new Date().toISOString()).run();
-
   const [itemsRows, countRow, categoryRows, popularRows, statusRows, settingsRows] = await Promise.all([
     env.BLOG_DB.prepare(itemsSql).bind(...baseBind, perPage, offset).all(),
     env.BLOG_DB.prepare(countSql).bind(...binds).first(),
@@ -158,6 +144,9 @@ export async function onRequestGet({ env, request }) {
   const statusMap = new Map((statusRows?.results || []).map((row) => [String(row.status || "published").trim().toLowerCase(), Number(row.count || 0)]));
 
   return okJson({
+    viewer: {
+      is_admin: Boolean(admin)
+    },
     items: itemsRows.results || [],
     filters: {
       status: safeStatus,
@@ -198,7 +187,6 @@ export async function onRequestGet({ env, request }) {
 }
 
 export async function onRequestPost({ env, request }) {
-  await ensurePostSeoColumns(env.BLOG_DB);
   const admin = await requireAdmin(env, request);
   if (!admin) return okJson({ message: "관리자 로그인이 필요합니다." }, { status: 401 });
   const body = await request.json().catch(() => null);

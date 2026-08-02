@@ -1,7 +1,6 @@
 (function () {
-  const statePromise = fetch('/api/admin/session', { credentials: 'same-origin' })
-    .then((res) => res.ok ? res.json() : { authenticated: false, admin: null })
-    .catch(() => ({ authenticated: false, admin: null }));
+  const embeddedState = window.__ADMIN_SESSION__ || { authenticated: false, admin: null };
+  const statePromise = window.__adminSessionPromise || Promise.resolve(embeddedState);
 
   window.__adminSessionPromise = statePromise;
 

@@ -1,4 +1,4 @@
-import { escapeHtml, jsonld, okHtml, edgeCache, getAdminSession, ensurePostSeoColumns } from "./_utils.js";
+import { escapeHtml, jsonld, okHtml, edgeCache, getAdminSession, hasAdminSessionCookie } from "./_utils.js";
 import { buildImageAttrs } from "../lib/image-utils.js";
 
 export const SITE_ORIGIN = "https://wacky-wiki.com";
@@ -79,8 +79,9 @@ async function getAllCategoryRows(db) {
 }
 
 async function fetchHomeData({ db, request, category = "", tag = "", page = 1, status = "published" }) {
-  await ensurePostSeoColumns(db);
-  const admin = await getAdminSession({ BLOG_DB: db }, request).catch(() => null);
+  const admin = hasAdminSessionCookie(request)
+    ? await getAdminSession({ BLOG_DB: db }, request).catch(() => null)
+    : null;
   const requestedStatus = ["published", "draft", "all"].includes(status) ? status : "published";
   const safeStatus = admin ? requestedStatus : "published";
   const safeCategory = normalizeText(category);
@@ -108,19 +109,6 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
 
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
   const baseBind = [...binds];
-
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS site_settings (
-      key TEXT PRIMARY KEY,
-      value TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    )
-  `).run();
-
-  await db.prepare(`
-    INSERT OR IGNORE INTO site_settings (key, value, updated_at)
-    VALUES ('index_sidebar_ad_enabled', '0', ?)
-  `).bind(new Date().toISOString()).run();
 
   const [itemsRows, countRow, categoryRows, popularRows, statusRows, settingsRows] = await Promise.all([
     db.prepare(`
@@ -171,6 +159,9 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
   const statusMap = new Map((statusRows?.results || []).map((row) => [String(row.status || "published").trim().toLowerCase(), Number(row.count || 0)]));
 
   return {
+    viewer: {
+      is_admin: Boolean(admin)
+    },
     items: itemsRows.results || [],
     filters: {
       status: safeStatus,
@@ -605,7 +596,7 @@ export async function renderHomePage({ env, request, category = "" }) {
   <script>window.__WACKY_INITIAL_POSTS__=${safeJson(data)};</script>
   <script src="/assets/js/nav.js?v=20260428v11" defer></script>
   <script src="/assets/js/site-search.js?v=20260428v10" defer></script>
-  <script src="/assets/js/posts.js?v=20260731v2" defer></script>
+  <script src="/assets/js/posts.js?v=20260802v1" defer></script>
 </body>
 </html>`;
 
@@ -623,7 +614,7 @@ export async function renderHomePageCached({ env, request, category = "" }) {
   const status = normalizeText(url.searchParams.get("status") || "published").toLowerCase();
   const activeCategory = normalizeText(category);
 
-  if (status !== "published") {
+  if (status !== "published" || hasAdminSessionCookie(request)) {
     return renderHomePage({ env, request, category: activeCategory });
   }
 
