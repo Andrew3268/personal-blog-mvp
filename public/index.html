@@ -29,8 +29,8 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
   <meta name="theme-color" content="#5B7CFF" />
   <link rel="stylesheet" href="/assets/css/app.css?v=20260523v3" />
-  <link rel="preload" href="/assets/css/components.css?v=20260731v2" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-  <noscript><link rel="stylesheet" href="/assets/css/components.css?v=20260731v2" /></noscript>
+  <link rel="preload" href="/assets/css/components.css?v=20260802v3" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="/assets/css/components.css?v=20260802v3" /></noscript>
 </head>
 <body class="page-home">
   <header class="topbar topbar--editorial">
@@ -74,7 +74,7 @@
   <main class="container posts-page">
     <section id="postsHomeHero" class="posts-home-hero posts-home-hero--index" aria-label="카테고리 바로가기">
       <div class="posts-home-hero__content posts-home-hero__content--editorial">
-        <h1 id="postsPageTitle" class="posts-home-hero__title posts-home-hero__title--editorial">생활에 바로 쓰는 제품 정보와 실용 가이드</h1>
+        <h1 id="postsPageTitle" class="posts-home-hero__title posts-home-hero__title--editorial posts-home-hero__title--visually-hidden">생활에 바로 쓰는 제품 정보와 실용 가이드</h1>
         <p id="postsPageDescription" class="posts-home-hero__desc posts-home-hero__desc--editorial">실생활에 바로 적용할 수 있는 생활 꿀팁과 정리된 가이드를 전하는 블로그입니다.</p>
         <div class="posts-home-hero__category-wrap" aria-label="카테고리 바로가기">
           <div id="heroCategoryBar" class="topbar-categories__list topbar-categories__list--hero"><a class="posts-home-hero__category-link is-active" data-active-key="all" aria-current="page" href="/">ALL</a></div>
@@ -153,9 +153,9 @@
           </article>
         </div>
 
-        <div id="postsLoadMoreWrap" class="posts-load-more" hidden>
-          <button id="postsLoadMoreBtn" class="btn btn--brand posts-load-more__btn" type="button">더보기</button>
-        </div>
+        <nav id="postsLoadMoreWrap" class="posts-pagination" aria-label="글 목록 더 보기" hidden>
+          <button id="postsLoadMoreBtn" class="btn btn--brand posts-load-more__btn" type="button" hidden>더 보기</button>
+        </nav>
       </section>
 
       <aside class="post-side posts-sidebar posts-sidebar--simple" aria-label="글 목록 사이드바">
@@ -186,6 +186,6 @@
   </footer>
   <script src="/assets/js/nav.js?v=20260428v11" defer></script>
   <script src="/assets/js/site-search.js?v=20260428v10" defer></script>
-  <script src="/assets/js/posts.js?v=20260802v1" defer></script>
+  <script src="/assets/js/posts.js?v=20260802v2" defer></script>
 </body>
 </html>

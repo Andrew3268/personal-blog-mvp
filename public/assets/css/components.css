@@ -1491,11 +1491,8 @@ body.search-open::before{display:none !important;}
   }
 }
 
-/* SEO 친화적 페이지네이션: 실제 href 링크를 제공하면서 기존 더보기 UX를 유지합니다. */
-.posts-pagination{display:grid;gap:14px;justify-items:center;margin-top:28px}
-.posts-pagination__links{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
-.posts-pagination__link.is-disabled{opacity:.45;pointer-events:none}
-.posts-pagination__current{font-size:14px;color:#667085;min-width:92px;text-align:center}
+/* 글 목록은 페이지 번호 링크 없이 단일 더 보기 버튼만 제공합니다. */
+.posts-pagination{display:grid;justify-items:center;margin-top:28px}
+.posts-home-hero__title--visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);clip-path:inset(50%);white-space:nowrap;border:0}
 .posts-home-hero__content--editorial{display:grid;gap:10px}
 .posts-home-hero__category-wrap{margin-top:6px}
-@media (max-width:720px){.posts-pagination__links{gap:8px}.posts-pagination__link{padding-left:14px;padding-right:14px}.posts-pagination__current{order:-1;width:100%}}

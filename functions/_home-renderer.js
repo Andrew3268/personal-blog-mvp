@@ -296,22 +296,12 @@ function renderPopularList(items = []) {
 }
 
 function renderPagination({ path, page, totalPages, tag = "", status = "published", hasMore = false }) {
-  if (totalPages <= 1) return "";
-  const previousUrl = page > 1
-    ? buildArchivePath(path, { page: page - 1, tag, status })
-    : "";
-  const nextUrl = hasMore
-    ? buildArchivePath(path, { page: page + 1, tag, status })
-    : "";
+  if (totalPages <= 1 || !hasMore) return "";
+  const nextUrl = buildArchivePath(path, { page: page + 1, tag, status });
 
   return `
-    <nav id="postsLoadMoreWrap" class="posts-pagination" aria-label="글 목록 페이지 이동">
-      <div class="posts-pagination__links">
-        ${previousUrl ? `<a class="btn posts-pagination__link" rel="prev" href="${escapeHtml(previousUrl)}">이전 페이지</a>` : `<span class="btn posts-pagination__link is-disabled" aria-disabled="true">이전 페이지</span>`}
-        <span id="postsPaginationCurrent" class="posts-pagination__current" aria-current="page">${Number(page)} / ${Number(totalPages)} 페이지</span>
-        ${nextUrl ? `<a id="postsNextPageLink" class="btn posts-pagination__link" rel="next" href="${escapeHtml(nextUrl)}">다음 페이지</a>` : `<span class="btn posts-pagination__link is-disabled" aria-disabled="true">다음 페이지</span>`}
-      </div>
-      ${nextUrl ? `<button id="postsLoadMoreBtn" class="btn btn--brand posts-load-more__btn" type="button" data-next-url="${escapeHtml(nextUrl)}">현재 화면에서 더보기</button>` : ""}
+    <nav id="postsLoadMoreWrap" class="posts-pagination" aria-label="글 목록 더 보기">
+      <button id="postsLoadMoreBtn" class="btn btn--brand posts-load-more__btn" type="button" data-next-url="${escapeHtml(nextUrl)}">더 보기</button>
     </nav>
   `;
 }
@@ -326,7 +316,7 @@ function renderArchiveNotFound({ title = "페이지를 찾을 수 없습니다",
   <meta name="description" content="${escapeHtml(description)}" />
   <meta name="robots" content="noindex,follow" />
   <link rel="stylesheet" href="/assets/css/app.css?v=20260523v3" />
-  <link rel="stylesheet" href="/assets/css/components.css?v=20260731v2" />
+  <link rel="stylesheet" href="/assets/css/components.css?v=20260802v3" />
 </head>
 <body>
   <main class="container">
@@ -566,8 +556,8 @@ export async function renderHomePage({ env, request, category = "" }) {
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
   <meta name="theme-color" content="#5B7CFF" />
   <link rel="stylesheet" href="/assets/css/app.css?v=20260523v3" />
-  <link rel="preload" href="/assets/css/components.css?v=20260731v2" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-  <noscript><link rel="stylesheet" href="/assets/css/components.css?v=20260731v2" /></noscript>
+  <link rel="preload" href="/assets/css/components.css?v=20260802v3" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="/assets/css/components.css?v=20260802v3" /></noscript>
   ${jsonld(websiteJsonLd)}
   ${jsonld(collectionJsonLd)}
 </head>
@@ -577,7 +567,7 @@ export async function renderHomePage({ env, request, category = "" }) {
   <main class="container posts-page">
     <section id="postsHomeHero" class="posts-home-hero ${isDefaultHome ? "posts-home-hero--index" : "posts-home-hero--category"}" aria-label="카테고리 바로가기">
       <div class="posts-home-hero__content posts-home-hero__content--editorial">
-        <h1 id="postsPageTitle" class="posts-home-hero__title ${isDefaultHome ? "posts-home-hero__title--editorial" : ""}">${escapeHtml(pageHeading)}</h1>
+        <h1 id="postsPageTitle" class="posts-home-hero__title ${isDefaultHome ? "posts-home-hero__title--editorial posts-home-hero__title--visually-hidden" : ""}">${escapeHtml(pageHeading)}</h1>
         <p id="postsPageDescription" class="posts-home-hero__desc ${isDefaultHome ? "posts-home-hero__desc--editorial" : ""}">${escapeHtml(description)}</p>
         <div class="posts-home-hero__category-wrap" aria-label="카테고리 바로가기">
           <div id="heroCategoryBar" class="topbar-categories__list topbar-categories__list--hero">${heroCategoryHtml}</div>
@@ -614,7 +604,7 @@ export async function renderHomePage({ env, request, category = "" }) {
   <script>window.__WACKY_INITIAL_POSTS__=${safeJson(data)};</script>
   <script src="/assets/js/nav.js?v=20260428v11" defer></script>
   <script src="/assets/js/site-search.js?v=20260428v10" defer></script>
-  <script src="/assets/js/posts.js?v=20260802v1" defer></script>
+  <script src="/assets/js/posts.js?v=20260802v2" defer></script>
 </body>
 </html>`;
 

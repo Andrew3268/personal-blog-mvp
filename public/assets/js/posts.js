@@ -292,6 +292,7 @@ function buildPostsHeroNav(categories = []) {
 
     if (pageTitleEl) {
       pageTitleEl.classList.toggle('posts-home-hero__title--editorial', isHomeDefault);
+      pageTitleEl.classList.toggle('posts-home-hero__title--visually-hidden', isHomeDefault);
       pageTitleEl.textContent = getPageTitle();
     }
 
@@ -311,9 +312,8 @@ function buildPostsHeroNav(categories = []) {
     if (kickerEl) kickerEl.hidden = !isHomeDefault;
     if (heroCategoryWrap) heroCategoryWrap.hidden = false;
   }
+  const loadMoreWrap = $('#postsLoadMoreWrap');
   const loadMoreBtn = $('#postsLoadMoreBtn');
-  const nextPageLink = $('#postsNextPageLink');
-  const paginationCurrentEl = $('#postsPaginationCurrent');
 
   const show = (el, on) => { if (el) el.hidden = !on; };
   const escapeHtml = (s) => String(s ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
@@ -536,16 +536,13 @@ function buildPostsHeroNav(categories = []) {
 
   function updateLoadMore(pagination = {}) {
     hasMore = Boolean(pagination.has_more);
+    show(loadMoreWrap, hasMore);
     if (loadMoreBtn) {
       show(loadMoreBtn, hasMore);
       loadMoreBtn.disabled = !hasMore || isLoading;
-      loadMoreBtn.textContent = isLoading ? '불러오는 중…' : '현재 화면에서 더보기';
+      loadMoreBtn.textContent = isLoading ? '불러오는 중…' : '더 보기';
       if (pagination.next_page) loadMoreBtn.dataset.nextUrl = buildPostsPageUrl(Number(pagination.next_page));
     }
-    if (nextPageLink && pagination.next_page) {
-      nextPageLink.href = buildPostsPageUrl(Number(pagination.next_page));
-    }
-    if (nextPageLink) show(nextPageLink, hasMore);
   }
 
   async function fetchPage(page, { append = false } = {}) {
@@ -595,9 +592,6 @@ function buildPostsHeroNav(categories = []) {
       currentPage = Number(pagination.page || page);
       updateLoadMore(pagination);
 
-      if (paginationCurrentEl && append) {
-        paginationCurrentEl.textContent = `1–${currentPage}페이지 불러옴`;
-      }
     } catch (err) {
       clearAppendSkeleton();
       if (!append) {
