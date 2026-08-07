@@ -87,7 +87,9 @@ export async function onRequest(context) {
   const url = new URL(context.request.url);
   const host = url.hostname.toLowerCase();
 
-  if (host === "www.wacky-wiki.com" || host.endsWith(".pages.dev")) {
+  // Keep every public request on the canonical HTTPS origin. This also makes
+  // /ads.txt consistently reachable when crawlers try HTTP, www or pages.dev.
+  if (url.protocol !== "https:" || host === "www.wacky-wiki.com" || host.endsWith(".pages.dev")) {
     const redirectUrl = new URL(url.pathname + url.search, SITE_ORIGIN);
     return Response.redirect(redirectUrl.toString(), 301);
   }
