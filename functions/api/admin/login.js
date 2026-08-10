@@ -52,31 +52,62 @@ async function recordFailure(db, attemptKey, currentState) {
 }
 
 export async function onRequestPost({ env, request }) {
-  const body = await request.json().catch(() => null);
-  const email = String(body?.email || "").trim().toLowerCase();
-  const password = String(body?.password || "");
-  const attemptKey = await sha256Hex(`${getClientIp(request)}::${email}`);
-  const attemptState = await getAttemptState(env.BLOG_DB, attemptKey);
-  const lockedUntilMs = new Date(attemptState?.locked_until || 0).getTime();
+  let stage = "request";
 
-  if (Number.isFinite(lockedUntilMs) && lockedUntilMs > Date.now()) {
-    const retryAfter = Math.max(1, Math.ceil((lockedUntilMs - Date.now()) / 1000));
-    return okJson({ message: "로그인 시도가 너무 많습니다. 잠시 후 다시 시도하세요." }, {
-      status: 429,
-      headers: { "retry-after": String(retryAfter) }
+  try {
+    if (!env?.BLOG_DB) {
+      throw new Error("BLOG_DB binding is unavailable");
+    }
+
+    stage = "parse_body";
+    const body = await request.json().catch(() => null);
+    const email = String(body?.email || "").trim().toLowerCase();
+    const password = String(body?.password || "");
+
+    stage = "build_attempt_key";
+    const attemptKey = await sha256Hex(`${getClientIp(request)}::${email}`);
+
+    stage = "read_attempt_state";
+    const attemptState = await getAttemptState(env.BLOG_DB, attemptKey);
+    const lockedUntilMs = new Date(attemptState?.locked_until || 0).getTime();
+
+    if (Number.isFinite(lockedUntilMs) && lockedUntilMs > Date.now()) {
+      const retryAfter = Math.max(1, Math.ceil((lockedUntilMs - Date.now()) / 1000));
+      return okJson({ message: "로그인 시도가 너무 많습니다. 잠시 후 다시 시도하세요." }, {
+        status: 429,
+        headers: { "retry-after": String(retryAfter) }
+      });
+    }
+
+    stage = "verify_credentials";
+    const admin = await verifyAdminCredentials(env.BLOG_DB, email, password);
+    if (!admin) {
+      stage = "record_failure";
+      const result = await recordFailure(env.BLOG_DB, attemptKey, attemptState);
+      const headers = result.lockedUntil ? { "retry-after": String(LOCK_MS / 1000) } : {};
+      return okJson({ message: "이메일 또는 비밀번호가 올바르지 않습니다." }, { status: 401, headers });
+    }
+
+    stage = "clear_failures";
+    await env.BLOG_DB.prepare(`DELETE FROM admin_login_attempts WHERE attempt_key = ?`).bind(attemptKey).run();
+
+    stage = "create_session";
+    const session = await createAdminSession(env.BLOG_DB, admin.id);
+
+    stage = "response";
+    return okJson({ ok: true, admin: { email: admin.email } }, {
+      headers: { "set-cookie": buildAdminSessionCookie(session.token) }
     });
-  }
+  } catch (error) {
+    console.error("[admin/login] request failed", {
+      stage,
+      name: error?.name || "Error",
+      message: error?.message || String(error),
+      stack: error?.stack || "",
+    });
 
-  const admin = await verifyAdminCredentials(env.BLOG_DB, email, password);
-  if (!admin) {
-    const result = await recordFailure(env.BLOG_DB, attemptKey, attemptState);
-    const headers = result.lockedUntil ? { "retry-after": String(LOCK_MS / 1000) } : {};
-    return okJson({ message: "이메일 또는 비밀번호가 올바르지 않습니다." }, { status: 401, headers });
+    return okJson({
+      message: "로그인 처리 중 서버 오류가 발생했습니다. 잠시 후 다시 시도하세요."
+    }, { status: 500 });
   }
-
-  await env.BLOG_DB.prepare(`DELETE FROM admin_login_attempts WHERE attempt_key = ?`).bind(attemptKey).run();
-  const session = await createAdminSession(env.BLOG_DB, admin.id);
-  return okJson({ ok: true, admin: { email: admin.email } }, {
-    headers: { "set-cookie": buildAdminSessionCookie(session.token) }
-  });
 }

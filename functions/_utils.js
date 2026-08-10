@@ -162,7 +162,8 @@ async function verifyStoredPassword(email, password, storedHash) {
     return timingSafeEqual(actual, expected);
   }
 
-  // 이전 배포에서 사용한 SHA-256 해시를 한 번만 허용하고, 로그인 성공 시 PBKDF2로 자동 교체합니다.
+  // 이전 배포에서 사용한 SHA-256 해시는 로그인 호환을 위해 계속 검증합니다.
+  // 고비용 PBKDF2 변환은 로그인 요청 중 자동 실행하지 않습니다.
   if (/^[0-9a-f]{64}$/i.test(value)) {
     const legacy = await sha256Hex(`${normalizeEmail(email)}::${String(password || "")}`);
     return timingSafeEqual(hexToBytes(legacy), hexToBytes(value));
@@ -200,15 +201,12 @@ export async function verifyAdminCredentials(db, email, password) {
   const safePassword = String(password || "");
   const user = await db.prepare(`SELECT id, email, password_hash FROM admin_users WHERE email = ?`).bind(safeEmail).first();
   if (!user) return null;
+
   const verified = await verifyStoredPassword(safeEmail, safePassword, user.password_hash);
   if (!verified) return null;
 
-  if (!String(user.password_hash || "").startsWith("pbkdf2_sha256$")) {
-    const upgradedHash = await createPasswordHash(safeEmail, safePassword);
-    await db.prepare(`UPDATE admin_users SET password_hash = ?, updated_at = ? WHERE id = ?`)
-      .bind(upgradedHash, new Date().toISOString(), user.id)
-      .run();
-  }
+  // 레거시 SHA-256 계정을 로그인 요청 안에서 PBKDF2로 자동 변환하지 않습니다.
+  // 인증 성공 후 바로 세션 생성 단계로 넘겨 정상 비밀번호 입력 시 발생하던 500 오류를 방지합니다.
   return { id: Number(user.id), email: user.email };
 }
 
