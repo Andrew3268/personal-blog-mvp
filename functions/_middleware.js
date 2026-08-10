@@ -16,9 +16,40 @@ const CANONICAL_STATIC_PATHS = new Map([
   ["/admin/index.html", "/admin/"],
 ]);
 
-function normalizeCategoryPath(name = "") {
+// Legacy category consolidation (2026-08):
+// LIVING / KITCHEN / HEALTH were merged into the new Life category.
+// Keep this mapping so already-indexed/search-linked legacy URLs permanently
+// redirect to the single canonical category instead of becoming 404 pages.
+const LEGACY_CATEGORY_REDIRECTS = new Map([
+  ["LIVING", "Life"],
+  ["KITCHEN", "Life"],
+  ["HEALTH", "Life"],
+]);
+
+function normalizeCategoryName(name = "") {
   const safeName = String(name || "").replace(/\s+/g, " ").trim();
+  if (!safeName) return "";
+  return LEGACY_CATEGORY_REDIRECTS.get(safeName.toUpperCase()) || safeName;
+}
+
+function normalizeCategoryPath(name = "") {
+  const safeName = normalizeCategoryName(name);
   return safeName ? `/category/${encodeURIComponent(safeName)}/` : "/";
+}
+
+function getLegacyCategoryRedirect(pathname = "") {
+  const match = String(pathname || "").match(/^\/category\/([^/]+)\/?$/);
+  if (!match) return null;
+
+  let decoded = "";
+  try {
+    decoded = decodeURIComponent(match[1]);
+  } catch {
+    return null;
+  }
+
+  const safeName = String(decoded || "").replace(/\s+/g, " ").trim();
+  return LEGACY_CATEGORY_REDIRECTS.get(safeName.toUpperCase()) || null;
 }
 
 function isSameOriginMutation(request, url) {
@@ -97,6 +128,17 @@ export async function onRequest(context) {
   const canonicalStaticPath = CANONICAL_STATIC_PATHS.get(url.pathname);
   if (canonicalStaticPath) {
     const redirectUrl = new URL(canonicalStaticPath + url.search, url.origin);
+    return Response.redirect(redirectUrl.toString(), 301);
+  }
+
+  const legacyCategoryTarget = getLegacyCategoryRedirect(url.pathname);
+  if (legacyCategoryTarget) {
+    const redirectUrl = new URL(normalizeCategoryPath(legacyCategoryTarget), url.origin);
+    // Preserve meaningful pagination/tag parameters from indexed legacy URLs.
+    const page = url.searchParams.get("page");
+    const tag = url.searchParams.get("tag");
+    if (page) redirectUrl.searchParams.set("page", page);
+    if (tag) redirectUrl.searchParams.set("tag", tag);
     return Response.redirect(redirectUrl.toString(), 301);
   }
 
