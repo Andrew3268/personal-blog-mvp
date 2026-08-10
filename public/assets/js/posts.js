@@ -162,18 +162,26 @@ function renderOptimizedImageAttrs(src = "", config = {}) {
     : "";
   return `src="${escapeHtml(image.src)}"${image.srcset ? ` srcset="${escapeHtml(image.srcset)}"` : ""} sizes="${escapeHtml(image.sizes)}" data-original-src="${escapeHtml(fallbackSrc)}"${directFallbackSrc ? ` data-direct-src="${escapeHtml(directFallbackSrc)}"` : ""}${onError}`;
 }
+function canonicalCategoryName(value = '') {
+  const normalized = String(value || '').replace(/\s+/g, ' ').trim();
+  if (!normalized) return '';
+  const upper = normalized.toUpperCase();
+  if (upper === 'LIVING' || upper === 'KITCHEN' || upper === 'HEALTH') return 'Life';
+  return normalized;
+}
+
 function getPathCategory() {
   const parts = window.location.pathname.split('/').filter(Boolean);
   if (parts[0] !== 'category' || !parts[1]) return '';
   try {
-    return decodeURIComponent(parts[1]).replace(/\s+/g, ' ').trim();
+    return canonicalCategoryName(decodeURIComponent(parts[1]));
   } catch (_) {
-    return String(parts[1] || '').replace(/\s+/g, ' ').trim();
+    return canonicalCategoryName(parts[1]);
   }
 }
 
 function buildCategoryUrl(name = '') {
-  const safeName = String(name || '').replace(/\s+/g, ' ').trim();
+  const safeName = canonicalCategoryName(name);
   return safeName ? `/category/${encodeURIComponent(safeName)}/` : '/';
 }
 
@@ -191,7 +199,7 @@ function getPostsHeroActiveKey() {
 function mergeCategoryCounts(baseCategories = [], countedCategories = []) {
   const countMap = new Map(
     (Array.isArray(countedCategories) ? countedCategories : []).map((item) => [
-      String(item?.name || '').trim(),
+      canonicalCategoryName(item?.name),
       Number(item?.count || 0)
     ])
   );
@@ -200,7 +208,7 @@ function mergeCategoryCounts(baseCategories = [], countedCategories = []) {
   const seen = new Set();
 
   (Array.isArray(baseCategories) ? baseCategories : []).forEach((item) => {
-    const name = String(item?.name || '').trim();
+    const name = canonicalCategoryName(item?.name);
     if (!name || seen.has(name)) return;
     seen.add(name);
     merged.push({
@@ -210,7 +218,7 @@ function mergeCategoryCounts(baseCategories = [], countedCategories = []) {
   });
 
   (Array.isArray(countedCategories) ? countedCategories : []).forEach((item) => {
-    const name = String(item?.name || '').trim();
+    const name = canonicalCategoryName(item?.name);
     if (!name || seen.has(name)) return;
     seen.add(name);
     merged.push({
@@ -242,7 +250,7 @@ function buildPostsHeroNav(categories = []) {
   const seen = new Set();
 
   (Array.isArray(categories) ? categories : []).forEach((cat) => {
-    const name = String(cat?.name || '').trim();
+    const name = canonicalCategoryName(cat?.name);
     if (!name || seen.has(name)) return;
     seen.add(name);
     unique.push({ name, count: Number(cat?.count || 0) });
@@ -486,7 +494,7 @@ function buildPostsHeroNav(categories = []) {
     const markup = items.map((it, index) => {
       const rawTitle = String(it.title || '(제목 없음)');
       const title = escapeHtml(rawTitle);
-      const categoryText = String(it.category || '').trim();
+      const categoryText = canonicalCategoryName(it.category);
       const categoryHtml = categoryText
         ? `<a class="badge" href="${buildCategoryUrl(categoryText)}">${escapeHtml(categoryText)}</a>`
         : `<span class="badge">미분류</span>`;

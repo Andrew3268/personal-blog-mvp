@@ -1,5 +1,6 @@
 import { okJson, requireAdmin, getAdminSession } from "../_utils.js";
 import { scheduleContentCacheInvalidation } from "../_cache-invalidation.js";
+import { isLegacyCategoryName } from "../_category-utils.js";
 
 function normalizeCategoryName(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
@@ -47,6 +48,7 @@ export async function onRequestPost(context) {
   const body = await request.json().catch(() => null);
   const name = normalizeCategoryName(body?.name);
   if (!name) return okJson({ message: "카테고리 이름을 입력하세요." }, { status: 400 });
+  if (isLegacyCategoryName(name)) return okJson({ message: "해당 이름은 Life로 통합된 이전 카테고리명입니다." }, { status: 400 });
 
   const exists = await env.BLOG_DB.prepare(`SELECT name FROM categories WHERE name = ?`).bind(name).first();
   if (exists) return okJson({ message: "같은 이름의 카테고리가 이미 있습니다." }, { status: 409 });
@@ -75,6 +77,9 @@ export async function onRequestPut(context) {
 
   if (!currentName || !newName) {
     return okJson({ message: "현재 이름과 새 이름이 모두 필요합니다." }, { status: 400 });
+  }
+  if (isLegacyCategoryName(newName)) {
+    return okJson({ message: "해당 이름은 Life로 통합된 이전 카테고리명입니다." }, { status: 400 });
   }
 
   const current = await env.BLOG_DB.prepare(`SELECT name FROM categories WHERE name = ?`).bind(currentName).first();

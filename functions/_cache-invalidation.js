@@ -1,13 +1,10 @@
+import { canonicalCategoryName, categoryPath } from "./_category-utils.js";
+
 const SITE_ORIGIN = "https://wacky-wiki.com";
 const ARCHIVE_CACHE_VERSION = "3";
 
 function normalizeText(value = "") {
   return String(value || "").replace(/\s+/g, " ").trim();
-}
-
-function categoryPath(name = "") {
-  const safeName = normalizeText(name);
-  return safeName ? `/category/${encodeURIComponent(safeName)}/` : "/";
 }
 
 function archiveCacheUrl(path, tag = "") {
@@ -23,7 +20,7 @@ export function scheduleContentCacheInvalidation({ waitUntil, slugs = [], catego
   if (typeof waitUntil !== "function") return;
 
   const urls = new Set([archiveCacheUrl("/")]);
-  const safeCategories = [...new Set(categories.map(normalizeText).filter(Boolean))];
+  const safeCategories = [...new Set(categories.map(canonicalCategoryName).filter(Boolean))];
   const safeTags = [...new Set(tags.map(normalizeText).filter(Boolean))];
 
   for (const slug of slugs.map((value) => String(value || "").trim()).filter(Boolean)) {

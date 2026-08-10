@@ -1,4 +1,5 @@
-import { renderHomePageCached, categoryPath } from "./_home-renderer.js";
+import { renderHomePageCached } from "./_home-renderer.js";
+import { categoryPath } from "./_category-utils.js";
 
 export async function onRequestGet(context) {
   const { env, request } = context;

@@ -1,3 +1,5 @@
+import { canonicalCategoryName, categoryPath } from "./_category-utils.js";
+
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
 
@@ -16,10 +18,6 @@ function formatLastmod(value = "") {
   return date.toISOString().slice(0, 10);
 }
 
-function categoryPath(name = "") {
-  const safeName = String(name || "").replace(/\s+/g, " ").trim();
-  return safeName ? `/category/${encodeURIComponent(safeName)}/` : "/";
-}
 
 function renderUrl(loc, lastmod = "") {
   const safeLastmod = lastmod ? `<lastmod>${escapeXml(formatLastmod(lastmod))}</lastmod>` : "";
@@ -51,7 +49,16 @@ export async function onRequestGet({ env }) {
     renderUrl(`${origin}/privacy-policy/`)
   ];
 
-  const categoryUrls = (categoryRows.results || [])
+  const categoryMap = new Map();
+  for (const item of categoryRows.results || []) {
+    const name = canonicalCategoryName(item.name);
+    if (!name) continue;
+    const current = categoryMap.get(name);
+    if (!current || String(item.updated_at || "") > String(current.updated_at || "")) {
+      categoryMap.set(name, { name, updated_at: item.updated_at || "" });
+    }
+  }
+  const categoryUrls = [...categoryMap.values()]
     .map((item) => renderUrl(`${origin}${categoryPath(item.name)}`, item.updated_at));
 
   const postUrls = (postRows.results || [])

@@ -1,4 +1,5 @@
 import { getAdminSession, okJson } from "./_utils.js";
+import { canonicalCategoryName, categoryPath, isLegacyCategoryName, normalizeCategoryName } from "./_category-utils.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
 const PROTECTED_ADMIN_PATHS = new Set([
@@ -17,26 +18,7 @@ const CANONICAL_STATIC_PATHS = new Map([
 ]);
 
 // Legacy category consolidation (2026-08):
-// LIVING / KITCHEN / HEALTH were merged into the new Life category.
-// Keep this mapping so already-indexed/search-linked legacy URLs permanently
-// redirect to the single canonical category instead of becoming 404 pages.
-const LEGACY_CATEGORY_REDIRECTS = new Map([
-  ["LIVING", "Life"],
-  ["KITCHEN", "Life"],
-  ["HEALTH", "Life"],
-]);
-
-function normalizeCategoryName(name = "") {
-  const safeName = String(name || "").replace(/\s+/g, " ").trim();
-  if (!safeName) return "";
-  return LEGACY_CATEGORY_REDIRECTS.get(safeName.toUpperCase()) || safeName;
-}
-
-function normalizeCategoryPath(name = "") {
-  const safeName = normalizeCategoryName(name);
-  return safeName ? `/category/${encodeURIComponent(safeName)}/` : "/";
-}
-
+// Previously indexed category URLs are kept only as permanent redirect aliases.
 function getLegacyCategoryRedirect(pathname = "") {
   const match = String(pathname || "").match(/^\/category\/([^/]+)\/?$/);
   if (!match) return null;
@@ -48,8 +30,7 @@ function getLegacyCategoryRedirect(pathname = "") {
     return null;
   }
 
-  const safeName = String(decoded || "").replace(/\s+/g, " ").trim();
-  return LEGACY_CATEGORY_REDIRECTS.get(safeName.toUpperCase()) || null;
+  return isLegacyCategoryName(decoded) ? canonicalCategoryName(decoded) : null;
 }
 
 function isSameOriginMutation(request, url) {
@@ -133,7 +114,7 @@ export async function onRequest(context) {
 
   const legacyCategoryTarget = getLegacyCategoryRedirect(url.pathname);
   if (legacyCategoryTarget) {
-    const redirectUrl = new URL(normalizeCategoryPath(legacyCategoryTarget), url.origin);
+    const redirectUrl = new URL(categoryPath(legacyCategoryTarget), url.origin);
     // Preserve meaningful pagination/tag parameters from indexed legacy URLs.
     const page = url.searchParams.get("page");
     const tag = url.searchParams.get("tag");
@@ -153,9 +134,9 @@ export async function onRequest(context) {
   }
 
   if (url.pathname === "/" && url.searchParams.has("category")) {
-    const category = String(url.searchParams.get("category") || "").replace(/\s+/g, " ").trim();
+    const category = normalizeCategoryName(url.searchParams.get("category"));
     if (category) {
-      const redirectUrl = new URL(normalizeCategoryPath(category), url.origin);
+      const redirectUrl = new URL(categoryPath(category), url.origin);
       const page = url.searchParams.get("page");
       const tag = url.searchParams.get("tag");
       if (page && page !== "1") redirectUrl.searchParams.set("page", page);

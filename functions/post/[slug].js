@@ -1,14 +1,10 @@
 import { escapeHtml, jsonld, okHtml, edgeCache } from "../_utils.js";
 import { renderMarkdown, renderMarkdownBlocks, buildTocItemsFromBlocks, renderTocHtml, parseInlineImages, stripInlineImageTokens } from "../../lib/posts/renderer.js";
 import { buildImageAttrs, absolutizeImageUrl } from "../../lib/image-utils.js";
+import { canonicalCategoryName, categoryPath } from "../_category-utils.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
 const ADSENSE_CLIENT = "ca-pub-7298667883751711";
-
-function categoryPath(name = "") {
-  const safeName = String(name || "").replace(/\s+/g, " ").trim();
-  return safeName ? `/category/${encodeURIComponent(safeName)}/` : "/";
-}
 
 function safeDecodePathParam(value = "") {
   try {
@@ -110,7 +106,7 @@ export async function onRequestGet(context) {
       const inArticleAds = shouldShowInarticleAds ? buildInArticleAds(adConfig, 2) : [];
       const bodyHtml = buildArticleBodyHtml(row.content_md || "", inArticleAds, contentTextLength, env);
       const faqSectionHtml = renderFaqSection(faqItems);
-      const relatedPostsHtml = renderRelatedPostsSection(relatedRows, row.category);
+      const relatedPostsHtml = renderRelatedPostsSection(relatedRows, canonicalCategoryName(row.category));
       const popularPostsHtml = renderPopularPosts(popularRows);
       const sidebarAdHtml = shouldShowSidebarAd ? renderSidebarAd(adConfig) : "";
       const adsenseHeadScript = renderAdsenseHeadScript(adConfig, shouldLoadAdsense);
@@ -151,8 +147,8 @@ export async function onRequestGet(context) {
 
       if (row.category) {
         breadcrumbItems.push({
-          name: String(row.category),
-          url: `${origin}${categoryPath(String(row.category))}`
+          name: canonicalCategoryName(row.category),
+          url: `${origin}${categoryPath(row.category)}`
         });
       }
 
@@ -201,7 +197,7 @@ export async function onRequestGet(context) {
         dateModified: updatedIso || row.updated_at || "",
         url: canonical.toString(),
         inLanguage: "ko-KR",
-        articleSection: row.category || "블로그",
+        articleSection: canonicalCategoryName(row.category) || "블로그",
         wordCount: stripMarkdown(row.content_md || "").split(/\s+/).filter(Boolean).length
       };
 
@@ -665,7 +661,7 @@ function renderFaqSection(items) {
 
 function renderRelatedPostsSection(items, category) {
   if (!Array.isArray(items) || !items.length) return "";
-  const categoryText = String(category || "").trim();
+  const categoryText = canonicalCategoryName(category);
   const headingText = categoryText ? `${categoryText} 관련글 더보기` : "관련글 더보기";
   const categoryActionHtml = categoryText
     ? `<div class="post-related__action"><a class="btn post-related__more-btn" href="${categoryPath(categoryText)}">카테고리 전체 보기</a></div>`
@@ -804,7 +800,7 @@ function getMobileCategoryStatement(db) {
 function renderMobileCategoryLinks(items = []) {
   const links = (items || [])
     .filter((item) => Number(item?.count || 0) > 0)
-    .map((item) => String(item?.name || '').trim())
+    .map((item) => canonicalCategoryName(item?.name))
     .filter(Boolean)
     .map((name) => '<a class="topbar-categories__chip" href="' + categoryPath(name) + '">' + escapeHtml(name) + '</a>')
     .join('');

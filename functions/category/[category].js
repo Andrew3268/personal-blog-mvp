@@ -1,8 +1,5 @@
 import { renderHomePageCached, archiveNotFoundResponse } from "../_home-renderer.js";
-
-function normalizeCategory(value = "") {
-  return String(value || "").replace(/\s+/g, " ").trim();
-}
+import { canonicalCategoryName, isLegacyCategoryName } from "../_category-utils.js";
 
 export async function onRequestGet(context) {
   const { params, env, request } = context;
@@ -16,8 +13,11 @@ export async function onRequestGet(context) {
     });
   }
 
-  const category = normalizeCategory(decoded);
+  const category = canonicalCategoryName(decoded);
   if (!category) return Response.redirect(new URL("/", request.url).toString(), 301);
+  if (isLegacyCategoryName(decoded)) {
+    return Response.redirect(new URL(`/category/${encodeURIComponent(category)}/`, request.url).toString(), 301);
+  }
 
   return renderHomePageCached({
     env,

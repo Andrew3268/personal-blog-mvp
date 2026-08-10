@@ -1,5 +1,6 @@
 import { escapeHtml, jsonld, okHtml, edgeCache, getAdminSession, hasAdminSessionCookie } from "./_utils.js";
 import { buildImageAttrs } from "../lib/image-utils.js";
+import { canonicalCategoryName, categoryPath } from "./_category-utils.js";
 
 export const SITE_ORIGIN = "https://wacky-wiki.com";
 const SITE_NAME = "Wacky Wiki";
@@ -18,11 +19,6 @@ function normalizeText(value = "") {
 
 function normalizeTagKey(value = "") {
   return normalizeText(value).replace(/^#+/, "").toLowerCase();
-}
-
-export function categoryPath(name = "") {
-  const safeName = normalizeText(name);
-  return safeName ? `/category/${encodeURIComponent(safeName)}/` : "/";
 }
 
 function postPath(slug = "") {
@@ -61,7 +57,7 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
     : null;
   const requestedStatus = ["published", "draft", "all"].includes(status) ? status : "published";
   const safeStatus = admin ? requestedStatus : "published";
-  const safeCategory = normalizeText(category);
+  const safeCategory = canonicalCategoryName(category);
   const safeTag = normalizeText(tag);
   const safePage = clampInt(page, 1, 1, 9999);
   const offset = (safePage - 1) * PER_PAGE;
@@ -196,13 +192,7 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
         published: statusMap.get("published") || 0,
         draft: statusMap.get("draft") || 0
       },
-      categories: (categoryRows?.results || [])
-        .map((row) => ({
-          name: normalizeText(row.name),
-          count: Number(row.count || 0),
-          updated_at: row.updated_at || ""
-        }))
-        .filter((row) => row.name && row.count > 0),
+      categories: aggregateCategories(categoryRows?.results || []),
       popular: (popularRows?.results || []).map((row) => ({
         slug: row.slug,
         title: row.title,
@@ -214,13 +204,30 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
   };
 }
 
+
+function aggregateCategories(rows = []) {
+  const merged = new Map();
+  for (const row of rows || []) {
+    const name = canonicalCategoryName(row?.name);
+    if (!name) continue;
+    const current = merged.get(name) || { name, count: 0, updated_at: "" };
+    current.count += Number(row?.count || 0);
+    const candidateUpdated = String(row?.updated_at || "");
+    if (candidateUpdated && (!current.updated_at || candidateUpdated > current.updated_at)) {
+      current.updated_at = candidateUpdated;
+    }
+    merged.set(name, current);
+  }
+  return [...merged.values()].filter((row) => row.count > 0);
+}
+
 function renderCategoryNav(categories = [], activeCategory = "") {
   const active = normalizeText(activeCategory);
   const allLink = `<a class="posts-home-hero__category-link ${!active ? "is-active" : ""}" data-active-key="all" ${!active ? 'aria-current="page"' : ""} href="/">ALL</a>`;
   const links = categories
     .filter((item) => normalizeText(item.name))
     .map((item) => {
-      const name = normalizeText(item.name);
+      const name = canonicalCategoryName(item.name);
       const isActive = name === active;
       return `<a class="posts-home-hero__category-link ${isActive ? "is-active" : ""}" data-active-key="${escapeHtml(name)}" ${isActive ? 'aria-current="page"' : ""} href="${escapeHtml(categoryPath(name))}">${escapeHtml(name)}</a>`;
     })
@@ -232,7 +239,7 @@ function renderChipCategories(categories = []) {
   const links = categories
     .filter((item) => normalizeText(item.name))
     .map((item) => {
-      const name = normalizeText(item.name);
+      const name = canonicalCategoryName(item.name);
       return `<a class="topbar-categories__chip" href="${escapeHtml(categoryPath(name))}">${escapeHtml(name)} <span>${Number(item.count || 0)}</span></a>`;
     })
     .join("");
@@ -242,7 +249,7 @@ function renderChipCategories(categories = []) {
 function renderPostCard(item, index, page) {
   const slug = String(item.slug || "");
   const title = normalizeText(item.title || "제목 없음");
-  const category = normalizeText(item.category || "");
+  const category = canonicalCategoryName(item.category || "");
   const summary = normalizeText(item.summary || item.meta_description || "요약이 아직 없습니다.");
   const updated = formatDate(item.updated_at || item.published_at);
   const href = postPath(slug);
@@ -402,7 +409,7 @@ export async function renderHomePage({ env, request, category = "" }) {
   const page = clampInt(url.searchParams.get("page"), 1, 1, 9999);
   const tag = normalizeText(url.searchParams.get("tag"));
   const status = normalizeText(url.searchParams.get("status") || "published").toLowerCase();
-  const activeCategory = normalizeText(category);
+  const activeCategory = canonicalCategoryName(category);
 
   const data = await fetchHomeData({
     db: env.BLOG_DB,
@@ -604,7 +611,7 @@ export async function renderHomePage({ env, request, category = "" }) {
   <script>window.__WACKY_INITIAL_POSTS__=${safeJson(data)};</script>
   <script src="/assets/js/nav.js?v=20260428v11" defer></script>
   <script src="/assets/js/site-search.js?v=20260428v10" defer></script>
-  <script src="/assets/js/posts.js?v=20260802v2" defer></script>
+  <script src="/assets/js/posts.js?v=20260811v1" defer></script>
 </body>
 </html>`;
 
@@ -620,7 +627,7 @@ export async function renderHomePageCached({ env, request, category = "", waitUn
   const page = clampInt(url.searchParams.get("page"), 1, 1, 9999);
   const tag = normalizeText(url.searchParams.get("tag"));
   const status = normalizeText(url.searchParams.get("status") || "published").toLowerCase();
-  const activeCategory = normalizeText(category);
+  const activeCategory = canonicalCategoryName(category);
 
   if (status !== "published" || hasAdminSessionCookie(request)) {
     return renderHomePage({ env, request, category: activeCategory });
