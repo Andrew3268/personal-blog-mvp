@@ -9,14 +9,13 @@
 
   if (!page || !article || !root || !panel || !toggle || !closeButton || !list) return;
 
-  const headings = Array.from(article.querySelectorAll('h2, h3')).filter((heading) => {
+  const headings = Array.from(article.querySelectorAll('h2')).filter((heading) => {
     return String(heading.textContent || '').trim().length > 0;
   });
   if (!headings.length) return;
 
   const usedIds = new Set(Array.from(document.querySelectorAll('[id]')).map((node) => node.id).filter(Boolean));
   let h2Index = 0;
-  let h3Index = 0;
 
   function ensureHeadingId(heading, index) {
     if (heading.id) return heading.id;
@@ -32,18 +31,10 @@
   }
 
   const tocEntries = headings.map((heading, index) => {
-    const level = heading.tagName === 'H3' ? 3 : 2;
-    if (level === 2) {
-      h2Index += 1;
-      h3Index = 0;
-    } else {
-      h3Index += 1;
-    }
+    h2Index += 1;
     const id = ensureHeadingId(heading, index);
-    const indexLabel = level === 2
-      ? String(h2Index).padStart(2, '0')
-      : `${String(h2Index).padStart(2, '0')}.${h3Index}`;
-    return { heading, id, level, indexLabel, text: String(heading.textContent || '').trim() };
+    const indexLabel = String(h2Index).padStart(2, '0');
+    return { heading, id, level: 2, indexLabel, text: String(heading.textContent || '').trim() };
   });
 
   const fragment = document.createDocumentFragment();
@@ -75,8 +66,21 @@
 
   let isOpen = false;
   let rafId = 0;
-  const articleTop = article.getBoundingClientRect().top + window.scrollY;
-  const revealAt = Math.max(420, articleTop - 120);
+  let revealAt = 0;
+  const inlineToc = article.querySelector('.post-toc');
+
+  function calculateRevealAt() {
+    const articleTop = article.getBoundingClientRect().top + window.scrollY;
+    const baseRevealAt = articleTop + Math.max(900, window.innerHeight * 1.1);
+
+    if (!inlineToc) {
+      revealAt = baseRevealAt;
+      return;
+    }
+
+    const inlineTocBottom = inlineToc.getBoundingClientRect().bottom + window.scrollY;
+    revealAt = Math.max(baseRevealAt, inlineTocBottom + 360);
+  }
 
   function setOpen(nextOpen, { restoreFocus = false } = {}) {
     isOpen = Boolean(nextOpen);
@@ -131,7 +135,23 @@
   });
 
   window.addEventListener('scroll', requestVisibilitySync, { passive: true });
-  window.addEventListener('resize', requestVisibilitySync, { passive: true });
+  window.addEventListener('resize', () => {
+    calculateRevealAt();
+    requestVisibilitySync();
+  }, { passive: true });
+  window.addEventListener('load', () => {
+    calculateRevealAt();
+    requestVisibilitySync();
+  }, { once: true });
+
+  if ('ResizeObserver' in window) {
+    const layoutObserver = new ResizeObserver(() => {
+      calculateRevealAt();
+      requestVisibilitySync();
+    });
+    layoutObserver.observe(article);
+    if (inlineToc) layoutObserver.observe(inlineToc);
+  }
 
   const links = Array.from(list.querySelectorAll('[data-floating-toc-link]'));
   function setActive(id) {
@@ -152,6 +172,7 @@
     headings.forEach((heading) => observer.observe(heading));
   }
 
+  calculateRevealAt();
   setActive(tocEntries[0].id);
   syncVisibility();
 })();
