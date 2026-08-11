@@ -5,7 +5,7 @@ import { canonicalCategoryName, categoryPath } from "../_category-utils.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
 const ADSENSE_CLIENT = "ca-pub-7298667883751711";
-const POST_CACHE_VERSION = "2";
+const POST_CACHE_VERSION = "3";
 
 function safeDecodePathParam(value = "") {
   try {
@@ -328,7 +328,7 @@ export async function onRequestGet(context) {
   <meta name="twitter:description" content="${escapeHtml(descriptionText)}" />
   <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
 
-  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v11" />
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v12" />
   <link rel="stylesheet" href="/assets/css/components.css?v=20260731v2" />
 
   ${jsonld(blogPostingJsonLd)}
@@ -681,10 +681,10 @@ function renderFaqSection(items) {
       <h2 id="post-faq-title" class="h2">자주 묻는 질문</h2>
       <div class="post-faq__list">
         ${items.map((item) => `
-          <article class="card">
-            <h3 class="h3 post-faq__question">Q. ${escapeHtml(item.question)}</h3>
+          <details class="post-faq__item">
+            <summary class="post-faq__question">Q. ${escapeHtml(item.question)}</summary>
             <div class="post-faq__answer">${renderMarkdown(item.answerMd || "", { origin: SITE_ORIGIN })}</div>
-          </article>
+          </details>
         `).join("")}
       </div>
     </section>
@@ -799,7 +799,7 @@ function renderNotFound(slug) {
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/favicon-192x192.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
   <meta name="theme-color" content="#111111" />
-  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v11" />
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v12" />
   <link rel="stylesheet" href="/assets/css/components.css?v=20260731v2" />
 </head>
 <body>
