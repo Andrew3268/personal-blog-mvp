@@ -330,7 +330,7 @@ function buildPostsHeroNav(categories = []) {
   const category = String(url.searchParams.get('category') || getPathCategory() || '').trim();
   const tag = String(url.searchParams.get('tag') || '').trim();
   const initialPage = Math.max(1, Number.parseInt(url.searchParams.get('page') || '1', 10) || 1);
-  const perPage = 8;
+  const perPage = 10;
   const safeStatus = ['published', 'draft', 'all'].includes(status) ? status : 'published';
 
   let currentPage = initialPage;
@@ -375,27 +375,19 @@ function buildPostsHeroNav(categories = []) {
     return '정리된 생활 팁과 가이드를 빠르게 둘러보고 필요한 글만 골라 읽어보세요.';
   }
 
-  function renderPostsSkeleton(count = 5, append = false) {
+  function renderPostsSkeleton(count = 10, append = false) {
     if (!listEl) return;
     const markup = Array.from({ length: count }).map(() => `
-      <article class="card post-card post-card--row post-card--skeleton" aria-hidden="true">
-        <div class="post-card__thumb post-card__thumb--row skeleton-box skeleton-box--media"></div>
-        <div class="post-card__body">
-          <div class="post-meta post-meta--row">
-            <div class="row row--chips">
-              <span class="skeleton-box skeleton-box--chip"></span>
-              <span class="skeleton-box skeleton-box--chip skeleton-box--chip-short"></span>
-            </div>
-            <span class="skeleton-box skeleton-box--date"></span>
+      <article class="category-post-card category-post-card--skeleton" aria-hidden="true">
+        <div class="home-life-card__media category-post-card__media skeleton-box skeleton-box--category-media"></div>
+        <div class="home-life-card__body category-post-card__body">
+          <div class="category-skeleton-title">
+            <span class="skeleton-box skeleton-box--category-title"></span>
+            <span class="skeleton-box skeleton-box--category-title skeleton-box--category-title-short"></span>
           </div>
-          <div class="skeleton-stack">
-            <span class="skeleton-box skeleton-box--title"></span>
-            <span class="skeleton-box skeleton-box--text"></span>
-            <span class="skeleton-box skeleton-box--text skeleton-box--text-short"></span>
-          </div>
-          <div class="row post-admin-actions post-admin-actions--wrap">
-            <span class="skeleton-box skeleton-box--button"></span>
-            <span class="skeleton-box skeleton-box--button skeleton-box--button-muted"></span>
+          <div class="home-life-card__meta category-post-card__meta category-post-card__meta--skeleton">
+            <span class="skeleton-box skeleton-box--category-meta"></span>
+            <span class="skeleton-box skeleton-box--category-meta skeleton-box--category-meta-short"></span>
           </div>
         </div>
       </article>
@@ -490,48 +482,62 @@ function buildPostsHeroNav(categories = []) {
     }
   }
 
+  function bindArchiveImageLoading(scope = document) {
+    scope.querySelectorAll('.archive-loading-media').forEach((media) => {
+      if (media.dataset.archiveImageBound === '1') return;
+      media.dataset.archiveImageBound = '1';
+      const img = media.querySelector('img');
+      if (!img) {
+        media.classList.add('is-loaded');
+        return;
+      }
+      const markLoaded = () => {
+        media.classList.remove('is-loading');
+        media.classList.add('is-loaded');
+      };
+      media.classList.add('is-loading');
+      if (img.complete) markLoaded();
+      else {
+        img.addEventListener('load', markLoaded, { once: true });
+        img.addEventListener('error', markLoaded, { once: true });
+      }
+    });
+  }
+
+  function finishArchiveSkeleton() {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        document.documentElement.classList.remove('archive-skeleton-active');
+      });
+    });
+  }
+
   function renderItems(items, { append = false, pageNumber = currentPage } = {}) {
     const markup = items.map((it, index) => {
       const rawTitle = String(it.title || '(제목 없음)');
       const title = escapeHtml(rawTitle);
       const categoryText = canonicalCategoryName(it.category);
-      const categoryHtml = categoryText
-        ? `<a class="badge" href="${buildCategoryUrl(categoryText)}">${escapeHtml(categoryText)}</a>`
-        : `<span class="badge">미분류</span>`;
-      const summary = escapeHtml(it.summary || '요약이 아직 없습니다.');
       const slug = String(it.slug || '');
-      const updated = escapeHtml(String(it.updated_at || '').slice(0, 10));
+      const updated = escapeHtml(String(it.first_published_at || it.published_at || it.updated_at || '').slice(0, 10));
       const cover = String(it.cover_image || '').trim();
       const coverAlt = escapeHtml(String(it.cover_image_alt || `${rawTitle} 대표 이미지`).trim());
       const itemStatus = String(it.status || 'published').trim().toLowerCase();
-      const statusBadge = itemStatus === 'draft'
-        ? '<span class="badge badge--draft">초안</span>'
-        : '<span class="badge">발행</span>';
       const postHref = itemStatus === 'published' ? `/post/${encodeURIComponent(slug)}` : `/edit.html?slug=${encodeURIComponent(slug)}`;
-      const shouldPrioritizeImage = !append && index === 0 && Number(pageNumber) === 1;
+      const shouldPrioritizeImage = !append && index < 2 && Number(pageNumber) === 1;
       const imageLoadingAttrs = shouldPrioritizeImage
-        ? 'loading="eager" fetchpriority="high" decoding="async" width="640" height="360"'
-        : 'loading="lazy" decoding="async" width="640" height="360"';
-
+        ? 'loading="eager" fetchpriority="high" decoding="async"'
+        : 'loading="lazy" decoding="async"';
 
       return `
-        <article class="card post-card post-card--row js-post-card" data-href="${postHref}" tabindex="0" aria-label="${title} 글로 이동">
-          <div class="post-card__thumb post-card__thumb--row">
-            ${cover ? `<img ${renderOptimizedImageAttrs(cover, { widths: [320, 640, 960], sizes: "(max-width: 720px) 100vw, 320px", fallbackWidth: 640, fit: "cover", quality: 82 })} alt="${coverAlt}" ${imageLoadingAttrs} />` : '<div class="post-card__thumb-placeholder">대표 이미지 없음</div>'}
-          </div>
-          <div class="post-card__body">
-            <div class="post-meta post-meta--row">
-              <div class="row row--chips">
-                ${categoryHtml}
-                ${isAdmin ? statusBadge : ''}
-              </div>
-              <div class="small">${updated}</div>
-            </div>
-            <h2 class="post-card__title"><a href="${postHref}">${title}</a></h2>
-            <p class="post-card__summary">${summary}</p>
-            <div class="row post-admin-actions post-admin-actions--wrap">
-              ${itemStatus === 'published' ? `<a class="post-card__readmore" href="/post/${encodeURIComponent(slug)}"><span class="post-card__readmore-text">Read more</span><svg class="post-card__readmore-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h11"></path><path d="M13 7l5 5-5 5"></path></svg></a>` : ''}
-              ${isAdmin ? `<span class="post-admin-actions__controls"><a class="btn" href="/edit.html?slug=${encodeURIComponent(slug)}">수정</a><button class="btn btn--danger js-delete-post" type="button" data-slug="${encodeURIComponent(slug)}" data-title="${escapeHtml(rawTitle)}">삭제</button></span>` : ''}
+        <article class="category-post-card js-post-card" data-href="${postHref}" tabindex="0" aria-label="${title} 글로 이동">
+          <a class="home-life-card__media category-post-card__media archive-loading-media" href="${postHref}" aria-label="${title} 글 보기">
+            ${cover ? `<img ${renderOptimizedImageAttrs(cover, { widths: [480, 720, 960], sizes: "(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 34vw", fallbackWidth: 720, fit: "contain", quality: 84 })} alt="${coverAlt}" ${imageLoadingAttrs} />` : '<div class="category-post-card__placeholder">대표 이미지 없음</div>'}
+          </a>
+          <div class="home-life-card__body category-post-card__body">
+            <h2 class="home-life-card__title category-post-card__title"><a href="${postHref}">${title}</a></h2>
+            <div class="home-life-card__meta category-post-card__meta">
+              ${updated ? `<span>${updated}</span>` : ''}
+              ${categoryText ? `<span>${escapeHtml(categoryText)}</span>` : ''}
             </div>
           </div>
         </article>
@@ -540,6 +546,7 @@ function buildPostsHeroNav(categories = []) {
 
     if (append) listEl.insertAdjacentHTML('beforeend', markup);
     else listEl.innerHTML = markup;
+    bindArchiveImageLoading(listEl || document);
   }
 
   function updateLoadMore(pagination = {}) {
@@ -610,6 +617,7 @@ function buildPostsHeroNav(categories = []) {
       show(errorEl, true);
       errorEl.textContent = '목록을 불러오지 못했습니다. ' + (err?.message || '');
     } finally {
+      if (!append) finishArchiveSkeleton();
       isLoading = false;
       updateLoadMore({ has_more: hasMore, next_page: currentPage + 1 });
     }
@@ -653,34 +661,7 @@ function buildPostsHeroNav(categories = []) {
     fetchPage(currentPage + 1, { append: true });
   });
 
-  listEl?.addEventListener('click', async (event) => {
-    const deleteBtn = event.target.closest('.js-delete-post');
-    if (deleteBtn) {
-      const slug = decodeURIComponent(String(deleteBtn.dataset.slug || ''));
-      const title = String(deleteBtn.dataset.title || slug || '이 글');
-      if (!slug) return;
-      const confirmed = window.confirm(`'${title}' 글을 삭제할까요? 삭제 후 되돌릴 수 없습니다.`);
-      if (!confirmed) return;
-      deleteBtn.disabled = true;
-      deleteBtn.textContent = '삭제 중…';
-      try {
-        const res = await fetch(`/api/posts/${encodeURIComponent(slug)}`, { method: 'DELETE' });
-        const json = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(json?.message || `삭제 실패 (${res.status})`);
-        const card = deleteBtn.closest('.post-card');
-        if (card) card.remove();
-        if (!listEl.children.length) {
-          show(emptyEl, true);
-          emptyEl.textContent = '등록된 글이 없습니다.';
-        }
-      } catch (err) {
-        alert(err?.message || '삭제 중 오류가 발생했습니다.');
-        deleteBtn.disabled = false;
-        deleteBtn.textContent = '삭제';
-      }
-      return;
-    }
-
+  listEl?.addEventListener('click', (event) => {
     const blockedTarget = event.target.closest('a, button, input, select, textarea, label');
     if (blockedTarget) return;
 
@@ -737,6 +718,8 @@ function buildPostsHeroNav(categories = []) {
     }
     currentPage = Number(initialPagination.page || initialPage);
     updateLoadMore(initialPagination);
+    bindArchiveImageLoading(listEl || document);
+    finishArchiveSkeleton();
     window.__WACKY_INITIAL_POSTS__ = null;
   } else {
     fetchPage(initialPage, { append: false });

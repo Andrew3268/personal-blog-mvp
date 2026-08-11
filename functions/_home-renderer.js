@@ -4,8 +4,8 @@ import { canonicalCategoryName, categoryPath } from "./_category-utils.js";
 
 export const SITE_ORIGIN = "https://wacky-wiki.com";
 const SITE_NAME = "Wacky Wiki";
-const PER_PAGE = 8;
-const ARCHIVE_CACHE_VERSION = "6";
+const PER_PAGE = 10;
+const ARCHIVE_CACHE_VERSION = "7";
 
 function clampInt(value, fallback, min, max) {
   const num = Number.parseInt(String(value || ""), 10);
@@ -310,46 +310,38 @@ function renderPostCard(item, index, page) {
   const slug = String(item.slug || "");
   const title = normalizeText(item.title || "제목 없음");
   const category = canonicalCategoryName(item.category || "");
-  const summary = normalizeText(item.summary || item.meta_description || "요약이 아직 없습니다.");
-  const updated = formatDate(item.updated_at || item.published_at);
+  const updated = formatDate(item.first_published_at || item.published_at || item.updated_at);
   const href = postPath(slug);
   const cover = normalizeText(item.cover_image || "");
   const alt = normalizeText(item.cover_image_alt || `${title} 대표 이미지`);
-  const imageLoadingAttrs = index === 0 && Number(page) === 1
-    ? 'loading="eager" fetchpriority="high" decoding="async" width="640" height="360"'
-    : 'loading="lazy" decoding="async" width="640" height="360"';
+  const imageLoadingAttrs = index < 2 && Number(page) === 1
+    ? 'loading="eager" fetchpriority="high" decoding="async"'
+    : 'loading="lazy" decoding="async"';
   const image = cover
     ? buildImageAttrs(cover, {
-        widths: [320, 640, 960],
-        sizes: "(max-width: 720px) 100vw, 320px",
-        fallbackWidth: 640,
-        fit: "cover",
-        quality: 82
+        widths: [480, 720, 960],
+        sizes: "(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 34vw",
+        fallbackWidth: 720,
+        fit: "contain",
+        quality: 84
       }, SITE_ORIGIN)
     : null;
 
   return `
-    <article class="card post-card post-card--row js-post-card" data-href="${escapeHtml(href)}" tabindex="0" aria-label="${escapeHtml(title)} 글로 이동">
-      <div class="post-card__thumb post-card__thumb--row">
-        ${image ? `<img ${image.attrs} alt="${escapeHtml(alt)}" ${imageLoadingAttrs} />` : '<div class="post-card__thumb-placeholder">대표 이미지 없음</div>'}
-      </div>
-      <div class="post-card__body">
-        <div class="post-meta post-meta--row">
-          <div class="row row--chips">
-            ${category ? `<a class="badge" href="${escapeHtml(categoryPath(category))}">${escapeHtml(category)}</a>` : '<span class="badge">미분류</span>'}
-          </div>
-          ${updated ? `<div class="small">${escapeHtml(updated)}</div>` : ""}
-        </div>
-        <h2 class="post-card__title"><a href="${escapeHtml(href)}">${escapeHtml(title)}</a></h2>
-        <p class="post-card__summary">${escapeHtml(summary)}</p>
-        <div class="row post-admin-actions post-admin-actions--wrap">
-          <a class="post-card__readmore" href="${escapeHtml(href)}"><span class="post-card__readmore-text">Read more</span><svg class="post-card__readmore-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h11"></path><path d="M13 7l5 5-5 5"></path></svg></a>
+    <article class="category-post-card js-post-card" data-href="${escapeHtml(href)}" tabindex="0" aria-label="${escapeHtml(title)} 글로 이동">
+      <a class="home-life-card__media category-post-card__media archive-loading-media" href="${escapeHtml(href)}" aria-label="${escapeHtml(title)} 글 보기">
+        ${image ? `<img ${image.attrs} alt="${escapeHtml(alt)}" ${imageLoadingAttrs} />` : '<div class="category-post-card__placeholder">대표 이미지 없음</div>'}
+      </a>
+      <div class="home-life-card__body category-post-card__body">
+        <h2 class="home-life-card__title category-post-card__title"><a href="${escapeHtml(href)}">${escapeHtml(title)}</a></h2>
+        <div class="home-life-card__meta category-post-card__meta">
+          ${updated ? `<span>${escapeHtml(updated)}</span>` : ""}
+          ${category ? `<span>${escapeHtml(category)}</span>` : ""}
         </div>
       </div>
     </article>
   `;
 }
-
 
 function renderHomeImage(item, { featured = false } = {}) {
   const title = normalizeText(item?.title || "제목 없음");
@@ -474,7 +466,7 @@ function renderArchiveNotFound({ title = "페이지를 찾을 수 없습니다",
   <title>${escapeHtml(title)} | ${escapeHtml(SITE_NAME)}</title>
   <meta name="description" content="${escapeHtml(description)}" />
   <meta name="robots" content="noindex,follow" />
-  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v8" />
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v9" />
   <link rel="stylesheet" href="/assets/css/components.css?v=20260802v3" />
 </head>
 <body>
@@ -720,14 +712,14 @@ export async function renderHomePage({ env, request, category = "" }) {
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/favicon-192x192.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
   <meta name="theme-color" content="#ffffff" />
-  ${isDefaultHome ? '<script>document.documentElement.classList.add("home-skeleton-active");</script>' : ""}
-  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v8" />
+  ${isDefaultHome ? '<script>document.documentElement.classList.add("home-skeleton-active");</script>' : activeCategory ? '<script>document.documentElement.classList.add("archive-skeleton-active");</script>' : ""}
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v9" />
   <link rel="preload" href="/assets/css/components.css?v=20260802v3" as="style" onload="this.onload=null;this.rel='stylesheet'" />
   <noscript><link rel="stylesheet" href="/assets/css/components.css?v=20260802v3" /></noscript>
   ${jsonld(websiteJsonLd)}
   ${jsonld(collectionJsonLd)}
 </head>
-<body class="page-home">
+<body class="page-home${activeCategory ? " page-category" : " page-archive"}">
   ${topbar(mobileCategoryHtml)}
 
   ${isDefaultHome ? `
@@ -739,13 +731,9 @@ export async function renderHomePage({ env, request, category = "" }) {
     </div>
   </main>` : `
   <main class="container posts-page">
-    <section id="postsHomeHero" class="posts-home-hero posts-home-hero--category" aria-label="카테고리 바로가기">
+    <section id="postsHomeHero" class="posts-home-hero posts-home-hero--category" aria-labelledby="postsPageTitle">
       <div class="posts-home-hero__content posts-home-hero__content--editorial">
         <h1 id="postsPageTitle" class="posts-home-hero__title">${escapeHtml(pageHeading)}</h1>
-        <p id="postsPageDescription" class="posts-home-hero__desc">${escapeHtml(description)}</p>
-        <div class="posts-home-hero__category-wrap" aria-label="카테고리 바로가기">
-          <div id="heroCategoryBar" class="topbar-categories__list topbar-categories__list--hero">${heroCategoryHtml}</div>
-        </div>
       </div>
     </section>
 
@@ -774,7 +762,7 @@ export async function renderHomePage({ env, request, category = "" }) {
   ${isDefaultHome ? "" : `<script>window.__WACKY_INITIAL_POSTS__=${safeJson(data)};</script>`}
   <script src="/assets/js/nav.js?v=20260428v11" defer></script>
   <script src="/assets/js/site-search.js?v=20260428v10" defer></script>
-  ${isDefaultHome ? '<script src="/assets/js/home.js?v=20260811v2" defer></script>' : '<script src="/assets/js/posts.js?v=20260811v1" defer></script>'}
+  ${isDefaultHome ? '<script src="/assets/js/home.js?v=20260811v2" defer></script>' : '<script src="/assets/js/posts.js?v=20260811v2" defer></script><script src="/assets/js/post-layout.js?v=20260811v2" defer></script>'}
 </body>
 </html>`;
 

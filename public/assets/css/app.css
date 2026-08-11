@@ -1444,3 +1444,322 @@ body.has-preview-open{overflow:hidden}
     padding-top:56px;
   }
 }
+
+/* =========================================================
+   Category archive - editorial cards + post-style sidebar
+========================================================= */
+.page-category{
+  background:#fff;
+  color:#171717;
+}
+.page-category .posts-page{
+  padding-top:0;
+  padding-bottom:72px;
+}
+.page-category .posts-home-hero--category{
+  margin:0;
+  padding:38px 0 24px;
+  overflow:visible;
+  border:0;
+  border-bottom:1px solid #d8d8d3;
+  border-radius:0;
+  background:#fff;
+  box-shadow:none;
+  min-height:0;
+}
+.page-category .posts-home-hero__content--editorial{
+  display:block;
+  max-width:none;
+  width:100%;
+}
+.page-category .posts-home-hero__title{
+  margin:0;
+  color:#171717;
+  font-size:36px;
+  line-height:1.25;
+  font-weight:400;
+  letter-spacing:-.04em;
+  word-break:keep-all;
+}
+.page-category .posts-layout--home-top{
+  margin-top:32px;
+}
+.page-category .posts-layout{
+  grid-template-columns:minmax(0,1fr) 300px;
+  gap:48px;
+}
+.page-category .post-list-grid--rows{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  column-gap:24px;
+  row-gap:44px;
+}
+.category-post-card{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  padding:0;
+  background:#fff;
+  cursor:pointer;
+}
+.category-post-card:focus-visible{
+  outline:1px solid #111;
+  outline-offset:5px;
+}
+.category-post-card__media{
+  position:relative;
+  display:block;
+  width:100%;
+  max-width:100%;
+  height:auto;
+  overflow:hidden;
+  background:#fff;
+}
+.category-post-card__media img{
+  display:block;
+  width:100%;
+  max-width:100%;
+  height:auto;
+  object-fit:contain;
+}
+.category-post-card__placeholder{
+  display:grid;
+  place-items:center;
+  min-height:220px;
+  padding:18px;
+  background:#f3f3f1;
+  color:#777;
+  font-size:13px;
+  text-align:center;
+}
+.category-post-card__body{
+  margin-top:11px;
+  padding-top:10px;
+  border-top:1px solid #b8b8b3;
+}
+.category-post-card__title{
+  margin:0;
+  height:4.2em;
+  font-size:16px;
+  line-height:1.4;
+  font-weight:400;
+  letter-spacing:-.035em;
+}
+.category-post-card__meta{
+  margin-top:auto;
+  padding-top:10px;
+  border-top:1px solid #d8d8d3;
+  color:#666;
+  font-size:11px;
+}
+.page-category .posts-pagination{
+  margin-top:48px;
+}
+.page-category .posts-load-more__btn{
+  min-width:180px;
+  min-height:44px;
+  border:1px solid #111;
+  border-radius:0;
+  background:#fff;
+  color:#111;
+  box-shadow:none;
+  font-weight:500;
+}
+.page-category .posts-load-more__btn:hover,
+.page-category .posts-load-more__btn:focus-visible{
+  background:#111;
+  color:#fff;
+  box-shadow:none;
+  transform:none;
+}
+
+/* 카테고리 사이드바는 /post의 흑백 선형 디자인을 그대로 따릅니다. */
+.page-category .posts-sidebar--simple{
+  gap:28px;
+}
+.page-category .posts-sidebar__ad-shell,
+.page-category .posts-sidebar__popular-shell{
+  padding:20px 0;
+  border:0;
+  border-top:1px solid #111;
+  border-radius:0;
+  background:#fff;
+  box-shadow:none;
+  contain:none;
+  min-height:0;
+}
+.page-category .posts-sidebar__ad-shell{
+  padding-top:0;
+  border-top:0;
+}
+.page-category .posts-sidebar__popular-shell .h2{
+  margin:0;
+  color:#111;
+  font-size:17px;
+  line-height:1.35;
+  font-weight:700;
+  letter-spacing:-.02em;
+}
+.page-category .posts-popular-list{
+  margin-top:16px;
+}
+.page-category .posts-sidebar .post-side__popular-text{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  line-clamp:2;
+  overflow:hidden;
+  color:#222;
+  font-size:14px;
+  line-height:1.55;
+  font-weight:400;
+}
+.page-category .posts-sidebar .post-side__ad-slot{
+  margin-top:0;
+  border:1px dashed #d4d4d4;
+  border-radius:0;
+  background:#fafafa;
+  box-shadow:none;
+}
+
+/* 최초 화면과 더보기 로딩 모두 같은 2열 카드 skeleton을 사용합니다. */
+.category-post-card--skeleton{
+  pointer-events:none;
+}
+.skeleton-box--category-media{
+  width:100%;
+  min-height:220px;
+  border-radius:0;
+}
+.category-skeleton-title{
+  display:grid;
+  gap:8px;
+  min-height:4.2em;
+}
+.skeleton-box--category-title{
+  width:100%;
+  height:18px;
+  border-radius:0;
+}
+.skeleton-box--category-title-short{
+  width:72%;
+}
+.category-post-card__meta--skeleton{
+  align-items:center;
+}
+.skeleton-box--category-meta{
+  width:76px;
+  height:13px;
+  border-radius:0;
+}
+.skeleton-box--category-meta-short{
+  width:44px;
+}
+.posts-skeleton-chunk{
+  display:contents;
+}
+.archive-loading-media.is-loading::after,
+.archive-skeleton-active .category-post-card__media::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  transform:translateX(-100%);
+  background:linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.78) 50%,rgba(255,255,255,0) 100%);
+  animation:skeleton-shimmer 1.25s ease-in-out infinite;
+  pointer-events:none;
+}
+.archive-loading-media.is-loading{
+  min-height:220px;
+  background:#ececea;
+}
+.archive-loading-media.is-loading img,
+.archive-skeleton-active .category-post-card__media img{
+  opacity:0;
+}
+.archive-loading-media.is-loaded{
+  min-height:0;
+  background:#fff;
+}
+.archive-loading-media.is-loaded img{
+  opacity:1;
+}
+.archive-skeleton-active .page-category .posts-home-hero__title,
+.archive-skeleton-active .page-category .category-post-card__title,
+.archive-skeleton-active .page-category .category-post-card__meta,
+.archive-skeleton-active .page-category .posts-sidebar__popular-shell .h2,
+.archive-skeleton-active .page-category .post-side__popular-rank,
+.archive-skeleton-active .page-category .post-side__popular-text{
+  color:transparent;
+  background:#ececea;
+  background-image:linear-gradient(90deg,#ececea 0%,#f7f7f5 50%,#ececea 100%);
+  background-size:200% 100%;
+  animation:home-skeleton-shimmer 1.25s linear infinite;
+}
+.archive-skeleton-active .page-category .posts-home-hero__title{
+  width:min(340px,70%);
+  min-height:45px;
+}
+.archive-skeleton-active .page-category .category-post-card__title{
+  width:100%;
+}
+.archive-skeleton-active .page-category .category-post-card__title a,
+.archive-skeleton-active .page-category .category-post-card__meta span,
+.archive-skeleton-active .page-category .post-side__popular-text{
+  visibility:hidden;
+}
+.archive-skeleton-active .page-category .posts-sidebar__popular-shell .h2{
+  width:64px;
+  min-height:23px;
+}
+.archive-skeleton-active .page-category .post-side__popular-rank{
+  width:20px;
+  min-height:20px;
+}
+
+@media (max-width:1100px){
+  .page-category .posts-layout{
+    grid-template-columns:minmax(0,1fr) 280px;
+    gap:32px;
+  }
+  .page-category .post-list-grid--rows{
+    column-gap:20px;
+  }
+}
+@media (max-width:860px){
+  .page-category .posts-layout{
+    grid-template-columns:1fr;
+  }
+  .page-category .posts-sidebar{
+    position:static;
+    top:auto;
+    padding-top:56px;
+  }
+}
+@media (max-width:640px){
+  .page-category .posts-page{
+    padding-left:18px;
+    padding-right:18px;
+  }
+  .page-category .posts-home-hero--category{
+    padding:28px 0 20px;
+  }
+  .page-category .posts-home-hero__title{
+    font-size:30px;
+  }
+  .page-category .posts-layout--home-top{
+    margin-top:24px;
+  }
+  .page-category .post-list-grid--rows{
+    grid-template-columns:1fr;
+    row-gap:36px;
+  }
+  .category-post-card__title{
+    height:auto;
+    min-height:0;
+    padding-bottom:10px;
+  }
+  .skeleton-box--category-media,
+  .archive-loading-media.is-loading{
+    min-height:180px;
+  }
+}
+

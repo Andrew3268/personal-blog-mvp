@@ -1,8 +1,8 @@
 (function () {
-  const postBody = document.querySelector('.post-page-body');
-  const sidebar = document.querySelector('.post-page-body .post-side');
+  const pageScope = document.querySelector('.post-page-body, .page-category');
+  const sidebar = pageScope?.querySelector('.post-side');
   const header = document.querySelector('.topbar');
-  if (!postBody || !sidebar || !header) return;
+  if (!pageScope || !sidebar || !header) return;
 
   const desktopQuery = window.matchMedia('(min-width: 980px)');
   let frameId = 0;

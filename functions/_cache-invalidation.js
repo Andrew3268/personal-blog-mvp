@@ -1,7 +1,7 @@
 import { canonicalCategoryName, categoryPath } from "./_category-utils.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
-const ARCHIVE_CACHE_VERSION = "6";
+const ARCHIVE_CACHE_VERSION = "7";
 
 function normalizeText(value = "") {
   return String(value || "").replace(/\s+/g, " ").trim();
