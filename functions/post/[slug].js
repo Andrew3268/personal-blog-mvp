@@ -5,6 +5,7 @@ import { canonicalCategoryName, categoryPath } from "../_category-utils.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
 const ADSENSE_CLIENT = "ca-pub-7298667883751711";
+const POST_CACHE_VERSION = "2";
 
 function safeDecodePathParam(value = "") {
   try {
@@ -19,7 +20,9 @@ export async function onRequestGet(context) {
   const slug = safeDecodePathParam(params.slug).trim();
   if (!slug) return okHtml("Not Found", { status: 404 });
 
-  const cacheKeyUrl = `${SITE_ORIGIN}/post/${encodeURIComponent(slug)}`;
+  const cacheUrl = new URL(`/post/${encodeURIComponent(slug)}`, SITE_ORIGIN);
+  cacheUrl.searchParams.set("__cv", POST_CACHE_VERSION);
+  const cacheKeyUrl = cacheUrl.toString();
 
   return edgeCache({
     request,
@@ -80,8 +83,25 @@ export async function onRequestGet(context) {
             FROM posts
             WHERE 1 = 0
           `);
-      const [relatedResult, popularResult, categoryResult] = await env.BLOG_DB.batch([
+      const categoryPopularStatement = row.category
+        ? env.BLOG_DB.prepare(`
+            SELECT slug, title, view_count
+            FROM posts
+            WHERE status = 'published'
+              AND category = ?
+              AND slug != ?
+            ORDER BY view_count DESC, updated_at DESC, first_published_at DESC
+            LIMIT 5
+          `).bind(String(row.category).trim(), slug)
+        : env.BLOG_DB.prepare(`
+            SELECT slug, title, view_count
+            FROM posts
+            WHERE 1 = 0
+          `);
+
+      const [relatedResult, categoryPopularResult, overallPopularResult, categoryResult] = await env.BLOG_DB.batch([
         relatedStatement,
+        categoryPopularStatement,
         env.BLOG_DB.prepare(`
           SELECT slug, title, view_count
           FROM posts
@@ -93,7 +113,8 @@ export async function onRequestGet(context) {
         getMobileCategoryStatement(env.BLOG_DB)
       ]);
       const relatedRows = relatedResult?.results || [];
-      const popularRows = popularResult?.results || [];
+      const categoryPopularRows = categoryPopularResult?.results || [];
+      const overallPopularRows = overallPopularResult?.results || [];
       const mobileCategoryHtml = renderMobileCategoryLinks(categoryResult?.results || []);
 
       const adConfig = buildAdsenseConfig(env);
@@ -107,7 +128,17 @@ export async function onRequestGet(context) {
       const bodyHtml = buildArticleBodyHtml(row.content_md || "", inArticleAds, contentTextLength, env);
       const faqSectionHtml = renderFaqSection(faqItems);
       const relatedPostsHtml = renderRelatedPostsSection(relatedRows, canonicalCategoryName(row.category));
-      const popularPostsHtml = renderPopularPosts(popularRows);
+      const categoryName = canonicalCategoryName(row.category);
+      const categoryPopularPostsHtml = renderPopularPosts(
+        categoryPopularRows,
+        categoryName ? `${categoryName} 인기글` : "관련 카테고리 인기글",
+        "post-category-popular-title"
+      );
+      const overallPopularPostsHtml = renderPopularPosts(
+        overallPopularRows,
+        "전체 인기글",
+        "post-overall-popular-title"
+      );
       const sidebarAdHtml = shouldShowSidebarAd ? renderSidebarAd(adConfig) : "";
       const adsenseHeadScript = renderAdsenseHeadScript(adConfig, shouldLoadAdsense);
       const adsenseRuntimeScript = renderAdsenseRuntimeScript(adConfig, shouldLoadAdsense);
@@ -297,7 +328,7 @@ export async function onRequestGet(context) {
   <meta name="twitter:description" content="${escapeHtml(descriptionText)}" />
   <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
 
-  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v3" />
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v11" />
   <link rel="stylesheet" href="/assets/css/components.css?v=20260731v2" />
 
   ${jsonld(blogPostingJsonLd)}
@@ -342,7 +373,8 @@ export async function onRequestGet(context) {
 
         <aside class="card post-side" aria-label="추가 콘텐츠">
           ${sidebarAdHtml}
-          ${popularPostsHtml}
+          ${categoryPopularPostsHtml}
+          ${overallPopularPostsHtml}
         </aside>
       </div>
     </article>
@@ -586,13 +618,12 @@ function dedupePositions(positions, blockLength) {
   return result;
 }
 
-function renderPopularPosts(items) {
+function renderPopularPosts(items, title = "인기글", titleId = "post-popular-title") {
   if (!Array.isArray(items) || !items.length) return "";
   return `
-    <section class="post-side__section post-side__popular" aria-labelledby="post-popular-title">
+    <section class="post-side__section post-side__popular" aria-labelledby="${escapeHtml(titleId)}">
       <div class="row post-section-header post-section-header--compact">
-        <p id="post-popular-title" class="post-side__title">인기글</p>
-        
+        <p id="${escapeHtml(titleId)}" class="post-side__title">${escapeHtml(title)}</p>
       </div>
       <ul class="post-side__popular-list">
         ${items.map((item, index) => `
@@ -663,9 +694,9 @@ function renderFaqSection(items) {
 function renderRelatedPostsSection(items, category) {
   if (!Array.isArray(items) || !items.length) return "";
   const categoryText = canonicalCategoryName(category);
-  const headingText = categoryText ? `${categoryText} 관련글 더보기` : "관련글 더보기";
+  const headingText = categoryText ? `${categoryText} 관련 글` : "관련 글";
   const categoryActionHtml = categoryText
-    ? `<div class="post-related__action"><a class="btn post-related__more-btn" href="${categoryPath(categoryText)}">카테고리 전체 보기</a></div>`
+    ? `<div class="post-related__action"><a class="btn post-related__more-btn" href="${categoryPath(categoryText)}">더 보기</a></div>`
     : "";
   return `
     <section class="post-related post-section-divider post-section-divider--related" aria-labelledby="post-related-title">
@@ -768,7 +799,7 @@ function renderNotFound(slug) {
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/favicon-192x192.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
   <meta name="theme-color" content="#111111" />
-  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v3" />
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v11" />
   <link rel="stylesheet" href="/assets/css/components.css?v=20260731v2" />
 </head>
 <body>

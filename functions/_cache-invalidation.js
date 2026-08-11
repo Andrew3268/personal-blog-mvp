@@ -1,7 +1,8 @@
 import { canonicalCategoryName, categoryPath } from "./_category-utils.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
-const ARCHIVE_CACHE_VERSION = "8";
+const ARCHIVE_CACHE_VERSION = "9";
+const POST_CACHE_VERSION = "2";
 
 function normalizeText(value = "") {
   return String(value || "").replace(/\s+/g, " ").trim();
@@ -24,7 +25,9 @@ export function scheduleContentCacheInvalidation({ waitUntil, slugs = [], catego
   const safeTags = [...new Set(tags.map(normalizeText).filter(Boolean))];
 
   for (const slug of slugs.map((value) => String(value || "").trim()).filter(Boolean)) {
-    urls.add(`${SITE_ORIGIN}/post/${encodeURIComponent(slug)}`);
+    const postUrl = new URL(`/post/${encodeURIComponent(slug)}`, SITE_ORIGIN);
+    postUrl.searchParams.set("__cv", POST_CACHE_VERSION);
+    urls.add(postUrl.toString());
   }
 
   for (const category of safeCategories) {

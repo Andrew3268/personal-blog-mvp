@@ -5,7 +5,7 @@ import { canonicalCategoryName, categoryPath } from "./_category-utils.js";
 export const SITE_ORIGIN = "https://wacky-wiki.com";
 const SITE_NAME = "Wacky Wiki";
 const PER_PAGE = 10;
-const ARCHIVE_CACHE_VERSION = "8";
+const ARCHIVE_CACHE_VERSION = "9";
 
 function clampInt(value, fallback, min, max) {
   const num = Number.parseInt(String(value || ""), 10);
@@ -508,7 +508,7 @@ function renderArchiveNotFound({ title = "페이지를 찾을 수 없습니다",
   <title>${escapeHtml(title)} | ${escapeHtml(SITE_NAME)}</title>
   <meta name="description" content="${escapeHtml(description)}" />
   <meta name="robots" content="noindex,follow" />
-  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v10" />
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v11" />
   <link rel="stylesheet" href="/assets/css/components.css?v=20260811v4" />
 </head>
 <body>
@@ -755,7 +755,7 @@ export async function renderHomePage({ env, request, category = "" }) {
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
   <meta name="theme-color" content="#ffffff" />
   ${isDefaultHome ? '<script>document.documentElement.classList.add("home-skeleton-active");</script>' : activeCategory ? '<script>document.documentElement.classList.add("archive-skeleton-active");</script>' : ""}
-  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v10" />
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v11" />
   <link rel="preload" href="/assets/css/components.css?v=20260811v4" as="style" onload="this.onload=null;this.rel='stylesheet'" />
   <noscript><link rel="stylesheet" href="/assets/css/components.css?v=20260811v4" /></noscript>
   ${jsonld(websiteJsonLd)}
