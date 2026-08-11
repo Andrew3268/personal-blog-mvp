@@ -5,7 +5,7 @@ import { canonicalCategoryName, categoryPath } from "../_category-utils.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
 const ADSENSE_CLIENT = "ca-pub-7298667883751711";
-const POST_CACHE_VERSION = "4";
+const POST_CACHE_VERSION = "5";
 
 function safeDecodePathParam(value = "") {
   try {
@@ -99,22 +99,13 @@ export async function onRequestGet(context) {
             WHERE 1 = 0
           `);
 
-      const [relatedResult, categoryPopularResult, overallPopularResult, categoryResult] = await env.BLOG_DB.batch([
+      const [relatedResult, categoryPopularResult, categoryResult] = await env.BLOG_DB.batch([
         relatedStatement,
         categoryPopularStatement,
-        env.BLOG_DB.prepare(`
-          SELECT slug, title, view_count
-          FROM posts
-          WHERE status = 'published'
-            AND slug != ?
-          ORDER BY view_count DESC, updated_at DESC, first_published_at DESC
-          LIMIT 5
-        `).bind(slug),
         getMobileCategoryStatement(env.BLOG_DB)
       ]);
       const relatedRows = relatedResult?.results || [];
       const categoryPopularRows = categoryPopularResult?.results || [];
-      const overallPopularRows = overallPopularResult?.results || [];
       const mobileCategoryHtml = renderMobileCategoryLinks(categoryResult?.results || []);
 
       const adConfig = buildAdsenseConfig(env);
@@ -127,18 +118,13 @@ export async function onRequestGet(context) {
       const inArticleAds = shouldShowInarticleAds ? buildInArticleAds(adConfig, 2) : [];
       const bodyHtml = buildArticleBodyHtml(row.content_md || "", inArticleAds, contentTextLength, env);
       const faqSectionHtml = renderFaqSection(faqItems);
-      const relatedPostsHtml = renderRelatedPostsSection(relatedRows, canonicalCategoryName(row.category));
       const categoryName = canonicalCategoryName(row.category);
       const categoryPopularPostsHtml = renderPopularPosts(
         categoryPopularRows,
         categoryName ? `${categoryName} 인기글` : "관련 카테고리 인기글",
         "post-category-popular-title"
       );
-      const overallPopularPostsHtml = renderPopularPosts(
-        overallPopularRows,
-        "전체 인기글",
-        "post-overall-popular-title"
-      );
+      const sidebarRelatedPostsHtml = renderSidebarRelatedPosts(relatedRows, categoryName);
       const sidebarAdHtml = shouldShowSidebarAd ? renderSidebarAd(adConfig) : "";
       const adsenseHeadScript = renderAdsenseHeadScript(adConfig, shouldLoadAdsense);
       const adsenseRuntimeScript = renderAdsenseRuntimeScript(adConfig, shouldLoadAdsense);
@@ -367,20 +353,39 @@ export async function onRequestGet(context) {
               ${bodyHtml}
             </div>
             ${faqSectionHtml}
-            ${relatedPostsHtml}
           </section>
         </div>
 
         <aside class="card post-side" aria-label="추가 콘텐츠">
           ${sidebarAdHtml}
           ${categoryPopularPostsHtml}
-          ${overallPopularPostsHtml}
+          ${sidebarRelatedPostsHtml}
         </aside>
       </div>
     </article>
 
     ${footer(siteName, siteDescription)}
   </main>
+
+  <div class="post-floating-toc" data-floating-toc hidden>
+    <div id="postFloatingTocPanel" class="post-floating-toc__panel" data-floating-toc-panel hidden>
+      <div class="post-floating-toc__header">
+        <p class="post-floating-toc__title">목차</p>
+        <button class="post-floating-toc__close" type="button" data-floating-toc-close aria-label="목차 닫기">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
+      </div>
+      <nav class="post-floating-toc__nav" aria-label="본문 목차">
+        <ol class="post-floating-toc__list" data-floating-toc-list></ol>
+      </nav>
+    </div>
+    <button class="post-floating-toc__button" type="button" data-floating-toc-toggle aria-controls="postFloatingTocPanel" aria-expanded="false" aria-label="목차 열기">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M9 6h11M9 12h11M9 18h11" />
+        <path d="M4 6h.01M4 12h.01M4 18h.01" />
+      </svg>
+    </button>
+  </div>
 
   ${adsenseRuntimeScript}
   <script>
@@ -406,6 +411,7 @@ export async function onRequestGet(context) {
   </script>
   <script src="/assets/js/nav.js" defer></script>
   <script src="/assets/js/post-layout.js" defer></script>
+  <script src="/assets/js/post-floating-toc.js" defer></script>
 </body>
 </html>`;
 
@@ -691,32 +697,24 @@ function renderFaqSection(items) {
   `;
 }
 
-function renderRelatedPostsSection(items, category) {
+function renderSidebarRelatedPosts(items, category) {
   if (!Array.isArray(items) || !items.length) return "";
   const categoryText = canonicalCategoryName(category);
   const headingText = categoryText ? `${categoryText} 관련 글` : "관련 글";
-  const categoryActionHtml = categoryText
-    ? `<div class="post-related__action"><a class="btn post-related__more-btn" href="${categoryPath(categoryText)}">더 보기</a></div>`
-    : "";
   return `
-    <section class="post-related post-section-divider post-section-divider--related" aria-labelledby="post-related-title">
-      <div class="post-related__layout">
-        <div class="row post-section-header post-section-header--related">
-          <div>
-            <h2 id="post-related-title" class="h2 post-section-title">${escapeHtml(headingText)}</h2>
-          </div>
-        </div>
-        ${categoryActionHtml}
-        <ul class="list-reset post-related__list">
-          ${items.map((item, index) => `
-            <li>
-              <a href="/post/${encodeURIComponent(String(item.slug || ""))}" class="post-related-link">
-                <span>${escapeHtml(String(item.title || "(제목 없음)"))}</span>
-              </a>
-            </li>
-          `).join("")}
-        </ul>
+    <section class="post-side__section post-side__related" aria-labelledby="post-sidebar-related-title">
+      <div class="row post-section-header post-section-header--compact">
+        <p id="post-sidebar-related-title" class="post-side__title">${escapeHtml(headingText)}</p>
       </div>
+      <ul class="post-side__related-list">
+        ${items.map((item) => `
+          <li>
+            <a class="post-side__related-link" href="/post/${encodeURIComponent(String(item.slug || ""))}">
+              <span class="post-side__related-text">${escapeHtml(String(item.title || "제목 없음"))}</span>
+            </a>
+          </li>
+        `).join("")}
+      </ul>
     </section>
   `;
 }
