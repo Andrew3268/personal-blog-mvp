@@ -272,7 +272,7 @@ export async function onRequestGet(context) {
   <title>${escapeHtml(pageTitle)}</title>
   <meta name="description" content="${escapeHtml(descriptionText)}" />
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
-  <meta name="theme-color" content="#5B7CFF" />
+  <meta name="theme-color" content="#111111" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/favicon-192x192.png" />
@@ -297,7 +297,7 @@ export async function onRequestGet(context) {
   <meta name="twitter:description" content="${escapeHtml(descriptionText)}" />
   <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
 
-  <link rel="stylesheet" href="/assets/css/app.css?v=20260523v3" />
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v2" />
   <link rel="stylesheet" href="/assets/css/components.css?v=20260731v2" />
 
   ${jsonld(blogPostingJsonLd)}
@@ -305,7 +305,7 @@ export async function onRequestGet(context) {
   ${jsonld(webPageJsonLd)}
   ${faqJsonLd ? jsonld(faqJsonLd) : ""}
 </head>
-<body>
+<body class="post-page-body">
 
   ${topbar(mobileCategoryHtml)}
 
@@ -766,8 +766,8 @@ function renderNotFound(slug) {
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/favicon-192x192.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
-  <meta name="theme-color" content="#5B7CFF" />
-  <link rel="stylesheet" href="/assets/css/app.css?v=20260523v3" />
+  <meta name="theme-color" content="#111111" />
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v2" />
   <link rel="stylesheet" href="/assets/css/components.css?v=20260731v2" />
 </head>
 <body>
