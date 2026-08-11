@@ -711,7 +711,7 @@ export async function renderHomePage({ env, request, category = "" }) {
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/favicon-192x192.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
   <meta name="theme-color" content="#ffffff" />
-  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v5" />
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v6" />
   <link rel="preload" href="/assets/css/components.css?v=20260802v3" as="style" onload="this.onload=null;this.rel='stylesheet'" />
   <noscript><link rel="stylesheet" href="/assets/css/components.css?v=20260802v3" /></noscript>
   ${jsonld(websiteJsonLd)}
