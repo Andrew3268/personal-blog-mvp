@@ -142,6 +142,30 @@ export async function onRequestGet({ env, request }) {
       SELECT key, value
       FROM site_settings
       WHERE key = 'index_sidebar_ad_enabled'
+    `),
+    env.BLOG_DB.prepare(`
+      SELECT
+        slug,
+        title,
+        view_count,
+        updated_at,
+        first_published_at AS published_at
+      FROM posts
+      WHERE status = 'published' AND category = ?
+      ORDER BY view_count DESC, updated_at DESC, first_published_at DESC
+      LIMIT 5
+    `).bind(category || '__none__'),
+    env.BLOG_DB.prepare(`
+      SELECT
+        slug,
+        title,
+        view_count,
+        updated_at,
+        first_published_at AS published_at
+      FROM posts
+      WHERE status = 'published'
+      ORDER BY view_count DESC, updated_at DESC, first_published_at DESC
+      LIMIT 5
     `)
   ];
   if (admin) {
@@ -154,7 +178,7 @@ export async function onRequestGet({ env, request }) {
   }
 
   const batchResults = await env.BLOG_DB.batch(statements);
-  const [itemsRows, countRows, categoryRows, popularRows, settingsRows, statusRows] = batchResults;
+  const [itemsRows, countRows, categoryRows, popularRows, settingsRows, categoryPopularRows, overallPopularRows, statusRows] = batchResults;
   const countRow = countRows?.results?.[0] || null;
   const total = Number(countRow?.total || 0);
   const totalPages = Math.max(1, Math.ceil(total / perPage));
@@ -204,6 +228,20 @@ export async function onRequestGet({ env, request }) {
         count: Number(row.count || 0)
       })),
       popular: (popularRows?.results || []).map((row) => ({
+        slug: row.slug,
+        title: row.title,
+        view_count: Number(row.view_count || 0),
+        updated_at: row.updated_at,
+        published_at: row.published_at
+      })),
+      category_popular: (categoryPopularRows?.results || []).map((row) => ({
+        slug: row.slug,
+        title: row.title,
+        view_count: Number(row.view_count || 0),
+        updated_at: row.updated_at,
+        published_at: row.published_at
+      })),
+      overall_popular: (overallPopularRows?.results || []).map((row) => ({
         slug: row.slug,
         title: row.title,
         view_count: Number(row.view_count || 0),

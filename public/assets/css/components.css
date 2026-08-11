@@ -35,7 +35,7 @@
 .posts-home-hero__title--editorial{font-size:clamp(48px,8vw,84px);line-height:.92;letter-spacing:-.07em;font-weight:600;color:#4b4b4b}
 .posts-home-hero__desc--editorial{margin-top:4px;font-size:14px;line-height:1.7;color:#8b93a1}
 .posts-home-hero__category-wrap{margin-top:0;width:100%;display:block}
-.posts-home-hero--category{padding:38px 0 24px;border-radius:0;background:#fff;border:0;border-bottom:1px solid #d8d8d3;box-shadow:none;text-align:left;min-height:auto}
+.posts-home-hero--category{padding:38px 0 24px;border-radius:0;background:#fff;border:0;box-shadow:none;text-align:left;min-height:auto}
 .posts-layout--home{margin-top:8px}
 @media (max-width:768px){
   .topbar-admin-status{display:none}

@@ -285,6 +285,8 @@ function buildPostsHeroNav(categories = []) {
   const postsCategoriesMenuEl = $('#postsCategoriesMenu');
   const postsCategoriesCloseEl = $('#postsCategoriesClose');
   const postsPopularEl = $('#postsPopular');
+  const postsCategoryPopularEl = $('#postsCategoryPopular');
+  const postsOverallPopularEl = $('#postsOverallPopular');
   const mobileSiteCategoryBarEl = $('#mobileSiteCategoryBar');
   const indexSidebarAdEl = document.querySelector('[data-index-sidebar-ad]');
 
@@ -358,11 +360,21 @@ function buildPostsHeroNav(categories = []) {
     return `${nextUrl.pathname}${nextUrl.search}`;
   }
 
+  function getCategoryPageTitle(name = '') {
+    const normalized = canonicalCategoryName(name);
+    const headings = {
+      Life: 'Life, 일상을 더 편리하게',
+      Tech: 'Tech, 더 똑똑한 선택',
+      Pet: 'Pet, 함께하는 일상을 위해'
+    };
+    return headings[normalized] || `${normalized} 이야기`;
+  }
+
   function getPageTitle() {
     const pageSuffix = initialPage > 1 ? ` - ${initialPage}페이지` : '';
     if (safeStatus === 'draft') return `초안 글 목록${pageSuffix}`;
     if (safeStatus === 'all') return `전체 글 목록${pageSuffix}`;
-    if (category) return `${category} 글 모음${pageSuffix}`;
+    if (category) return `${getCategoryPageTitle(category)}${pageSuffix}`;
     if (tag) return `#${tag} 관련 글${pageSuffix}`;
     return `생활에 바로 쓰는 제품 정보와 실용 가이드${pageSuffix}`;
   }
@@ -406,14 +418,15 @@ function buildPostsHeroNav(categories = []) {
     if (postsCategoriesBarEl) postsCategoriesBarEl.innerHTML = categorySkeleton;
     if (heroCategoryBarEl) heroCategoryBarEl.innerHTML = categorySkeleton;
     if (mobileSiteCategoryBarEl) mobileSiteCategoryBarEl.innerHTML = categorySkeleton;
-    if (postsPopularEl) {
-      postsPopularEl.innerHTML = Array.from({ length: 5 }).map((_, index) => `
-        <li class="post-side__popular-link post-side__popular-link--skeleton" aria-hidden="true">
-          <span class="post-side__popular-rank post-side__popular-rank--skeleton">${index + 1}</span>
-          <span class="skeleton-box skeleton-box--popular"></span>
-        </li>
-      `).join('');
-    }
+    const popularSkeleton = Array.from({ length: 5 }).map((_, index) => `
+      <li class="post-side__popular-link post-side__popular-link--skeleton" aria-hidden="true">
+        <span class="post-side__popular-rank post-side__popular-rank--skeleton">${index + 1}</span>
+        <span class="skeleton-box skeleton-box--popular"></span>
+      </li>
+    `).join('');
+    if (postsPopularEl) postsPopularEl.innerHTML = popularSkeleton;
+    if (postsCategoryPopularEl) postsCategoryPopularEl.innerHTML = popularSkeleton;
+    if (postsOverallPopularEl) postsOverallPopularEl.innerHTML = popularSkeleton;
   }
 
   function formatCountLabel(count, label) {
@@ -424,6 +437,8 @@ function buildPostsHeroNav(categories = []) {
     const counts = sidebarData.counts || {};
     const categories = Array.isArray(sidebarData.categories) ? sidebarData.categories : [];
     const popular = Array.isArray(sidebarData.popular) ? sidebarData.popular : [];
+    const categoryPopular = Array.isArray(sidebarData.category_popular) ? sidebarData.category_popular : [];
+    const overallPopular = Array.isArray(sidebarData.overall_popular) ? sidebarData.overall_popular : [];
     const settings = sidebarData.settings || {};
     const showIndexSidebarAd = Boolean(settings.index_sidebar_ad_enabled);
 
@@ -468,18 +483,20 @@ function buildPostsHeroNav(categories = []) {
       mobileSiteCategoryBarEl.innerHTML = categoriesHtml;
     }
 
-    if (postsPopularEl) {
-      postsPopularEl.innerHTML = popular.length
-        ? popular.map((item, index) => `
-            <li>
-              <a class="post-side__popular-link" href="/post/${encodeURIComponent(String(item.slug || ''))}">
-                <span class="post-side__popular-rank">${index + 1}</span>
-                <span class="post-side__popular-text">${escapeHtml(String(item.title || '제목 없음'))}</span>
-              </a>
-            </li>
-          `).join('')
-        : '<li class="small">인기글이 없습니다.</li>';
-    }
+    const renderPopularItems = (items = []) => items.length
+      ? items.map((item, index) => `
+          <li>
+            <a class="post-side__popular-link" href="/post/${encodeURIComponent(String(item.slug || ''))}">
+              <span class="post-side__popular-rank">${index + 1}</span>
+              <span class="post-side__popular-text">${escapeHtml(String(item.title || '제목 없음'))}</span>
+            </a>
+          </li>
+        `).join('')
+      : '<li class="small">인기글이 없습니다.</li>';
+
+    if (postsPopularEl) postsPopularEl.innerHTML = renderPopularItems(popular);
+    if (postsCategoryPopularEl) postsCategoryPopularEl.innerHTML = renderPopularItems(categoryPopular);
+    if (postsOverallPopularEl) postsOverallPopularEl.innerHTML = renderPopularItems(overallPopular);
   }
 
   function bindArchiveImageLoading(scope = document) {
@@ -504,12 +521,29 @@ function buildPostsHeroNav(categories = []) {
     });
   }
 
-  function finishArchiveSkeleton() {
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        document.documentElement.classList.remove('archive-skeleton-active');
+  function waitForArchiveCriticalImages(timeoutMs = 1600) {
+    const images = Array.from(document.querySelectorAll('.category-post-card__media img')).slice(0, 2);
+    if (!images.length) return Promise.resolve();
+
+    const pending = images.map((img) => {
+      if (img.complete) return Promise.resolve();
+      return new Promise((resolve) => {
+        const done = () => resolve();
+        img.addEventListener('load', done, { once: true });
+        img.addEventListener('error', done, { once: true });
       });
     });
+
+    return Promise.race([
+      Promise.all(pending),
+      new Promise((resolve) => window.setTimeout(resolve, timeoutMs))
+    ]);
+  }
+
+  async function finishArchiveSkeleton() {
+    await waitForArchiveCriticalImages();
+    await new Promise((resolve) => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve)));
+    document.documentElement.classList.remove('archive-skeleton-active');
   }
 
   function renderItems(items, { append = false, pageNumber = currentPage } = {}) {
@@ -571,7 +605,7 @@ function buildPostsHeroNav(categories = []) {
       renderPostsSkeleton();
       renderSidebarSkeleton();
     } else {
-      renderPostsSkeleton(2, true);
+      renderPostsSkeleton(perPage, true);
     }
 
     try {
@@ -611,13 +645,13 @@ function buildPostsHeroNav(categories = []) {
       clearAppendSkeleton();
       if (!append) {
         listEl.innerHTML = '';
-        renderSidebar({ counts: { total: 0, published: 0, draft: 0 }, categories: [], popular: [] });
+        renderSidebar({ counts: { total: 0, published: 0, draft: 0 }, categories: [], popular: [], category_popular: [], overall_popular: [] });
       }
       show(emptyEl, false);
       show(errorEl, true);
       errorEl.textContent = '목록을 불러오지 못했습니다. ' + (err?.message || '');
     } finally {
-      if (!append) finishArchiveSkeleton();
+      if (!append) await finishArchiveSkeleton();
       isLoading = false;
       updateLoadMore({ has_more: hasMore, next_page: currentPage + 1 });
     }

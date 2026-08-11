@@ -1461,7 +1461,6 @@ body.has-preview-open{overflow:hidden}
   padding:38px 0 24px;
   overflow:visible;
   border:0;
-  border-bottom:1px solid #d8d8d3;
   border-radius:0;
   background:#fff;
   box-shadow:none;
@@ -1480,6 +1479,9 @@ body.has-preview-open{overflow:hidden}
   font-weight:400;
   letter-spacing:-.04em;
   word-break:keep-all;
+  display:block;
+  visibility:visible;
+  opacity:1;
 }
 .page-category .posts-layout--home-top{
   margin-top:32px;
@@ -1520,6 +1522,14 @@ body.has-preview-open{overflow:hidden}
   max-width:100%;
   height:auto;
   object-fit:contain;
+}
+/* 카테고리 페이지의 실제 이미지는 모두 동일한 20px 라운드를 사용합니다. */
+.page-category img{
+  border-radius:20px;
+}
+.page-category .category-post-card__media,
+.page-category .category-post-card__placeholder{
+  border-radius:20px;
 }
 .category-post-card__placeholder{
   display:grid;
@@ -1576,6 +1586,9 @@ body.has-preview-open{overflow:hidden}
 .page-category .posts-sidebar--simple{
   gap:28px;
 }
+.page-category .post-side{
+  padding:0;
+}
 .page-category .posts-sidebar__ad-shell,
 .page-category .posts-sidebar__popular-shell{
   padding:20px 0;
@@ -1628,7 +1641,7 @@ body.has-preview-open{overflow:hidden}
 .skeleton-box--category-media{
   width:100%;
   min-height:220px;
-  border-radius:0;
+  border-radius:20px;
 }
 .category-skeleton-title{
   display:grid;
@@ -1714,6 +1727,21 @@ body.has-preview-open{overflow:hidden}
   width:20px;
   min-height:20px;
 }
+.archive-skeleton-active .page-category .posts-load-more__btn,
+.archive-skeleton-active .page-category .post-side__ad-slot{
+  color:transparent;
+  border-color:transparent;
+  background:#ececea;
+  background-image:linear-gradient(90deg,#ececea 0%,#f7f7f5 50%,#ececea 100%);
+  background-size:200% 100%;
+  animation:home-skeleton-shimmer 1.25s linear infinite;
+}
+.archive-skeleton-active .page-category .post-side__ad-slot span{
+  visibility:hidden;
+}
+.archive-skeleton-active .page-category .category-post-card__body{
+  pointer-events:none;
+}
 
 @media (max-width:1100px){
   .page-category .posts-layout{
@@ -1731,7 +1759,14 @@ body.has-preview-open{overflow:hidden}
   .page-category .posts-sidebar{
     position:static;
     top:auto;
-    padding-top:56px;
+    padding:0;
+  }
+  .page-category .posts-home-hero--category,
+  .page-category .posts-home-hero__content--editorial,
+  .page-category .posts-home-hero__title{
+    display:block;
+    visibility:visible;
+    opacity:1;
   }
 }
 @media (max-width:640px){
@@ -1743,6 +1778,9 @@ body.has-preview-open{overflow:hidden}
     padding:28px 0 20px;
   }
   .page-category .posts-home-hero__title{
+    display:block;
+    visibility:visible;
+    opacity:1;
     font-size:30px;
   }
   .page-category .posts-layout--home-top{
