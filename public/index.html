@@ -4,15 +4,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="naver-site-verification" content="e49bca383d3b342f512aeaaf82017d3705a638b3" />
-  <title>Wacky Wiki | 생활 꿀팁 블로그</title>
-  <meta name="description" content="실생활에 바로 적용할 수 있는 생활 꿀팁과 정리된 가이드를 전하는 블로그입니다." />
+  <title>Wacky Wiki | Life · Tech · Pet 실용 가이드</title>
+  <meta name="description" content="Life, Tech, Pet 분야에서 선택과 사용에 필요한 실용 정보를 정리합니다." />
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
   <link rel="alternate" type="application/rss+xml" title="Wacky Wiki RSS" href="https://wacky-wiki.com/rss.xml" />
   <link rel="canonical" href="https://wacky-wiki.com/" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Wacky Wiki" />
-  <meta property="og:title" content="Wacky Wiki | 생활 꿀팁 블로그" />
-  <meta property="og:description" content="실생활에 바로 적용할 수 있는 생활 꿀팁과 정리된 가이드를 전하는 블로그입니다." />
+  <meta property="og:title" content="Wacky Wiki | Life · Tech · Pet 실용 가이드" />
+  <meta property="og:description" content="Life, Tech, Pet 분야에서 선택과 사용에 필요한 실용 정보를 정리합니다." />
   <meta property="og:url" content="https://wacky-wiki.com/" />
   <meta property="og:image" content="https://wacky-wiki.com/assets/images/logo.png" />
   <meta property="og:image:width" content="520" />
@@ -20,15 +20,15 @@
   <meta property="og:image:alt" content="Wacky Wiki 로고" />
   <meta property="og:locale" content="ko_KR" />
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Wacky Wiki | 생활 꿀팁 블로그" />
-  <meta name="twitter:description" content="실생활에 바로 적용할 수 있는 생활 꿀팁과 정리된 가이드를 전하는 블로그입니다." />
+  <meta name="twitter:title" content="Wacky Wiki | Life · Tech · Pet 실용 가이드" />
+  <meta name="twitter:description" content="Life, Tech, Pet 분야에서 선택과 사용에 필요한 실용 정보를 정리합니다." />
   <meta name="twitter:image" content="https://wacky-wiki.com/assets/images/logo.png" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/favicon-192x192.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
-  <meta name="theme-color" content="#5B7CFF" />
-  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v3" />
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v5" />
   <link rel="preload" href="/assets/css/components.css?v=20260802v3" as="style" onload="this.onload=null;this.rel='stylesheet'" />
   <noscript><link rel="stylesheet" href="/assets/css/components.css?v=20260802v3" /></noscript>
 </head>
@@ -71,108 +71,41 @@
     </div>
   </aside>
 
-  <main class="container posts-page">
-    <section id="postsHomeHero" class="posts-home-hero posts-home-hero--index" aria-label="카테고리 바로가기">
-      <div class="posts-home-hero__content posts-home-hero__content--editorial">
-        <h1 id="postsPageTitle" class="posts-home-hero__title posts-home-hero__title--editorial posts-home-hero__title--visually-hidden">생활에 바로 쓰는 제품 정보와 실용 가이드</h1>
-        <p id="postsPageDescription" class="posts-home-hero__desc posts-home-hero__desc--editorial">실생활에 바로 적용할 수 있는 생활 꿀팁과 정리된 가이드를 전하는 블로그입니다.</p>
-        <div class="posts-home-hero__category-wrap" aria-label="카테고리 바로가기">
-          <div id="heroCategoryBar" class="topbar-categories__list topbar-categories__list--hero"><a class="posts-home-hero__category-link is-active" data-active-key="all" aria-current="page" href="/">ALL</a></div>
+  <main class="home-editorial-main">
+    <div class="home-editorial-container">
+      <section class="home-editorial-hero" aria-label="최신 글 로딩 중">
+        <div class="home-editorial-hero__media skeleton-box" aria-hidden="true"></div>
+        <div class="home-editorial-hero__content" aria-hidden="true">
+          <span class="skeleton-box skeleton-box--date"></span>
+          <span class="skeleton-box skeleton-box--title" style="margin-top:18px;width:92%;height:46px"></span>
+          <span class="skeleton-box skeleton-box--title" style="margin-top:10px;width:72%;height:46px"></span>
+          <span class="skeleton-box skeleton-box--text" style="margin-top:24px"></span>
+          <span class="skeleton-box skeleton-box--text skeleton-box--text-short" style="margin-top:10px"></span>
         </div>
-      </div>
-    </section>
-
-    <div class="posts-layout posts-layout--clean posts-layout--home posts-layout--home-top">
-      <section class="posts-main" aria-label="글 목록 영역">
-        <div id="postsLoading" class="small posts-loading-text" aria-hidden="true"></div>
-        <div id="postsError" class="small posts-error" hidden></div>
-        <div id="postsEmpty" class="small" hidden>등록된 글이 없습니다.</div>
-        <div id="postsList" class="grid post-list-grid post-list-grid--rows">
-          <article class="card post-card post-card--row post-card--skeleton" aria-hidden="true">
-            <div class="post-card__thumb post-card__thumb--row skeleton-box skeleton-box--media"></div>
-            <div class="post-card__body">
-              <div class="post-meta post-meta--row">
-                <div class="row row--chips">
-                  <span class="skeleton-box skeleton-box--chip"></span>
-                  <span class="skeleton-box skeleton-box--chip skeleton-box--chip-short"></span>
-                </div>
-                <span class="skeleton-box skeleton-box--date"></span>
-              </div>
-              <div class="skeleton-stack">
-                <span class="skeleton-box skeleton-box--title"></span>
-                <span class="skeleton-box skeleton-box--text"></span>
-                <span class="skeleton-box skeleton-box--text skeleton-box--text-short"></span>
-              </div>
-              <div class="row post-admin-actions post-admin-actions--wrap">
-                <span class="skeleton-box skeleton-box--button"></span>
-                <span class="skeleton-box skeleton-box--button skeleton-box--button-muted"></span>
-              </div>
-            </div>
-          </article>
-          <article class="card post-card post-card--row post-card--skeleton" aria-hidden="true">
-            <div class="post-card__thumb post-card__thumb--row skeleton-box skeleton-box--media"></div>
-            <div class="post-card__body">
-              <div class="post-meta post-meta--row">
-                <div class="row row--chips">
-                  <span class="skeleton-box skeleton-box--chip"></span>
-                  <span class="skeleton-box skeleton-box--chip skeleton-box--chip-short"></span>
-                </div>
-                <span class="skeleton-box skeleton-box--date"></span>
-              </div>
-              <div class="skeleton-stack">
-                <span class="skeleton-box skeleton-box--title"></span>
-                <span class="skeleton-box skeleton-box--text"></span>
-                <span class="skeleton-box skeleton-box--text skeleton-box--text-short"></span>
-              </div>
-              <div class="row post-admin-actions post-admin-actions--wrap">
-                <span class="skeleton-box skeleton-box--button"></span>
-                <span class="skeleton-box skeleton-box--button skeleton-box--button-muted"></span>
-              </div>
-            </div>
-          </article>
-          <article class="card post-card post-card--row post-card--skeleton" aria-hidden="true">
-            <div class="post-card__thumb post-card__thumb--row skeleton-box skeleton-box--media"></div>
-            <div class="post-card__body">
-              <div class="post-meta post-meta--row">
-                <div class="row row--chips">
-                  <span class="skeleton-box skeleton-box--chip"></span>
-                  <span class="skeleton-box skeleton-box--chip skeleton-box--chip-short"></span>
-                </div>
-                <span class="skeleton-box skeleton-box--date"></span>
-              </div>
-              <div class="skeleton-stack">
-                <span class="skeleton-box skeleton-box--title"></span>
-                <span class="skeleton-box skeleton-box--text"></span>
-                <span class="skeleton-box skeleton-box--text skeleton-box--text-short"></span>
-              </div>
-              <div class="row post-admin-actions post-admin-actions--wrap">
-                <span class="skeleton-box skeleton-box--button"></span>
-                <span class="skeleton-box skeleton-box--button skeleton-box--button-muted"></span>
-              </div>
-            </div>
-          </article>
-        </div>
-
-        <nav id="postsLoadMoreWrap" class="posts-pagination" aria-label="글 목록 더 보기" hidden>
-          <button id="postsLoadMoreBtn" class="btn btn--brand posts-load-more__btn" type="button" hidden>더 보기</button>
-        </nav>
       </section>
 
-      <aside class="post-side posts-sidebar posts-sidebar--simple" aria-label="글 목록 사이드바">
-        <div class="posts-sidebar__ad-shell" data-index-sidebar-ad hidden aria-label="향후 애드센스 광고 영역">
-          <div class="post-side__ad-slot post-side__ad-slot--placeholder">
-            <span>애드센스 광고가 들어갈 자리</span>
-          </div>
+      <section class="home-life-section" aria-label="Life 글 로딩 중">
+        <div class="home-section-heading"><h2>Life</h2><span class="home-section-more">더보기 →</span></div>
+        <div class="home-life-grid">
+          ${''}
+          <article class="home-life-card" aria-hidden="true"><div class="home-life-card__media skeleton-box"></div><div class="home-life-card__body"><span class="skeleton-box skeleton-box--text"></span><span class="skeleton-box skeleton-box--text skeleton-box--text-short" style="margin-top:9px"></span></div></article>
+          <article class="home-life-card" aria-hidden="true"><div class="home-life-card__media skeleton-box"></div><div class="home-life-card__body"><span class="skeleton-box skeleton-box--text"></span><span class="skeleton-box skeleton-box--text skeleton-box--text-short" style="margin-top:9px"></span></div></article>
+          <article class="home-life-card" aria-hidden="true"><div class="home-life-card__media skeleton-box"></div><div class="home-life-card__body"><span class="skeleton-box skeleton-box--text"></span><span class="skeleton-box skeleton-box--text skeleton-box--text-short" style="margin-top:9px"></span></div></article>
+          <article class="home-life-card" aria-hidden="true"><div class="home-life-card__media skeleton-box"></div><div class="home-life-card__body"><span class="skeleton-box skeleton-box--text"></span><span class="skeleton-box skeleton-box--text skeleton-box--text-short" style="margin-top:9px"></span></div></article>
         </div>
+      </section>
 
-        <div class="posts-sidebar__popular-shell" aria-labelledby="posts-popular-title">
-          <h2 id="posts-popular-title" class="h2">인기글</h2>
-          <ul id="postsPopular" class="post-side__popular-list posts-popular-list"><li class="post-side__popular-link post-side__popular-link--skeleton" aria-hidden="true"><span class="post-side__popular-rank post-side__popular-rank--skeleton">1</span><span class="skeleton-box skeleton-box--popular"></span></li><li class="post-side__popular-link post-side__popular-link--skeleton" aria-hidden="true"><span class="post-side__popular-rank post-side__popular-rank--skeleton">2</span><span class="skeleton-box skeleton-box--popular"></span></li><li class="post-side__popular-link post-side__popular-link--skeleton" aria-hidden="true"><span class="post-side__popular-rank post-side__popular-rank--skeleton">3</span><span class="skeleton-box skeleton-box--popular"></span></li></ul>
+      <section class="home-lower-section" aria-label="인기글 로딩 중">
+        <div class="home-popular-block">
+          <div class="home-section-heading home-section-heading--popular"><h2>인기글</h2></div>
+          <ul class="home-popular-list">
+            <li class="post-side__popular-link post-side__popular-link--skeleton" aria-hidden="true"><span class="post-side__popular-rank">1</span><span class="skeleton-box skeleton-box--popular"></span></li>
+            <li class="post-side__popular-link post-side__popular-link--skeleton" aria-hidden="true"><span class="post-side__popular-rank">2</span><span class="skeleton-box skeleton-box--popular"></span></li>
+          </ul>
         </div>
-      </aside>
+      </section>
     </div>
   </main>
-
   <footer class="footer container">
     <div class="footer__inner">
       <div class="footer__copy">
@@ -186,6 +119,6 @@
   </footer>
   <script src="/assets/js/nav.js?v=20260428v11" defer></script>
   <script src="/assets/js/site-search.js?v=20260428v10" defer></script>
-  <script src="/assets/js/posts.js?v=20260811v1" defer></script>
+  <script src="/assets/js/home.js?v=20260811v1" defer></script>
 </body>
 </html>

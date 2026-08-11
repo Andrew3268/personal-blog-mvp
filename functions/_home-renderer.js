@@ -5,7 +5,7 @@ import { canonicalCategoryName, categoryPath } from "./_category-utils.js";
 export const SITE_ORIGIN = "https://wacky-wiki.com";
 const SITE_NAME = "Wacky Wiki";
 const PER_PAGE = 8;
-const ARCHIVE_CACHE_VERSION = "3";
+const ARCHIVE_CACHE_VERSION = "4";
 
 function clampInt(value, fallback, min, max) {
   const num = Number.parseInt(String(value || ""), 10);
@@ -61,6 +61,7 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
   const safeTag = normalizeText(tag);
   const safePage = clampInt(page, 1, 1, 9999);
   const offset = (safePage - 1) * PER_PAGE;
+  const editorialHome = !safeCategory && !safeTag && safeStatus === "published" && safePage === 1;
 
   const where = [];
   const binds = [];
@@ -132,6 +133,42 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
     FROM site_settings
     WHERE key = 'index_sidebar_ad_enabled'
   `);
+  const featuredStatement = editorialHome ? db.prepare(`
+    SELECT
+      slug,
+      title,
+      category,
+      meta_description,
+      summary,
+      cover_image,
+      cover_image_alt,
+      view_count,
+      first_published_at,
+      published_at,
+      updated_at
+    FROM posts
+    WHERE status = 'published'
+    ORDER BY COALESCE(first_published_at, published_at, updated_at) DESC, updated_at DESC
+    LIMIT 1
+  `) : null;
+  const lifeStatement = editorialHome ? db.prepare(`
+    SELECT
+      slug,
+      title,
+      category,
+      meta_description,
+      summary,
+      cover_image,
+      cover_image_alt,
+      view_count,
+      first_published_at,
+      published_at,
+      updated_at
+    FROM posts
+    WHERE status = 'published' AND category = 'Life'
+    ORDER BY COALESCE(first_published_at, published_at, updated_at) DESC, updated_at DESC
+    LIMIT 5
+  `) : null;
 
   const statements = [
     itemsStatement,
@@ -140,6 +177,9 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
     popularStatement,
     settingsStatement
   ];
+  if (editorialHome) {
+    statements.push(featuredStatement, lifeStatement);
+  }
   if (admin) {
     statements.push(db.prepare(`
       SELECT status, COUNT(*) AS count
@@ -150,7 +190,13 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
   }
 
   const batchResults = await db.batch(statements);
-  const [itemsRows, countRows, categoryRows, popularRows, settingsRows, statusRows] = batchResults;
+  const [itemsRows, countRows, categoryRows, popularRows, settingsRows] = batchResults;
+  let resultIndex = 5;
+  const featuredRows = editorialHome ? batchResults[resultIndex++] : null;
+  const lifeRows = editorialHome ? batchResults[resultIndex++] : null;
+  const statusRows = admin ? batchResults[resultIndex] : null;
+  const featured = featuredRows?.results?.[0] || null;
+  const lifeItems = (lifeRows?.results || []).slice(0, 4);
   const countRow = countRows?.results?.[0] || null;
   const total = Number(countRow?.total || 0);
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
@@ -182,6 +228,11 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
       has_more: safePage < totalPages,
       next_page: safePage < totalPages ? safePage + 1 : null,
       invalid_page: invalidPage
+    },
+    editorial_home: {
+      enabled: editorialHome,
+      featured,
+      life: lifeItems
     },
     sidebar: {
       settings: {
@@ -288,6 +339,98 @@ function renderPostCard(item, index, page) {
       </div>
     </article>
   `;
+}
+
+
+function renderHomeImage(item, { featured = false } = {}) {
+  const title = normalizeText(item?.title || "제목 없음");
+  const cover = normalizeText(item?.cover_image || "");
+  const alt = normalizeText(item?.cover_image_alt || `${title} 대표 이미지`);
+  if (!cover) {
+    return `<div class="home-editorial__image-placeholder" aria-hidden="true">WACKY WIKI</div>`;
+  }
+  const image = buildImageAttrs(cover, {
+    widths: featured ? [640, 960, 1280] : [320, 480, 640, 800],
+    sizes: featured ? "(max-width: 840px) 100vw, 58vw" : "(max-width: 720px) 100vw, 25vw",
+    fallbackWidth: featured ? 960 : 640,
+    fit: "cover",
+    quality: 84
+  }, SITE_ORIGIN);
+  const fallback = image.original || cover;
+  return `<img ${image.attrs} alt="${escapeHtml(alt)}" ${featured ? 'loading="eager" fetchpriority="high"' : 'loading="lazy"'} decoding="async" data-home-image data-original-src="${escapeHtml(fallback)}" />`;
+}
+
+function renderEditorialHero(item) {
+  if (!item) {
+    return `<section class="home-editorial-hero home-editorial-hero--empty" aria-label="최신 글"><p class="home-editorial-empty">아직 발행된 글이 없습니다.</p></section>`;
+  }
+  const title = normalizeText(item.title || "제목 없음");
+  const summary = normalizeText(item.summary || item.meta_description || "새롭게 발행된 글을 확인해 보세요.");
+  const category = canonicalCategoryName(item.category || "");
+  const date = formatDate(item.first_published_at || item.published_at || item.updated_at);
+  const href = postPath(item.slug);
+  return `
+    <section class="home-editorial-hero" aria-labelledby="home-featured-title">
+      <a class="home-editorial-hero__media home-loading-media" href="${escapeHtml(href)}" aria-label="${escapeHtml(title)} 글 보기">
+        ${renderHomeImage(item, { featured: true })}
+      </a>
+      <div class="home-editorial-hero__content">
+        <div class="home-editorial-hero__meta">
+          ${category ? `<a href="${escapeHtml(categoryPath(category))}">${escapeHtml(category)}</a>` : ""}
+          ${date ? `<span>${escapeHtml(date)}</span>` : ""}
+        </div>
+        <h1 id="home-featured-title" class="home-editorial-hero__title"><a href="${escapeHtml(href)}">${escapeHtml(title)}</a></h1>
+        <p class="home-editorial-hero__summary">${escapeHtml(summary)}</p>
+        <a class="home-editorial-hero__read" href="${escapeHtml(href)}">글 읽기 <span aria-hidden="true">→</span></a>
+      </div>
+    </section>`;
+}
+
+function renderLifeCard(item) {
+  const title = normalizeText(item?.title || "제목 없음");
+  const date = formatDate(item?.first_published_at || item?.published_at || item?.updated_at);
+  const href = postPath(item?.slug || "");
+  return `
+    <article class="home-life-card">
+      <a class="home-life-card__media home-loading-media" href="${escapeHtml(href)}" aria-label="${escapeHtml(title)} 글 보기">
+        ${renderHomeImage(item)}
+      </a>
+      <div class="home-life-card__body">
+        <h3 class="home-life-card__title"><a href="${escapeHtml(href)}">${escapeHtml(title)}</a></h3>
+        <div class="home-life-card__meta">
+          ${date ? `<span>${escapeHtml(date)}</span>` : ""}
+          <span>Life</span>
+        </div>
+      </div>
+    </article>`;
+}
+
+function renderLifeSection(items = []) {
+  const cards = items.slice(0, 4).map(renderLifeCard).join("");
+  return `
+    <section class="home-life-section" aria-labelledby="home-life-title">
+      <div class="home-section-heading">
+        <h2 id="home-life-title">Life</h2>
+        <a class="home-section-more" href="${escapeHtml(categoryPath("Life"))}">더보기 <span aria-hidden="true">→</span></a>
+      </div>
+      ${cards ? `<div class="home-life-grid">${cards}</div>` : '<p class="home-editorial-empty">Life 카테고리에 발행된 글이 없습니다.</p>'}
+    </section>`;
+}
+
+function renderHomeLowerSection(sidebar = {}) {
+  const settings = sidebar.settings || {};
+  const showAd = Boolean(settings.index_sidebar_ad_enabled);
+  const popular = Array.isArray(sidebar.popular) ? sidebar.popular : [];
+  return `
+    <section class="home-lower-section ${showAd ? "home-lower-section--with-ad" : ""}" aria-labelledby="home-popular-title">
+      ${showAd ? `<div class="home-lower-section__ad" data-index-sidebar-ad aria-label="광고 영역"><div class="post-side__ad-slot post-side__ad-slot--placeholder"><span>애드센스 광고가 들어갈 자리</span></div></div>` : ""}
+      <div class="home-popular-block">
+        <div class="home-section-heading home-section-heading--popular">
+          <h2 id="home-popular-title">인기글</h2>
+        </div>
+        <ul id="postsPopular" class="home-popular-list">${renderPopularList(popular)}</ul>
+      </div>
+    </section>`;
 }
 
 function renderPopularList(items = []) {
@@ -441,7 +584,7 @@ export async function renderHomePage({ env, request, category = "" }) {
     });
   }
 
-  const isDefaultHome = !activeCategory && !tag && data.filters.status === "published";
+  const isDefaultHome = !activeCategory && !tag && data.filters.status === "published" && page === 1;
   const path = activeCategory ? categoryPath(activeCategory) : "/";
   const canonicalPath = buildArchivePath(path, {
     page,
@@ -454,12 +597,12 @@ export async function renderHomePage({ env, request, category = "" }) {
     ? `${activeCategory} 글 목록${pageSuffix} | ${SITE_NAME}`
     : tag
       ? `#${tag} 글 목록${pageSuffix} | ${SITE_NAME}`
-      : `${SITE_NAME} 생활 꿀팁 블로그${pageSuffix}`;
+      : `${SITE_NAME} | Life · Tech · Pet 실용 가이드${pageSuffix}`;
   const baseDescription = activeCategory
     ? `${activeCategory} 카테고리에 발행된 Wacky Wiki 글을 모아 확인할 수 있습니다.`
     : tag
       ? `#${tag} 태그가 포함된 Wacky Wiki 글을 모아 확인할 수 있습니다.`
-      : "실생활에 바로 적용할 수 있는 생활 꿀팁과 정리된 가이드를 전하는 블로그입니다.";
+      : "Life, Tech, Pet 분야에서 선택과 사용에 필요한 실용 정보를 정리합니다.";
   const description = page > 1 ? `${baseDescription} 현재 ${page}페이지입니다.` : baseDescription;
   const pageHeading = activeCategory
     ? `${activeCategory} 글 모음${pageSuffix}`
@@ -506,6 +649,12 @@ export async function renderHomePage({ env, request, category = "" }) {
     inLanguage: "ko-KR"
   };
 
+  const structuredItems = isDefaultHome
+    ? [data.editorial_home?.featured, ...(data.editorial_home?.life || [])]
+        .filter(Boolean)
+        .filter((item, index, items) => items.findIndex((candidate) => String(candidate.slug || "") === String(item.slug || "")) === index)
+    : data.items;
+
   const collectionJsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -520,7 +669,7 @@ export async function renderHomePage({ env, request, category = "" }) {
     },
     mainEntity: {
       "@type": "ItemList",
-      itemListElement: data.items.map((item, index) => ({
+      itemListElement: structuredItems.map((item, index) => ({
         "@type": "ListItem",
         position: (page - 1) * PER_PAGE + index + 1,
         url: `${SITE_ORIGIN}${postPath(item.slug)}`,
@@ -561,8 +710,8 @@ export async function renderHomePage({ env, request, category = "" }) {
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/favicon-192x192.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
-  <meta name="theme-color" content="#5B7CFF" />
-  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v3" />
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v5" />
   <link rel="preload" href="/assets/css/components.css?v=20260802v3" as="style" onload="this.onload=null;this.rel='stylesheet'" />
   <noscript><link rel="stylesheet" href="/assets/css/components.css?v=20260802v3" /></noscript>
   ${jsonld(websiteJsonLd)}
@@ -571,11 +720,19 @@ export async function renderHomePage({ env, request, category = "" }) {
 <body class="page-home">
   ${topbar(mobileCategoryHtml)}
 
+  ${isDefaultHome ? `
+  <main class="home-editorial-main">
+    <div class="home-editorial-container">
+      ${renderEditorialHero(data.editorial_home?.featured)}
+      ${renderLifeSection(data.editorial_home?.life || [])}
+      ${renderHomeLowerSection(data.sidebar)}
+    </div>
+  </main>` : `
   <main class="container posts-page">
-    <section id="postsHomeHero" class="posts-home-hero ${isDefaultHome ? "posts-home-hero--index" : "posts-home-hero--category"}" aria-label="카테고리 바로가기">
+    <section id="postsHomeHero" class="posts-home-hero posts-home-hero--category" aria-label="카테고리 바로가기">
       <div class="posts-home-hero__content posts-home-hero__content--editorial">
-        <h1 id="postsPageTitle" class="posts-home-hero__title ${isDefaultHome ? "posts-home-hero__title--editorial posts-home-hero__title--visually-hidden" : ""}">${escapeHtml(pageHeading)}</h1>
-        <p id="postsPageDescription" class="posts-home-hero__desc ${isDefaultHome ? "posts-home-hero__desc--editorial" : ""}">${escapeHtml(description)}</p>
+        <h1 id="postsPageTitle" class="posts-home-hero__title">${escapeHtml(pageHeading)}</h1>
+        <p id="postsPageDescription" class="posts-home-hero__desc">${escapeHtml(description)}</p>
         <div class="posts-home-hero__category-wrap" aria-label="카테고리 바로가기">
           <div id="heroCategoryBar" class="topbar-categories__list topbar-categories__list--hero">${heroCategoryHtml}</div>
         </div>
@@ -588,30 +745,26 @@ export async function renderHomePage({ env, request, category = "" }) {
         <div id="postsError" class="small posts-error" hidden></div>
         <div id="postsEmpty" class="small"${data.items.length ? " hidden" : ""}>${escapeHtml(emptyText)}</div>
         <div id="postsList" class="grid post-list-grid post-list-grid--rows">${postsHtml}</div>
-
         ${paginationHtml}
       </section>
 
       <aside class="post-side posts-sidebar posts-sidebar--simple" aria-label="글 목록 사이드바">
         <div class="posts-sidebar__ad-shell" data-index-sidebar-ad${adHidden} aria-label="향후 애드센스 광고 영역">
-          <div class="post-side__ad-slot post-side__ad-slot--placeholder">
-            <span>애드센스 광고가 들어갈 자리</span>
-          </div>
+          <div class="post-side__ad-slot post-side__ad-slot--placeholder"><span>애드센스 광고가 들어갈 자리</span></div>
         </div>
-
         <div class="posts-sidebar__popular-shell" aria-labelledby="posts-popular-title">
           <h2 id="posts-popular-title" class="h2">인기글</h2>
           <ul id="postsPopular" class="post-side__popular-list posts-popular-list">${renderPopularList(data.sidebar.popular)}</ul>
         </div>
       </aside>
     </div>
-  </main>
+  </main>`}
 
   ${footer()}
-  <script>window.__WACKY_INITIAL_POSTS__=${safeJson(data)};</script>
+  ${isDefaultHome ? "" : `<script>window.__WACKY_INITIAL_POSTS__=${safeJson(data)};</script>`}
   <script src="/assets/js/nav.js?v=20260428v11" defer></script>
   <script src="/assets/js/site-search.js?v=20260428v10" defer></script>
-  <script src="/assets/js/posts.js?v=20260811v1" defer></script>
+  ${isDefaultHome ? '<script src="/assets/js/home.js?v=20260811v1" defer></script>' : '<script src="/assets/js/posts.js?v=20260811v1" defer></script>'}
 </body>
 </html>`;
 
