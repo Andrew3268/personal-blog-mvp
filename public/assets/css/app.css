@@ -961,16 +961,17 @@ body.has-preview-open{overflow:hidden}
   width:100%;
   max-width:100%;
   min-width:0;
-  aspect-ratio:16/9;
+  height:430px;
   align-self:start;
   overflow:hidden;
   background:#f1f1ee;
 }
 .home-editorial-hero__media img,
 .home-life-card__media img{
+  display:block;
   width:100%;
   height:100%;
-  object-fit:cover;
+  object-fit:contain;
 }
 .home-editorial-hero__content{
   width:100%;
@@ -1003,9 +1004,9 @@ body.has-preview-open{overflow:hidden}
   width:100%;
   border-bottom:1px solid #a9a9a4;
   color:#171717;
-  font-size:clamp(34px,3.8vw,50px);
-  line-height:1.08;
-  font-weight:500;
+  font-size:40px;
+  line-height:1.3;
+  font-weight:400;
   letter-spacing:-.052em;
   word-break:keep-all;
   overflow-wrap:break-word;
@@ -1105,7 +1106,7 @@ body.has-preview-open{overflow:hidden}
   display:block;
   width:100%;
   max-width:100%;
-  aspect-ratio:4/3;
+  height:220px;
   overflow:hidden;
   background:#f1f1ee;
 }
@@ -1205,10 +1206,17 @@ body.has-preview-open{overflow:hidden}
   font-weight:500;
 }
 .home-popular-list .post-side__popular-text{
+  display:block;
+  min-width:0;
+  overflow:hidden;
   color:#222;
   font-size:14px;
   line-height:1.5;
   font-weight:400;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  -webkit-line-clamp:unset;
+  -webkit-box-orient:initial;
 }
 .home-editorial-empty{
   margin:18px 0 0;
@@ -1228,6 +1236,46 @@ body.has-preview-open{overflow:hidden}
   letter-spacing:.12em;
 }
 
+/* 홈 초기 로딩 시 이미지뿐 아니라 텍스트/메타/섹션 제목/인기글까지 동일한 skeleton 상태를 사용합니다. */
+.home-skeleton-active .home-editorial-hero__meta,
+.home-skeleton-active .home-editorial-hero__title,
+.home-skeleton-active .home-editorial-hero__summary,
+.home-skeleton-active .home-editorial-hero__read,
+.home-skeleton-active .home-section-heading h2,
+.home-skeleton-active .home-section-more,
+.home-skeleton-active .home-life-card__title,
+.home-skeleton-active .home-life-card__meta,
+.home-skeleton-active .home-popular-list .post-side__popular-rank,
+.home-skeleton-active .home-popular-list .post-side__popular-text,
+.home-skeleton-active .home-lower-section__ad .post-side__ad-slot{
+  position:relative;
+  overflow:hidden;
+  border-color:transparent;
+  color:transparent;
+  background:linear-gradient(100deg,#eeeeea 18%,#f8f8f5 42%,#eeeeea 66%);
+  background-size:220% 100%;
+  animation:home-skeleton-shimmer 1.25s linear infinite;
+}
+.home-skeleton-active .home-editorial-hero__meta a,
+.home-skeleton-active .home-editorial-hero__title a,
+.home-skeleton-active .home-editorial-hero__read span,
+.home-skeleton-active .home-section-more span,
+.home-skeleton-active .home-life-card__title a,
+.home-skeleton-active .home-life-card__meta span,
+.home-skeleton-active .home-lower-section__ad .post-side__ad-slot span{
+  color:transparent;
+}
+.home-skeleton-active .home-editorial-hero__meta{width:150px;min-height:17px;}
+.home-skeleton-active .home-editorial-hero__title{min-height:104px;}
+.home-skeleton-active .home-editorial-hero__summary{width:100%;min-height:74px;}
+.home-skeleton-active .home-editorial-hero__read{width:82px;min-height:20px;border-bottom:0;}
+.home-skeleton-active .home-section-heading h2{width:72px;min-height:29px;}
+.home-skeleton-active .home-section-more{width:68px;min-height:18px;}
+.home-skeleton-active .home-life-card__title{width:100%;}
+.home-skeleton-active .home-life-card__meta{width:72%;min-height:26px;border-top-color:transparent;}
+.home-skeleton-active .home-popular-list .post-side__popular-rank{width:22px;min-height:20px;}
+.home-skeleton-active .home-popular-list .post-side__popular-text{width:100%;min-height:21px;}
+
 /* 실제 이미지가 준비될 때까지 이미지 영역의 크기를 고정하고 shimmer를 보여줍니다. */
 .home-loading-media{
   position:relative;
@@ -1241,13 +1289,22 @@ body.has-preview-open{overflow:hidden}
   pointer-events:none;
   background:linear-gradient(100deg,#eeeeea 18%,#f8f8f5 42%,#eeeeea 66%);
   background-size:220% 100%;
-  animation:home-skeleton-shimmer 1.25s linear infinite;
-  opacity:1;
+  opacity:0;
+  animation:none;
   transition:opacity .2s ease;
 }
 .home-loading-media img{
-  opacity:0;
+  opacity:1;
   transition:opacity .22s ease;
+}
+.home-skeleton-active .home-loading-media::after,
+.home-loading-media.is-loading::after{
+  opacity:1;
+  animation:home-skeleton-shimmer 1.25s linear infinite;
+}
+.home-skeleton-active .home-loading-media img,
+.home-loading-media.is-loading img{
+  opacity:0;
 }
 .home-loading-media.is-loaded::after{
   opacity:0;
@@ -1261,7 +1318,8 @@ body.has-preview-open{overflow:hidden}
   to{background-position:-20% 0}
 }
 @media (prefers-reduced-motion:reduce){
-  .home-loading-media::after{animation:none}
+  .home-skeleton-active .home-loading-media::after,
+  .home-loading-media.is-loading::after{animation:none}
   .home-loading-media img{transition:none}
 }
 
@@ -1277,8 +1335,8 @@ body.has-preview-open{overflow:hidden}
   .home-editorial-hero__content{
     padding:0;
   }
-  .home-editorial-hero__title{
-    font-size:clamp(32px,7vw,44px);
+  .home-editorial-hero__media{
+    height:420px;
   }
   .home-life-grid{
     grid-template-columns:repeat(2,minmax(0,1fr));
@@ -1303,7 +1361,7 @@ body.has-preview-open{overflow:hidden}
     padding-bottom:26px;
   }
   .home-editorial-hero__media{
-    aspect-ratio:4/3;
+    height:300px;
   }
   .home-editorial-hero__meta{
     margin-bottom:12px;
@@ -1311,8 +1369,6 @@ body.has-preview-open{overflow:hidden}
   }
   .home-editorial-hero__title{
     padding-bottom:12px;
-    font-size:32px;
-    line-height:1.15;
   }
   .home-editorial-hero__summary{
     margin-top:12px;
@@ -1340,12 +1396,13 @@ body.has-preview-open{overflow:hidden}
     display:none;
   }
   .home-life-card__media{
-    aspect-ratio:16/10;
+    height:260px;
   }
   .home-life-card__title{
     display:block;
     height:auto;
     overflow:visible;
+    padding-bottom:10px;
     font-size:19px;
   }
   .home-popular-list{

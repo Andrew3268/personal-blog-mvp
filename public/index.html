@@ -28,7 +28,8 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/favicon-192x192.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
   <meta name="theme-color" content="#ffffff" />
-  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v6" />
+  <script>document.documentElement.classList.add("home-skeleton-active");</script>
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v7" />
   <link rel="preload" href="/assets/css/components.css?v=20260802v3" as="style" onload="this.onload=null;this.rel='stylesheet'" />
   <noscript><link rel="stylesheet" href="/assets/css/components.css?v=20260802v3" /></noscript>
 </head>
@@ -81,26 +82,30 @@
           <span class="skeleton-box skeleton-box--title" style="margin-top:10px;width:72%;height:46px"></span>
           <span class="skeleton-box skeleton-box--text" style="margin-top:24px"></span>
           <span class="skeleton-box skeleton-box--text skeleton-box--text-short" style="margin-top:10px"></span>
+          <span class="skeleton-box skeleton-box--button" style="margin-top:22px;width:82px;height:20px"></span>
         </div>
       </section>
 
       <section class="home-life-section" aria-label="Life 글 로딩 중">
-        <div class="home-section-heading"><h2>Life</h2><span class="home-section-more">더보기 →</span></div>
+        <div class="home-section-heading" aria-hidden="true"><span class="skeleton-box" style="width:72px;height:29px"></span><span class="skeleton-box" style="width:68px;height:18px"></span></div>
         <div class="home-life-grid">
-          ${''}
-          <article class="home-life-card" aria-hidden="true"><div class="home-life-card__media skeleton-box"></div><div class="home-life-card__body"><span class="skeleton-box skeleton-box--text"></span><span class="skeleton-box skeleton-box--text skeleton-box--text-short" style="margin-top:9px"></span></div></article>
-          <article class="home-life-card" aria-hidden="true"><div class="home-life-card__media skeleton-box"></div><div class="home-life-card__body"><span class="skeleton-box skeleton-box--text"></span><span class="skeleton-box skeleton-box--text skeleton-box--text-short" style="margin-top:9px"></span></div></article>
-          <article class="home-life-card" aria-hidden="true"><div class="home-life-card__media skeleton-box"></div><div class="home-life-card__body"><span class="skeleton-box skeleton-box--text"></span><span class="skeleton-box skeleton-box--text skeleton-box--text-short" style="margin-top:9px"></span></div></article>
-          <article class="home-life-card" aria-hidden="true"><div class="home-life-card__media skeleton-box"></div><div class="home-life-card__body"><span class="skeleton-box skeleton-box--text"></span><span class="skeleton-box skeleton-box--text skeleton-box--text-short" style="margin-top:9px"></span></div></article>
+          <article class="home-life-card" aria-hidden="true"><div class="home-life-card__media skeleton-box"></div><div class="home-life-card__body"><span class="skeleton-box skeleton-box--text"></span><span class="skeleton-box skeleton-box--text skeleton-box--text-short" style="margin-top:9px"></span><span class="skeleton-box skeleton-box--date" style="margin:18px 0 0;width:96px"></span></div></article>
+          <article class="home-life-card" aria-hidden="true"><div class="home-life-card__media skeleton-box"></div><div class="home-life-card__body"><span class="skeleton-box skeleton-box--text"></span><span class="skeleton-box skeleton-box--text skeleton-box--text-short" style="margin-top:9px"></span><span class="skeleton-box skeleton-box--date" style="margin:18px 0 0;width:96px"></span></div></article>
+          <article class="home-life-card" aria-hidden="true"><div class="home-life-card__media skeleton-box"></div><div class="home-life-card__body"><span class="skeleton-box skeleton-box--text"></span><span class="skeleton-box skeleton-box--text skeleton-box--text-short" style="margin-top:9px"></span><span class="skeleton-box skeleton-box--date" style="margin:18px 0 0;width:96px"></span></div></article>
+          <article class="home-life-card" aria-hidden="true"><div class="home-life-card__media skeleton-box"></div><div class="home-life-card__body"><span class="skeleton-box skeleton-box--text"></span><span class="skeleton-box skeleton-box--text skeleton-box--text-short" style="margin-top:9px"></span><span class="skeleton-box skeleton-box--date" style="margin:18px 0 0;width:96px"></span></div></article>
         </div>
       </section>
 
       <section class="home-lower-section" aria-label="인기글 로딩 중">
         <div class="home-popular-block">
-          <div class="home-section-heading home-section-heading--popular"><h2>인기글</h2></div>
+          <div class="home-section-heading home-section-heading--popular" aria-hidden="true"><span class="skeleton-box" style="width:72px;height:29px"></span></div>
           <ul class="home-popular-list">
             <li class="post-side__popular-link post-side__popular-link--skeleton" aria-hidden="true"><span class="post-side__popular-rank">1</span><span class="skeleton-box skeleton-box--popular"></span></li>
             <li class="post-side__popular-link post-side__popular-link--skeleton" aria-hidden="true"><span class="post-side__popular-rank">2</span><span class="skeleton-box skeleton-box--popular"></span></li>
+            <li class="post-side__popular-link post-side__popular-link--skeleton" aria-hidden="true"><span class="post-side__popular-rank">3</span><span class="skeleton-box skeleton-box--popular"></span></li>
+            <li class="post-side__popular-link post-side__popular-link--skeleton" aria-hidden="true"><span class="post-side__popular-rank">4</span><span class="skeleton-box skeleton-box--popular"></span></li>
+            <li class="post-side__popular-link post-side__popular-link--skeleton" aria-hidden="true"><span class="post-side__popular-rank">5</span><span class="skeleton-box skeleton-box--popular"></span></li>
+            <li class="post-side__popular-link post-side__popular-link--skeleton" aria-hidden="true"><span class="post-side__popular-rank">6</span><span class="skeleton-box skeleton-box--popular"></span></li>
           </ul>
         </div>
       </section>
@@ -119,6 +124,6 @@
   </footer>
   <script src="/assets/js/nav.js?v=20260428v11" defer></script>
   <script src="/assets/js/site-search.js?v=20260428v10" defer></script>
-  <script src="/assets/js/home.js?v=20260811v1" defer></script>
+  <script src="/assets/js/home.js?v=20260811v2" defer></script>
 </body>
 </html>

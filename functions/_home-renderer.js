@@ -5,7 +5,7 @@ import { canonicalCategoryName, categoryPath } from "./_category-utils.js";
 export const SITE_ORIGIN = "https://wacky-wiki.com";
 const SITE_NAME = "Wacky Wiki";
 const PER_PAGE = 8;
-const ARCHIVE_CACHE_VERSION = "4";
+const ARCHIVE_CACHE_VERSION = "5";
 
 function clampInt(value, fallback, min, max) {
   const num = Number.parseInt(String(value || ""), 10);
@@ -48,6 +48,13 @@ function truncateText(value = "", max = 155) {
 
 function safeJson(data) {
   return JSON.stringify(data).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
+}
+
+function excludeFeaturedFromSection(items = [], featured = null, limit = 4) {
+  const featuredSlug = String(featured?.slug || "").trim();
+  return (items || [])
+    .filter((item) => !featuredSlug || String(item?.slug || "").trim() !== featuredSlug)
+    .slice(0, limit);
 }
 
 
@@ -196,7 +203,9 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
   const lifeRows = editorialHome ? batchResults[resultIndex++] : null;
   const statusRows = admin ? batchResults[resultIndex] : null;
   const featured = featuredRows?.results?.[0] || null;
-  const lifeItems = (lifeRows?.results || []).slice(0, 4);
+  // Hero에 노출된 글은 같은 카테고리 섹션에서 다시 노출하지 않습니다.
+  // 이후 Tech/Pet 섹션을 추가할 때도 동일 helper를 사용하면 같은 규칙이 적용됩니다.
+  const lifeItems = excludeFeaturedFromSection(lifeRows?.results || [], featured, 4);
   const countRow = countRows?.results?.[0] || null;
   const total = Number(countRow?.total || 0);
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
@@ -353,7 +362,7 @@ function renderHomeImage(item, { featured = false } = {}) {
     widths: featured ? [640, 960, 1280] : [320, 480, 640, 800],
     sizes: featured ? "(max-width: 840px) 100vw, 58vw" : "(max-width: 720px) 100vw, 25vw",
     fallbackWidth: featured ? 960 : 640,
-    fit: "cover",
+    fit: "contain",
     quality: 84
   }, SITE_ORIGIN);
   const fallback = image.original || cover;
@@ -465,7 +474,7 @@ function renderArchiveNotFound({ title = "페이지를 찾을 수 없습니다",
   <title>${escapeHtml(title)} | ${escapeHtml(SITE_NAME)}</title>
   <meta name="description" content="${escapeHtml(description)}" />
   <meta name="robots" content="noindex,follow" />
-  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v3" />
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v7" />
   <link rel="stylesheet" href="/assets/css/components.css?v=20260802v3" />
 </head>
 <body>
@@ -711,7 +720,8 @@ export async function renderHomePage({ env, request, category = "" }) {
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/favicon-192x192.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
   <meta name="theme-color" content="#ffffff" />
-  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v6" />
+  ${isDefaultHome ? '<script>document.documentElement.classList.add("home-skeleton-active");</script>' : ""}
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v7" />
   <link rel="preload" href="/assets/css/components.css?v=20260802v3" as="style" onload="this.onload=null;this.rel='stylesheet'" />
   <noscript><link rel="stylesheet" href="/assets/css/components.css?v=20260802v3" /></noscript>
   ${jsonld(websiteJsonLd)}
@@ -764,7 +774,7 @@ export async function renderHomePage({ env, request, category = "" }) {
   ${isDefaultHome ? "" : `<script>window.__WACKY_INITIAL_POSTS__=${safeJson(data)};</script>`}
   <script src="/assets/js/nav.js?v=20260428v11" defer></script>
   <script src="/assets/js/site-search.js?v=20260428v10" defer></script>
-  ${isDefaultHome ? '<script src="/assets/js/home.js?v=20260811v1" defer></script>' : '<script src="/assets/js/posts.js?v=20260811v1" defer></script>'}
+  ${isDefaultHome ? '<script src="/assets/js/home.js?v=20260811v2" defer></script>' : '<script src="/assets/js/posts.js?v=20260811v1" defer></script>'}
 </body>
 </html>`;
 

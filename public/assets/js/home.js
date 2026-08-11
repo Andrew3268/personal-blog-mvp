@@ -1,20 +1,37 @@
 (() => {
+  const root = document.documentElement;
   const mediaBlocks = Array.from(document.querySelectorAll('.home-loading-media'));
 
-  mediaBlocks.forEach((media) => {
+  const mediaJobs = mediaBlocks.map((media) => {
+    media.classList.add('is-loading');
     const image = media.querySelector('img[data-home-image]');
     if (!image) {
+      media.classList.remove('is-loading');
       media.classList.add('is-loaded');
-      return;
+      return Promise.resolve();
     }
 
-    const markLoaded = () => media.classList.add('is-loaded');
-    if (image.complete && image.naturalWidth > 0) {
+    const markLoaded = () => {
+      media.classList.remove('is-loading');
+      media.classList.add('is-loaded');
+    };
+    if (image.complete) {
       markLoaded();
-      return;
+      return Promise.resolve();
     }
 
-    image.addEventListener('load', markLoaded, { once: true });
-    image.addEventListener('error', markLoaded, { once: true });
+    return new Promise((resolve) => {
+      const done = () => {
+        markLoaded();
+        resolve();
+      };
+      image.addEventListener('load', done, { once: true });
+      image.addEventListener('error', done, { once: true });
+    });
+  });
+
+  const timeout = new Promise((resolve) => window.setTimeout(resolve, 1800));
+  Promise.race([Promise.allSettled(mediaJobs), timeout]).then(() => {
+    requestAnimationFrame(() => root?.classList.remove('home-skeleton-active'));
   });
 })();
