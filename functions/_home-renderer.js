@@ -322,7 +322,7 @@ function renderArchiveNotFound({ title = "페이지를 찾을 수 없습니다",
   <title>${escapeHtml(title)} | ${escapeHtml(SITE_NAME)}</title>
   <meta name="description" content="${escapeHtml(description)}" />
   <meta name="robots" content="noindex,follow" />
-  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v2" />
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v3" />
   <link rel="stylesheet" href="/assets/css/components.css?v=20260802v3" />
 </head>
 <body>
@@ -562,7 +562,7 @@ export async function renderHomePage({ env, request, category = "" }) {
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/favicon-192x192.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
   <meta name="theme-color" content="#5B7CFF" />
-  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v2" />
+  <link rel="stylesheet" href="/assets/css/app.css?v=20260811v3" />
   <link rel="preload" href="/assets/css/components.css?v=20260802v3" as="style" onload="this.onload=null;this.rel='stylesheet'" />
   <noscript><link rel="stylesheet" href="/assets/css/components.css?v=20260802v3" /></noscript>
   ${jsonld(websiteJsonLd)}
