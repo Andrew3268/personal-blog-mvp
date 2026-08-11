@@ -12,7 +12,10 @@
     "d1:migrate:query-optimization:local": "wrangler d1 execute personal-blog-db --local --file=./db/migrations/2026-08-02-query-normalization-and-indexes.sql",
     "d1:migrate:query-optimization:remote": "wrangler d1 execute personal-blog-db --remote --file=./db/migrations/2026-08-02-query-normalization-and-indexes.sql",
     "d1:migrate:performance-phase3:local": "wrangler d1 execute personal-blog-db --local --file=./db/migrations/2026-08-02-cache-tags-view-aggregation.sql",
-    "d1:migrate:performance-phase3:remote": "wrangler d1 execute personal-blog-db --remote --file=./db/migrations/2026-08-02-cache-tags-view-aggregation.sql"
+    "d1:migrate:performance-phase3:remote": "wrangler d1 execute personal-blog-db --remote --file=./db/migrations/2026-08-02-cache-tags-view-aggregation.sql",
+    "verify:assets": "node ./scripts/verify-asset-cache.mjs",
+    "build": "npm run verify:assets",
+    "predeploy": "npm run verify:assets"
   },
   "devDependencies": {
     "wrangler": "^4.77.0"

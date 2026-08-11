@@ -508,8 +508,8 @@ function renderArchiveNotFound({ title = "페이지를 찾을 수 없습니다",
   <title>${escapeHtml(title)} | ${escapeHtml(SITE_NAME)}</title>
   <meta name="description" content="${escapeHtml(description)}" />
   <meta name="robots" content="noindex,follow" />
-  <link rel="stylesheet" href="/assets/css/app-20260812-v14.css" />
-  <link rel="stylesheet" href="/assets/css/components.css?v=20260811v4" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
 </head>
 <body>
   <main class="container">
@@ -755,9 +755,9 @@ export async function renderHomePage({ env, request, category = "" }) {
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
   <meta name="theme-color" content="#ffffff" />
   ${isDefaultHome ? '<script>document.documentElement.classList.add("home-skeleton-active");</script>' : activeCategory ? '<script>document.documentElement.classList.add("archive-skeleton-active");</script>' : ""}
-  <link rel="stylesheet" href="/assets/css/app-20260812-v14.css" />
-  <link rel="preload" href="/assets/css/components.css?v=20260811v4" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-  <noscript><link rel="stylesheet" href="/assets/css/components.css?v=20260811v4" /></noscript>
+  <link rel="stylesheet" href="/assets/css/app.css" />
+  <link rel="preload" href="/assets/css/components.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="/assets/css/components.css" /></noscript>
   ${jsonld(websiteJsonLd)}
   ${jsonld(collectionJsonLd)}
 </head>
@@ -811,9 +811,9 @@ export async function renderHomePage({ env, request, category = "" }) {
 
   ${footer()}
   ${isDefaultHome ? "" : `<script>window.__WACKY_INITIAL_POSTS__=${safeJson(data)};</script>`}
-  <script src="/assets/js/nav.js?v=20260428v11" defer></script>
-  <script src="/assets/js/site-search.js?v=20260428v10" defer></script>
-  ${isDefaultHome ? '<script src="/assets/js/home.js?v=20260811v2" defer></script>' : '<script src="/assets/js/posts.js?v=20260811v3" defer></script><script src="/assets/js/post-layout.js?v=20260811v2" defer></script>'}
+  <script src="/assets/js/nav.js" defer></script>
+  <script src="/assets/js/site-search.js" defer></script>
+  ${isDefaultHome ? '<script src="/assets/js/home.js" defer></script>' : '<script src="/assets/js/posts.js" defer></script><script src="/assets/js/post-layout.js" defer></script>'}
 </body>
 </html>`;
 

@@ -1,26 +1,7 @@
-/assets/css/*
-  Cache-Control: public, max-age=0, must-revalidate
-
-/assets/js/*
-  Cache-Control: public, max-age=0, must-revalidate
-
-/assets/images/*
-  Cache-Control: public, max-age=31536000, immutable
-
-/favicon.ico
-  Cache-Control: public, max-age=31536000, immutable
-
-/*.html
-  Cache-Control: public, max-age=0, must-revalidate
-
-/
-  Cache-Control: public, max-age=0, must-revalidate
-
-/category/*
-  Cache-Control: public, max-age=120, s-maxage=600
-
-/img/*
-  Cache-Control: public, max-age=31536000, immutable
+# Static asset caching intentionally uses Cloudflare Pages defaults.
+# Do not add long-lived `immutable` caching to mutable CSS/JS filenames such as
+# /assets/css/app.css or /assets/js/posts.js. Pages already provides CDN caching,
+# ETag revalidation, Brotli/Gzip, and refreshes deployed assets on new deployments.
 
 /admin/*
   X-Robots-Tag: noindex, nofollow
@@ -36,5 +17,4 @@
 
 /ads.txt
   Content-Type: text/plain; charset=utf-8
-  Cache-Control: public, max-age=300, must-revalidate
   X-Robots-Tag: all

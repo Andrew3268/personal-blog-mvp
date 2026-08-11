@@ -84,6 +84,20 @@ npm run d1:exec
 npm run d1:seed
 ```
 
+## 정적 자산 캐시 정책
+
+CSS와 JavaScript는 파일명을 수동으로 `v14`, `v15`처럼 바꾸거나 `?v=`를 붙이지 않습니다. 개발 원본은 `public/assets/css/app.css`와 각 JavaScript 파일 하나만 유지합니다.
+
+Cloudflare Pages의 기본 정적 자산 캐시를 사용합니다. Pages가 CDN 캐시, ETag 재검증, Brotli/Gzip을 처리하고 새 배포 시 배포된 자산을 갱신하므로, 변경 가능한 CSS/JS 파일에는 별도의 장기 `immutable` Cache-Control을 설정하지 않습니다.
+
+배포 전 다음 검증을 실행할 수 있습니다.
+
+```bash
+npm run verify:assets
+```
+
+`npm run deploy`를 사용할 경우 `predeploy`에서 이 검사가 자동 실행됩니다. `app-*.css`, 로컬 자산의 `?v=`, CSS/JS에 대한 장기 immutable 캐시가 다시 추가되면 검증이 실패합니다.
+
 ## 배포
 
 1. 변경 파일을 Git에 커밋합니다.

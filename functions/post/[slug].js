@@ -328,8 +328,8 @@ export async function onRequestGet(context) {
   <meta name="twitter:description" content="${escapeHtml(descriptionText)}" />
   <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
 
-  <link rel="stylesheet" href="/assets/css/app-20260812-v14.css" />
-  <link rel="stylesheet" href="/assets/css/components.css?v=20260731v2" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
 
   ${jsonld(blogPostingJsonLd)}
   ${jsonld(breadcrumbJsonLd)}
@@ -405,7 +405,7 @@ export async function onRequestGet(context) {
     }, { once: true });
   </script>
   <script src="/assets/js/nav.js" defer></script>
-  <script src="/assets/js/post-layout.js?v=20260811v1" defer></script>
+  <script src="/assets/js/post-layout.js" defer></script>
 </body>
 </html>`;
 
@@ -799,8 +799,8 @@ function renderNotFound(slug) {
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/favicon-192x192.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
   <meta name="theme-color" content="#111111" />
-  <link rel="stylesheet" href="/assets/css/app-20260812-v14.css" />
-  <link rel="stylesheet" href="/assets/css/components.css?v=20260731v2" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
 </head>
 <body>
   <main class="container">
