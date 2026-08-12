@@ -1,3 +1,31 @@
+function getSafeNextPath() {
+  const next = new URLSearchParams(location.search).get('next');
+  if (!next) return '/admin/dashboard.html';
+
+  let parsed;
+  try {
+    parsed = new URL(next, location.origin);
+  } catch {
+    return '/admin/dashboard.html';
+  }
+
+  if (parsed.origin !== location.origin) return '/admin/dashboard.html';
+
+  const allowedPaths = new Set([
+    '/admin/dashboard',
+    '/admin/dashboard.html',
+    '/admin/posts',
+    '/admin/posts.html',
+    '/add',
+    '/add.html',
+    '/edit',
+    '/edit.html'
+  ]);
+  if (!allowedPaths.has(parsed.pathname)) return '/admin/dashboard.html';
+
+  return parsed.pathname + parsed.search + parsed.hash;
+}
+
 async function fetchSession() {
   const res = await fetch('/api/admin/session', { credentials: 'same-origin', cache: 'no-store' });
   if (!res.ok) throw new Error(`세션 확인 실패 (${res.status})`);
@@ -42,7 +70,7 @@ async function init() {
     fetchSetupStatus().catch(() => ({ has_admin: true }))
   ]);
   if (state.authenticated) {
-    location.href = '/admin/dashboard.html';
+    location.href = getSafeNextPath();
     return;
   }
 
@@ -74,7 +102,7 @@ async function submitAuth(event) {
     return;
   }
   statusEl.textContent = mode === 'setup' ? '관리자 계정이 만들어졌습니다. 이동합니다…' : '로그인되었습니다. 이동합니다…';
-  location.href = '/admin/dashboard.html';
+  location.href = getSafeNextPath();
 }
 
 document.getElementById('adminAuthForm')?.addEventListener('submit', submitAuth);

@@ -5,6 +5,8 @@ const SITE_ORIGIN = "https://wacky-wiki.com";
 const PROTECTED_ADMIN_PATHS = new Set([
   "/admin/dashboard",
   "/admin/dashboard.html",
+  "/admin/posts",
+  "/admin/posts.html",
   "/add",
   "/add.html",
   "/edit",

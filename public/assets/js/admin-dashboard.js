@@ -28,7 +28,7 @@ async function fetchJson(url, options = {}) {
   return json;
 }
 
-function renderManagedPostList(items, { popular = false } = {}) {
+function renderManagedPostList(items) {
   if (!Array.isArray(items) || !items.length) {
     return '<li class="small">표시할 글이 없습니다.</li>';
   }
@@ -37,10 +37,7 @@ function renderManagedPostList(items, { popular = false } = {}) {
     const slug = String(item.slug || '');
     const title = String(item.title || '제목 없음');
     const publishedAt = formatDate(item.published_at);
-    const statusText = item.status === 'draft' ? '초안' : '발행';
-    const sideMeta = popular
-      ? `조회수 ${formatNumber(item.view_count)}`
-      : statusText;
+    const sideMeta = `조회수 ${formatNumber(item.view_count)}`;
     const titleHref = item.status === 'draft'
       ? `/edit.html?slug=${encodeURIComponent(slug)}`
       : `/post/${encodeURIComponent(slug)}`;
@@ -192,7 +189,7 @@ async function initDashboard() {
   }
 
   if (popularResult.status === 'fulfilled') {
-    popularListEl.innerHTML = renderManagedPostList(popularResult.value?.items || [], { popular: true });
+    popularListEl.innerHTML = renderManagedPostList(popularResult.value?.items || []);
   } else {
     console.error(popularResult.reason);
     popularListEl.innerHTML = '<li class="small">인기글을 불러오지 못했습니다.</li>';

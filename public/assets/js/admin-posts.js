@@ -92,7 +92,7 @@
       window.__ADMIN_SESSION__ || { authenticated: false, admin: null }
     ));
     if (!sessionJson.authenticated) {
-      location.href = '/admin/';
+      location.href = '/admin/?next=' + encodeURIComponent('/admin/posts.html');
       return;
     }
 
