@@ -2,6 +2,7 @@ const LEGACY_CATEGORY_ALIASES = new Map([
   ["LIVING", "Life"],
   ["KITCHEN", "Life"],
   ["HEALTH", "Life"],
+  ["CLEANING", "Life"],
 ]);
 
 export function normalizeCategoryName(value = "") {

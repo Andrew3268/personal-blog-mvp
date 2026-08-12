@@ -166,7 +166,7 @@ function canonicalCategoryName(value = '') {
   const normalized = String(value || '').replace(/\s+/g, ' ').trim();
   if (!normalized) return '';
   const upper = normalized.toUpperCase();
-  if (upper === 'LIVING' || upper === 'KITCHEN' || upper === 'HEALTH') return 'Life';
+  if (upper === 'LIVING' || upper === 'KITCHEN' || upper === 'HEALTH' || upper === 'CLEANING') return 'Life';
   return normalized;
 }
 
