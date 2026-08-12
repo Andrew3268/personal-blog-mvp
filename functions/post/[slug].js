@@ -5,7 +5,7 @@ import { canonicalCategoryName, categoryPath } from "../_category-utils.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
 const ADSENSE_CLIENT = "ca-pub-7298667883751711";
-const POST_CACHE_VERSION = "5";
+const POST_CACHE_VERSION = "6";
 
 function safeDecodePathParam(value = "") {
   try {
@@ -735,6 +735,7 @@ function buildDescription(metaDescription, summary, markdown, title) {
 function stripMarkdown(md) {
   return String(md || "")
     .replace(/```[\s\S]*?```/g, " ")
+    .replace(/^\s*\[\[POST_LINK_BUTTON[^\]]*\]\]\s*$/gim, " ")
     .replace(/`[^`]*`/g, " ")
     .replace(/!\[[^\]]*\]\([^)]+\)/g, " ")
     .replace(/\[[^\]]*\]\([^)]+\)/g, " ")

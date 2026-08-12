@@ -175,6 +175,34 @@
               <textarea class="input editor-textarea" id="content_md" rows="20" placeholder="본문을 입력하세요"></textarea>
             </label>
 
+            <div class="card editor-option-card editor-link-button-card">
+              <div class="editor-link-button-card__head">
+                <div class="h2">링크 버튼 추가</div>
+                <div class="small">본문 커서 위치에 선택한 스타일의 링크 버튼을 삽입합니다.</div>
+              </div>
+              <div class="editor-link-button-grid">
+                <label>
+                  <div class="small">버튼 스타일</div>
+                  <select class="input" id="linkButtonStyle">
+                    <option value="default" selected>기본 버튼</option>
+                    <option value="external">외부 페이지 이동 버튼</option>
+                  </select>
+                </label>
+                <label>
+                  <div class="small">버튼 텍스트</div>
+                  <input class="input" id="linkButtonText" placeholder="예: 자세히 보기" />
+                </label>
+                <label class="editor-link-button-grid__url">
+                  <div class="small">이동 URL</div>
+                  <input class="input" id="linkButtonUrl" placeholder="https://example.com 또는 /페이지/" />
+                </label>
+              </div>
+              <div class="editor-link-button-actions">
+                <button class="btn btn--brand" id="insertLinkButtonBtn" type="button">본문에 버튼 삽입</button>
+                <span class="small" id="linkButtonInsertStatus" role="status" aria-live="polite"></span>
+              </div>
+            </div>
+
             <label>
               <div class="small">FAQ Markdown <span id="faqCount"></span></div>
               <textarea class="input" id="faq_md" rows="8" placeholder="Q: 질문&#10;A: 답변"></textarea>

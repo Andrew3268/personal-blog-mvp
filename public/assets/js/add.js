@@ -28,6 +28,7 @@ function stripMarkdown(md) {
   return String(md || "")
     .replace(/^<!--\s*[\s\S]*?\s*-->\s*$/gm, "")
     .replace(/```[\s\S]*?```/g, " ")
+    .replace(/^\s*\[\[POST_LINK_BUTTON[^\]]*\]\]\s*$/gim, " ")
     .replace(/`([^`]+)`/g, "$1")
     .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
     .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
@@ -158,6 +159,7 @@ const TOC_TOKEN_RE = /^\[\[TOC(?::(h2|h2,h3))?\]\]$/i;
 
 const INLINE_IMAGE_TOKEN_RE = /^\[\[(POST_IMAGE_[12])\s+(.+?)\]\]$/i;
 const AFFILIATE_TOKEN_RE = /^\[\[(POST_AFFILIATE_(?:[1-5]))\s+(.+?)\]\]$/i;
+const LINK_BUTTON_TOKEN_RE = /^\[\[POST_LINK_BUTTON\s+(.+?)\]\]$/i;
 
 function parseTokenAttributes(raw = "") {
   const attrs = {};
@@ -285,6 +287,84 @@ function renderInlineImageFigure(data = {}, index = 1) {
   `;
 }
 
+
+
+function decodeLinkButtonAttribute(value = "") {
+  return String(value || "")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&");
+}
+
+function encodeLinkButtonAttribute(value = "") {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;");
+}
+
+function normalizeLinkButtonUrl(value = "") {
+  const url = String(value || "").trim();
+  if (/^https?:\/\/[^\s]+$/i.test(url)) return url;
+  if (/^\/(?!\/)[^\s]*$/.test(url)) return url;
+  return "";
+}
+
+function parseLinkButtonToken(line = "") {
+  const match = String(line || "").trim().match(LINK_BUTTON_TOKEN_RE);
+  if (!match) return null;
+  const attrs = parseTokenAttributes(match[1]);
+  const style = String(attrs.style || "default").trim().toLowerCase() === "external" ? "external" : "default";
+  const text = decodeLinkButtonAttribute(attrs.text || "").trim();
+  const url = normalizeLinkButtonUrl(decodeLinkButtonAttribute(attrs.url || ""));
+  if (!text || !url) return null;
+  return { style, text, url };
+}
+
+function renderLinkButtonPreview(data = {}) {
+  const style = data.style === "external" ? "external" : "default";
+  const url = normalizeLinkButtonUrl(data.url || "");
+  const text = String(data.text || "").trim();
+  if (!url || !text) return "";
+  const external = /^https?:\/\//i.test(url);
+  const targetAttrs = external ? ' target="_blank" rel="noopener noreferrer"' : "";
+  return `<div class="post-link-button-wrap"><a class="post-link-button post-link-button--${style}" href="${escapeHtml(url)}"${targetAttrs}>${escapeHtml(text)}</a></div>`;
+}
+
+function insertLinkButtonIntoContent() {
+  const textarea = $("content_md");
+  const status = $("linkButtonInsertStatus");
+  const style = $("linkButtonStyle")?.value === "external" ? "external" : "default";
+  const text = String($("linkButtonText")?.value || "").trim();
+  const url = normalizeLinkButtonUrl($("linkButtonUrl")?.value || "");
+
+  if (!textarea) return;
+  if (!text) {
+    if (status) status.textContent = "버튼 텍스트를 입력하세요.";
+    $("linkButtonText")?.focus();
+    return;
+  }
+  if (!url) {
+    if (status) status.textContent = "https:// 또는 /로 시작하는 올바른 URL을 입력하세요.";
+    $("linkButtonUrl")?.focus();
+    return;
+  }
+
+  const token = `[[POST_LINK_BUTTON style="${style}" text="${encodeLinkButtonAttribute(text)}" url="${encodeLinkButtonAttribute(url)}"]]`;
+  const start = Number.isInteger(textarea.selectionStart) ? textarea.selectionStart : textarea.value.length;
+  const end = Number.isInteger(textarea.selectionEnd) ? textarea.selectionEnd : start;
+  const before = textarea.value.slice(0, start);
+  const after = textarea.value.slice(end);
+  const prefix = before && !before.endsWith("\n") ? "\n\n" : (before.endsWith("\n") && !before.endsWith("\n\n") ? "\n" : "");
+  const suffix = after && !after.startsWith("\n") ? "\n\n" : (after.startsWith("\n") && !after.startsWith("\n\n") ? "\n" : "");
+  const insertion = `${prefix}${token}${suffix}`;
+
+  textarea.setRangeText(insertion, start, end, "end");
+  textarea.dispatchEvent(new Event("input", { bubbles: true }));
+  textarea.focus();
+  if (status) status.textContent = style === "external" ? "외부 페이지 이동 버튼을 삽입했습니다." : "기본 버튼을 삽입했습니다.";
+  if ($("linkButtonText")) $("linkButtonText").value = "";
+  if ($("linkButtonUrl")) $("linkButtonUrl").value = "";
+}
 
 function parseAffiliateToken(line = "") {
   const match = String(line || "").trim().match(AFFILIATE_TOKEN_RE);
@@ -1641,7 +1721,7 @@ function isMarkdownTableBodyRow(line = "") {
   if (/^\d+\.\s+/.test(value)) return false;
   if (parseTocModeFromLine(value)) return false;
   if (/^!\[[^\]]*\]\([^)]+\)$/.test(value)) return false;
-  if (parseInlineImageToken(value) || parseAffiliateToken(value)) return false;
+  if (parseInlineImageToken(value) || parseAffiliateToken(value) || parseLinkButtonToken(value)) return false;
   return true;
 }
 
@@ -1764,6 +1844,14 @@ function markdownToHtml(md, options = {}) {
       closeLists();
       closeQuote();
       pushContentBlock(tocItems.length ? renderTocHtml(tocItems, tocMode) : renderPreviewTocPlaceholder(tocMode));
+      continue;
+    }
+
+    const linkButton = parseLinkButtonToken(line);
+    if (linkButton) {
+      closeLists();
+      closeQuote();
+      pushContentBlock(renderLinkButtonPreview(linkButton));
       continue;
     }
 
@@ -2074,6 +2162,7 @@ $("addAffiliateItemBtn")?.addEventListener("click", () => { addAffiliateItemCard
 document.querySelectorAll("[data-affiliate-remove]").forEach((button) => {
   button.addEventListener("click", () => { removeAffiliateItemCard(Number(button.dataset.affiliateRemove || "0")); handleRealtimeChange(); });
 });
+$("insertLinkButtonBtn")?.addEventListener("click", insertLinkButtonIntoContent);
 if ($("saveBtn")) $("saveBtn").addEventListener("click", save);
 bindTaxonomyEvents();
 $("enableToc")?.addEventListener("change", applyTocControls);
