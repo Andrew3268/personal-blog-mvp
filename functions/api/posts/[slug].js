@@ -1,6 +1,7 @@
 import { okJson, requireAdmin } from "../../_utils.js";
 import { normalizeTags, buildPostTagReplaceStatements, parseStoredTags } from "../../_post-tags.js";
 import { scheduleContentCacheInvalidation } from "../../_cache-invalidation.js";
+import { normalizePostLinkStyle, parsePostLinkStyle, setPostLinkStyleToken } from "../../../lib/posts/link-style.js";
 
 function normalizeText(value = "") {
   return String(value || "").replace(/\s+/g, " ").trim();
@@ -64,7 +65,14 @@ export async function onRequestGet({ env, params, request }) {
     return okJson({ message: "not_found" }, { status: 404 });
   }
 
-  return okJson({ item: row });
+  return okJson({
+    item: {
+      ...row,
+      content_link_style: parsePostLinkStyle(row.content_md || "")
+    }
+  }, {
+    headers: { "cache-control": "private, no-store" }
+  });
 }
 
 export async function onRequestPut(context) {
@@ -90,7 +98,13 @@ export async function onRequestPut(context) {
   const coverImageAlt = String(body.cover_image_alt || "").trim();
   const focusKeyword = String(body.focus_keyword || "").trim();
   const longtailKeywords = Array.isArray(body.longtail_keywords) ? body.longtail_keywords : [];
-  const contentMd = String(body.content_md || "").trim();
+  const requestedContentLinkStyle = normalizePostLinkStyle(
+    body.content_link_style || parsePostLinkStyle(body.content_md || "")
+  );
+  const contentMd = setPostLinkStyleToken(
+    String(body.content_md || "").trim(),
+    requestedContentLinkStyle
+  );
   const faqMd = String(body.faq_md || "").trim();
   const enableSidebarAd = body.enable_sidebar_ad === false ? 0 : 1;
   const enableInarticleAds = body.enable_inarticle_ads === false ? 0 : 1;
@@ -205,7 +219,7 @@ export async function onRequestPut(context) {
     tags: [...previousTags, ...tags]
   });
 
-  return okJson({ ok: true, slug, updated_at: updatedAt, modified_date_updated: updateModifiedAt });
+  return okJson({ ok: true, slug, updated_at: updatedAt, modified_date_updated: updateModifiedAt, content_link_style: requestedContentLinkStyle });
 }
 
 export async function onRequestDelete(context) {

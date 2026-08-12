@@ -1,11 +1,12 @@
 import { escapeHtml, jsonld, okHtml, edgeCache } from "../_utils.js";
 import { renderMarkdown, renderMarkdownBlocks, buildTocItemsFromBlocks, renderTocHtml, parseInlineImages, stripInlineImageTokens, parsePostLinkStyle } from "../../lib/posts/renderer.js";
+import { applyPostLinkStyleToHtml } from "../../lib/posts/link-style.js";
 import { buildImageAttrs, absolutizeImageUrl } from "../../lib/image-utils.js";
 import { canonicalCategoryName, categoryPath } from "../_category-utils.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
 const ADSENSE_CLIENT = "ca-pub-7298667883751711";
-const POST_CACHE_VERSION = "7";
+const POST_CACHE_VERSION = "8";
 
 function safeDecodePathParam(value = "") {
   try {
@@ -116,8 +117,11 @@ export async function onRequestGet(context) {
       const hasRenderableInarticleAd = shouldShowInarticleAds && Boolean(adConfig.client && (adConfig.inArticleSlot1 || adConfig.inArticleSlot2));
       const shouldLoadAdsense = hasRenderableSidebarAd || hasRenderableInarticleAd;
       const inArticleAds = shouldShowInarticleAds ? buildInArticleAds(adConfig, 2) : [];
-      const bodyHtml = buildArticleBodyHtml(row.content_md || "", inArticleAds, contentTextLength, env);
       const contentLinkStyle = parsePostLinkStyle(row.content_md || "");
+      const bodyHtml = applyPostLinkStyleToHtml(
+        buildArticleBodyHtml(row.content_md || "", inArticleAds, contentTextLength, env),
+        contentLinkStyle
+      );
       const faqSectionHtml = renderFaqSection(faqItems);
       const categoryName = canonicalCategoryName(row.category);
       const categoryPopularPostsHtml = renderPopularPosts(
@@ -350,7 +354,7 @@ export async function onRequestGet(context) {
           </header>
 
           <section class="card post-body" aria-label="본문">
-            <div class="post-content${contentLinkStyle === "external" ? " post-content--link-style-external" : ""}" itemprop="articleBody">
+            <div class="post-content" itemprop="articleBody">
               ${bodyHtml}
             </div>
             ${faqSectionHtml}

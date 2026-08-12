@@ -348,9 +348,20 @@ function getSelectedContentLinkStyle() {
   return $("contentLinkStyle")?.value === "external" ? "external" : "default";
 }
 
-function applyContentLinkStyleFromMarkdown(md = "") {
+function applyContentLinkStyleFromMarkdown(md = "", explicitStyle = "") {
   const select = $("contentLinkStyle");
-  if (select) select.value = parseContentLinkStyleFromMarkdown(md);
+  if (!select) return;
+  const normalizedExplicitStyle = explicitStyle === "external" ? "external" : (explicitStyle === "default" ? "default" : "");
+  select.value = normalizedExplicitStyle || parseContentLinkStyleFromMarkdown(md);
+}
+
+function applyContentLinkStyleToRenderedHtml(html = "", style = "default") {
+  if (style !== "external") return String(html || "");
+  return String(html || "").replace(/class="([^"]*\bpost-content-link\b[^"]*)"/gi, (match, classes) => {
+    const items = String(classes || "").split(/\s+/).filter(Boolean);
+    if (!items.includes("post-link-style--external")) items.push("post-link-style--external");
+    return `class="${items.join(" ")}"`;
+  });
 }
 
 function getQuotedHtmlAttribute(rawAttributes = "", name = "") {
@@ -2077,7 +2088,7 @@ function renderPreview() {
         ${tags.length ? `<div class="row">${tags.map((tag) => `<span class="tag-chip">#${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
       </header>
       ${coverImage ? `<img class="preview-cover" ${renderOptimizedImageAttrs(coverImage, { widths: [640, 960, 1200, 1600], sizes: "(max-width: 900px) 100vw, 960px", fallbackWidth: 960, fit: "cover", quality: 85 })} alt="${escapeHtml(coverImageAlt || `${title} 대표 이미지`)}" loading="lazy">` : ""}
-      <section class="preview-body${contentLinkStyle === "external" ? " preview-body--link-style-external" : ""}">${markdownToHtml(contentMd, { adPositions: previewAdPositions, showAds: showPreviewAds, inlineImages, affiliates: affiliateMeta })}</section>
+      <section class="preview-body">${applyContentLinkStyleToRenderedHtml(markdownToHtml(contentMd, { adPositions: previewAdPositions, showAds: showPreviewAds, inlineImages, affiliates: affiliateMeta }), contentLinkStyle)}</section>
       ${faqItems.length ? `
         <section class="preview-faq" aria-label="자주 묻는 질문">
           <h2>자주 묻는 질문</h2>
@@ -2153,7 +2164,7 @@ async function load() {
   if (statusEl) statusEl.textContent = "불러오는 중…";
   setUpdateModifiedDateControl({ checked: false, disabled: true });
 
-  const postPromise = fetch(`/api/posts/${encodeURIComponent(slug)}`)
+  const postPromise = fetch(`/api/posts/${encodeURIComponent(slug)}`, { cache: "no-store" })
     .then(async (res) => ({ res, json: await res.json().catch(() => ({})) }));
   const taxonomyPromise = Promise.all([requestCategoryApi('GET'), requestSubcategoryApi()]);
   const [postResult, taxonomyResult] = await Promise.allSettled([postPromise, taxonomyPromise]);
@@ -2192,7 +2203,7 @@ async function load() {
   applyInlineImageFormData(parseInlineImageMetaFromMarkdown(rawContentMd));
   applyAffiliateFormData(parseAffiliateMetaFromMarkdown(rawContentMd));
   applyLsiKeywordsFromMarkdown(rawContentMd);
-  applyContentLinkStyleFromMarkdown(rawContentMd);
+  applyContentLinkStyleFromMarkdown(rawContentMd, item.content_link_style || "");
   $("content_md").value = stripContentLinkStyleTokenLines(stripLsiKeywordsTokenLines(stripAffiliateTokenLines(stripInlineImageTokenLines(rawContentMd))));
   if ($("faq_md")) $("faq_md").value = item.faq_md || "";
 
@@ -2245,6 +2256,7 @@ async function save() {
     enable_inarticle_ads: Boolean($("enable_inarticle_ads")?.checked),
     tags: parseTags($("tags").value),
     content_md: buildContentWithMetaTokens($("content_md").value),
+    content_link_style: getSelectedContentLinkStyle(),
     faq_md: $("faq_md") ? $("faq_md").value : "",
     update_modified_at: updateModifiedDateOnSave
   };
