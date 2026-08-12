@@ -28,10 +28,11 @@ function stripMarkdown(md) {
   return String(md || "")
     .replace(/^<!--\s*[\s\S]*?\s*-->\s*$/gm, "")
     .replace(/```[\s\S]*?```/g, " ")
-    .replace(/^\s*\[\[POST_LINK_BUTTON[^\]]*\]\]\s*$/gim, " ")
     .replace(/`([^`]+)`/g, "$1")
     .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
     .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/<a\b[^>]*>([\s\S]*?)<\/a>/gi, "$1")
+    .replace(/<[^>]+>/g, " ")
     .replace(/^\s{0,3}#{1,6}\s+/gm, "")
     .replace(/^\s{0,3}>\s?/gm, "")
     .replace(/^\s*[-*+]\s+/gm, "")
@@ -159,7 +160,6 @@ const TOC_TOKEN_RE = /^\[\[TOC(?::(h2|h2,h3))?\]\]$/i;
 
 const INLINE_IMAGE_TOKEN_RE = /^\[\[(POST_IMAGE_[12])\s+(.+?)\]\]$/i;
 const AFFILIATE_TOKEN_RE = /^\[\[(POST_AFFILIATE_(?:[1-5]))\s+(.+?)\]\]$/i;
-const LINK_BUTTON_TOKEN_RE = /^\[\[POST_LINK_BUTTON\s+(.+?)\]\]$/i;
 
 function parseTokenAttributes(raw = "") {
   const attrs = {};
@@ -289,82 +289,161 @@ function renderInlineImageFigure(data = {}, index = 1) {
 
 
 
-function decodeLinkButtonAttribute(value = "") {
-  return String(value || "")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&amp;/g, "&");
+const MANAGED_CONTENT_LINK_STYLE_CLASS = "post-link-style--external";
+
+function getQuotedHtmlAttribute(rawAttributes = "", name = "") {
+  const safeName = String(name || "").replace(/[^a-z0-9_-]/gi, "");
+  if (!safeName) return "";
+  const pattern = new RegExp(`\\b${safeName}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`, "i");
+  const match = String(rawAttributes || "").match(pattern);
+  return match ? String(match[1] ?? match[2] ?? "") : "";
 }
 
-function encodeLinkButtonAttribute(value = "") {
-  return String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;");
-}
-
-function normalizeLinkButtonUrl(value = "") {
-  const url = String(value || "").trim();
-  if (/^https?:\/\/[^\s]+$/i.test(url)) return url;
-  if (/^\/(?!\/)[^\s]*$/.test(url)) return url;
+function normalizeContentAnchorHref(value = "") {
+  const href = String(value || "").trim();
+  if (/^https?:\/\/[^\s]+$/i.test(href)) return href;
+  if (/^\/(?!\/)[^\s]*$/.test(href)) return href;
+  if (/^#[A-Za-z0-9_\-:.]+$/.test(href)) return href;
+  if (/^(?:mailto:|tel:)[^\s]+$/i.test(href)) return href;
   return "";
 }
 
-function parseLinkButtonToken(line = "") {
-  const match = String(line || "").trim().match(LINK_BUTTON_TOKEN_RE);
-  if (!match) return null;
-  const attrs = parseTokenAttributes(match[1]);
-  const style = String(attrs.style || "default").trim().toLowerCase() === "external" ? "external" : "default";
-  const text = decodeLinkButtonAttribute(attrs.text || "").trim();
-  const url = normalizeLinkButtonUrl(decodeLinkButtonAttribute(attrs.url || ""));
-  if (!text || !url) return null;
-  return { style, text, url };
+function getContentAnchorClassNames(anchorHtml = "") {
+  const openTag = String(anchorHtml || "").match(/^<a\b([^>]*)>/i);
+  if (!openTag) return [];
+  return getQuotedHtmlAttribute(openTag[1], "class")
+    .split(/\s+/)
+    .map((item) => item.trim())
+    .filter((item) => /^[A-Za-z0-9_-]+$/.test(item));
 }
 
-function renderLinkButtonPreview(data = {}) {
-  const style = data.style === "external" ? "external" : "default";
-  const url = normalizeLinkButtonUrl(data.url || "");
-  const text = String(data.text || "").trim();
-  if (!url || !text) return "";
-  const external = /^https?:\/\//i.test(url);
-  const targetAttrs = external ? ' target="_blank" rel="noopener noreferrer"' : "";
-  return `<div class="post-link-button-wrap"><a class="post-link-button post-link-button--${style}" href="${escapeHtml(url)}"${targetAttrs}>${escapeHtml(text)}</a></div>`;
+function getContentAnchorStyle(anchorHtml = "") {
+  return getContentAnchorClassNames(anchorHtml).includes(MANAGED_CONTENT_LINK_STYLE_CLASS) ? "external" : "default";
 }
 
-function insertLinkButtonIntoContent() {
+function updateContentAnchorStyle(anchorHtml = "", style = "default") {
+  const source = String(anchorHtml || "");
+  const openTagMatch = source.match(/^<a\b([^>]*)>/i);
+  if (!openTagMatch) return source;
+
+  const existingClasses = getContentAnchorClassNames(source).filter((item) => item !== MANAGED_CONTENT_LINK_STYLE_CLASS);
+  if (style === "external") existingClasses.push(MANAGED_CONTENT_LINK_STYLE_CLASS);
+  const nextClassValue = Array.from(new Set(existingClasses)).join(" ");
+  const classAttrPattern = /\sclass\s*=\s*(?:"[^"]*"|'[^']*')/i;
+  let nextOpenTag = openTagMatch[0];
+
+  if (classAttrPattern.test(nextOpenTag)) {
+    nextOpenTag = nextClassValue
+      ? nextOpenTag.replace(classAttrPattern, ` class="${nextClassValue}"`)
+      : nextOpenTag.replace(classAttrPattern, "");
+  } else if (nextClassValue) {
+    nextOpenTag = nextOpenTag.replace(/^<a\b/i, `<a class="${nextClassValue}"`);
+  }
+
+  return nextOpenTag + source.slice(openTagMatch[0].length);
+}
+
+function findContentAnchorAtSelection(textarea) {
+  if (!textarea) return null;
+  const value = String(textarea.value || "");
+  const selectionStart = Number.isInteger(textarea.selectionStart) ? textarea.selectionStart : 0;
+  const selectionEnd = Number.isInteger(textarea.selectionEnd) ? textarea.selectionEnd : selectionStart;
+  const pattern = /<a\b[^>]*>[\s\S]*?<\/a>/gi;
+  let match;
+
+  while ((match = pattern.exec(value)) !== null) {
+    const start = match.index;
+    const end = start + match[0].length;
+    const caretInside = selectionStart === selectionEnd && selectionStart >= start && selectionStart <= end;
+    const selectionIntersects = selectionStart !== selectionEnd && selectionStart < end && selectionEnd > start;
+    if (caretInside || selectionIntersects) return { start, end, html: match[0] };
+  }
+  return null;
+}
+
+function getContentAnchorLabel(anchorHtml = "") {
+  const match = String(anchorHtml || "").match(/^<a\b[^>]*>([\s\S]*?)<\/a>$/i);
+  return match ? String(match[1] || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim() : "";
+}
+
+function syncContentLinkStyleControl() {
   const textarea = $("content_md");
-  const status = $("linkButtonInsertStatus");
-  const style = $("linkButtonStyle")?.value === "external" ? "external" : "default";
-  const text = String($("linkButtonText")?.value || "").trim();
-  const url = normalizeLinkButtonUrl($("linkButtonUrl")?.value || "");
+  const select = $("contentLinkStyle");
+  const button = $("applyContentLinkStyleBtn");
+  const status = $("contentLinkStyleStatus");
+  if (!textarea || !select || !button || !status) return;
 
-  if (!textarea) return;
-  if (!text) {
-    if (status) status.textContent = "버튼 텍스트를 입력하세요.";
-    $("linkButtonText")?.focus();
-    return;
-  }
-  if (!url) {
-    if (status) status.textContent = "https:// 또는 /로 시작하는 올바른 URL을 입력하세요.";
-    $("linkButtonUrl")?.focus();
+  const anchor = findContentAnchorAtSelection(textarea);
+  if (!anchor) {
+    button.disabled = true;
+    status.classList.remove("is-active");
+    status.textContent = "본문의 <a> 태그 안에 커서를 두거나 태그를 선택하세요.";
     return;
   }
 
-  const token = `[[POST_LINK_BUTTON style="${style}" text="${encodeLinkButtonAttribute(text)}" url="${encodeLinkButtonAttribute(url)}"]]`;
-  const start = Number.isInteger(textarea.selectionStart) ? textarea.selectionStart : textarea.value.length;
-  const end = Number.isInteger(textarea.selectionEnd) ? textarea.selectionEnd : start;
-  const before = textarea.value.slice(0, start);
-  const after = textarea.value.slice(end);
-  const prefix = before && !before.endsWith("\n") ? "\n\n" : (before.endsWith("\n") && !before.endsWith("\n\n") ? "\n" : "");
-  const suffix = after && !after.startsWith("\n") ? "\n\n" : (after.startsWith("\n") && !after.startsWith("\n\n") ? "\n" : "");
-  const insertion = `${prefix}${token}${suffix}`;
+  select.value = getContentAnchorStyle(anchor.html);
+  button.disabled = false;
+  const label = getContentAnchorLabel(anchor.html);
+  status.classList.add("is-active");
+  status.textContent = label ? `선택된 링크: ${label}` : "선택된 <a> 태그에 스타일을 적용할 수 있습니다.";
+}
 
-  textarea.setRangeText(insertion, start, end, "end");
+function applyContentLinkStyle() {
+  const textarea = $("content_md");
+  const select = $("contentLinkStyle");
+  const status = $("contentLinkStyleStatus");
+  if (!textarea || !select || !status) return;
+
+  const anchor = findContentAnchorAtSelection(textarea);
+  if (!anchor) {
+    syncContentLinkStyleControl();
+    textarea.focus();
+    return;
+  }
+
+  const style = select.value === "external" ? "external" : "default";
+  const updatedAnchor = updateContentAnchorStyle(anchor.html, style);
+  textarea.setRangeText(updatedAnchor, anchor.start, anchor.end, "select");
   textarea.dispatchEvent(new Event("input", { bubbles: true }));
   textarea.focus();
-  if (status) status.textContent = style === "external" ? "외부 페이지 이동 버튼을 삽입했습니다." : "기본 버튼을 삽입했습니다.";
-  if ($("linkButtonText")) $("linkButtonText").value = "";
-  if ($("linkButtonUrl")) $("linkButtonUrl").value = "";
+  textarea.setSelectionRange(anchor.start, anchor.start + updatedAnchor.length);
+  status.classList.add("is-active");
+  status.textContent = style === "external"
+    ? "외부 페이지 이동 버튼 스타일을 적용했습니다."
+    : "기본 버튼 스타일로 되돌렸습니다.";
 }
+
+function renderSafeContentAnchor(rawAnchor = "") {
+  const match = String(rawAnchor || "").match(/^<a\b([^>]*)>([\s\S]*?)<\/a>$/i);
+  if (!match) return "";
+  const rawAttributes = match[1] || "";
+  const href = normalizeContentAnchorHref(getQuotedHtmlAttribute(rawAttributes, "href"));
+  if (!href) return "";
+
+  const classNames = getContentAnchorClassNames(rawAnchor);
+  const classAttr = classNames.length ? ` class="${classNames.map(escapeHtml).join(" ")}"` : "";
+  const rawTarget = getQuotedHtmlAttribute(rawAttributes, "target");
+  const target = rawTarget === "_blank" || rawTarget === "_self" ? rawTarget : "";
+  const targetAttr = target ? ` target="${target}"` : "";
+  const relTokens = getQuotedHtmlAttribute(rawAttributes, "rel")
+    .split(/\s+/)
+    .filter((item) => ["noopener", "noreferrer", "nofollow", "sponsored", "ugc"].includes(item.toLowerCase()))
+    .map((item) => item.toLowerCase());
+  if (target === "_blank") {
+    relTokens.push("noopener", "noreferrer");
+  }
+  const rel = Array.from(new Set(relTokens));
+  const relAttr = rel.length ? ` rel="${rel.join(" ")}"` : "";
+  const title = getQuotedHtmlAttribute(rawAttributes, "title");
+  const titleAttr = title ? ` title="${escapeHtml(title)}"` : "";
+  const label = escapeHtml(String(match[2] || "").replace(/<[^>]+>/g, ""))
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/`(.+?)`/g, "<code>$1</code>");
+
+  return `<a href="${escapeHtml(href)}"${classAttr}${targetAttr}${relAttr}${titleAttr}>${label}</a>`;
+}
+
 
 function parseAffiliateToken(line = "") {
   const match = String(line || "").trim().match(AFFILIATE_TOKEN_RE);
@@ -1656,11 +1735,25 @@ function renderSeoChecklist(activeGroupKey) {
 }
 
 function inlineFormat(text) {
-  return escapeHtml(text)
+  const safeAnchors = [];
+  const protectedText = String(text || "").replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, (rawAnchor) => {
+    const rendered = renderSafeContentAnchor(rawAnchor);
+    if (!rendered) return rawAnchor;
+    const marker = `@@SAFE_CONTENT_ANCHOR_${safeAnchors.length}@@`;
+    safeAnchors.push({ marker, rendered });
+    return marker;
+  });
+
+  let html = escapeHtml(protectedText)
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
     .replace(/`(.+?)`/g, "<code>$1</code>")
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+  safeAnchors.forEach(({ marker, rendered }) => {
+    html = html.split(marker).join(rendered);
+  });
+  return html;
 }
 
 
@@ -1721,7 +1814,7 @@ function isMarkdownTableBodyRow(line = "") {
   if (/^\d+\.\s+/.test(value)) return false;
   if (parseTocModeFromLine(value)) return false;
   if (/^!\[[^\]]*\]\([^)]+\)$/.test(value)) return false;
-  if (parseInlineImageToken(value) || parseAffiliateToken(value) || parseLinkButtonToken(value)) return false;
+  if (parseInlineImageToken(value) || parseAffiliateToken(value)) return false;
   return true;
 }
 
@@ -1844,14 +1937,6 @@ function markdownToHtml(md, options = {}) {
       closeLists();
       closeQuote();
       pushContentBlock(tocItems.length ? renderTocHtml(tocItems, tocMode) : renderPreviewTocPlaceholder(tocMode));
-      continue;
-    }
-
-    const linkButton = parseLinkButtonToken(line);
-    if (linkButton) {
-      closeLists();
-      closeQuote();
-      pushContentBlock(renderLinkButtonPreview(linkButton));
       continue;
     }
 
@@ -2162,7 +2247,13 @@ $("addAffiliateItemBtn")?.addEventListener("click", () => { addAffiliateItemCard
 document.querySelectorAll("[data-affiliate-remove]").forEach((button) => {
   button.addEventListener("click", () => { removeAffiliateItemCard(Number(button.dataset.affiliateRemove || "0")); handleRealtimeChange(); });
 });
-$("insertLinkButtonBtn")?.addEventListener("click", insertLinkButtonIntoContent);
+const contentEditorForLinkStyle = $("content_md");
+if (contentEditorForLinkStyle) {
+  ["click", "keyup", "select", "input"].forEach((eventName) => {
+    contentEditorForLinkStyle.addEventListener(eventName, syncContentLinkStyleControl);
+  });
+}
+$("applyContentLinkStyleBtn")?.addEventListener("click", applyContentLinkStyle);
 if ($("saveBtn")) $("saveBtn").addEventListener("click", save);
 bindTaxonomyEvents();
 $("enableToc")?.addEventListener("change", applyTocControls);

@@ -735,10 +735,11 @@ function buildDescription(metaDescription, summary, markdown, title) {
 function stripMarkdown(md) {
   return String(md || "")
     .replace(/```[\s\S]*?```/g, " ")
-    .replace(/^\s*\[\[POST_LINK_BUTTON[^\]]*\]\]\s*$/gim, " ")
     .replace(/`[^`]*`/g, " ")
     .replace(/!\[[^\]]*\]\([^)]+\)/g, " ")
     .replace(/\[[^\]]*\]\([^)]+\)/g, " ")
+    .replace(/<a\b[^>]*>([\s\S]*?)<\/a>/gi, "$1")
+    .replace(/<[^>]+>/g, " ")
     .replace(/^#{1,6}\s+/gm, "")
     .replace(/[*_~>-]/g, " ")
     .replace(/\n+/g, " ")

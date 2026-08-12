@@ -175,32 +175,22 @@
               <textarea class="input editor-textarea" id="content_md" rows="20" placeholder="본문을 입력하세요"></textarea>
             </label>
 
-            <div class="card editor-option-card editor-link-button-card">
-              <div class="editor-link-button-card__head">
-                <div class="h2">링크 버튼 추가</div>
-                <div class="small">본문 커서 위치에 선택한 스타일의 링크 버튼을 삽입합니다.</div>
+            <div class="card editor-option-card editor-link-style-card">
+              <div class="editor-link-style-card__head">
+                <div class="h2">본문 링크 스타일</div>
+                <div class="small">본문의 &lt;a&gt; 태그 안에 커서를 두거나 태그를 선택한 뒤 스타일을 적용하세요.</div>
               </div>
-              <div class="editor-link-button-grid">
-                <label>
+              <div class="editor-link-style-controls">
+                <label class="editor-link-style-select">
                   <div class="small">버튼 스타일</div>
-                  <select class="input" id="linkButtonStyle">
+                  <select class="input" id="contentLinkStyle">
                     <option value="default" selected>기본 버튼</option>
                     <option value="external">외부 페이지 이동 버튼</option>
                   </select>
                 </label>
-                <label>
-                  <div class="small">버튼 텍스트</div>
-                  <input class="input" id="linkButtonText" placeholder="예: 자세히 보기" />
-                </label>
-                <label class="editor-link-button-grid__url">
-                  <div class="small">이동 URL</div>
-                  <input class="input" id="linkButtonUrl" placeholder="https://example.com 또는 /페이지/" />
-                </label>
+                <button class="btn btn--brand editor-link-style-apply" id="applyContentLinkStyleBtn" type="button" disabled>선택한 a 태그에 적용</button>
               </div>
-              <div class="editor-link-button-actions">
-                <button class="btn btn--brand" id="insertLinkButtonBtn" type="button">본문에 버튼 삽입</button>
-                <span class="small" id="linkButtonInsertStatus" role="status" aria-live="polite"></span>
-              </div>
+              <div class="small editor-link-style-status" id="contentLinkStyleStatus" role="status" aria-live="polite">본문의 &lt;a&gt; 태그를 선택하세요.</div>
             </div>
 
             <label>
