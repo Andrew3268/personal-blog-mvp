@@ -66,9 +66,10 @@
         </div>
       </div>
       <div class="dashboard-stats" aria-label="글 운영 현황">
-        <div class="dashboard-stat">
+        <div class="dashboard-stat dashboard-stat--with-action">
           <div class="dashboard-stat__label">작성된 글</div>
           <strong class="dashboard-stat__value" id="dashboardTotalCount">-</strong>
+          <a class="dashboard-stat__more" href="/admin/posts.html">작성된 글 전체 보기</a>
         </div>
         <div class="dashboard-stat">
           <div class="dashboard-stat__label">발행 글</div>
@@ -82,14 +83,24 @@
     </section>
 
     <section class="dashboard-grid" style="margin-top:16px">
-      <article class="card dashboard-panel">
-        <div class="dashboard-panel__head">
-          <h2 class="h2">인기글 TOP 10</h2>
-          <span class="small">제목 · 조회수 · 작성일 · 수정일</span>
+      <article class="card dashboard-panel dashboard-post-panel">
+        <div class="dashboard-panel__head dashboard-panel__head--tabs">
+          <div class="dashboard-tabs" role="tablist" aria-label="글 목록 보기">
+            <button class="dashboard-tab is-active" id="dashboardRecentTab" type="button" role="tab" aria-selected="true" aria-controls="dashboardRecentPanel" data-dashboard-tab="recent">최근 작성글</button>
+            <button class="dashboard-tab" id="dashboardPopularTab" type="button" role="tab" aria-selected="false" aria-controls="dashboardPopularPanel" data-dashboard-tab="popular">인기글</button>
+          </div>
+          <span class="small">각 10개</span>
         </div>
-        <ol class="dashboard-popular" id="dashboardPopularList">
-          <li class="small">불러오는 중…</li>
-        </ol>
+        <div id="dashboardRecentPanel" role="tabpanel" aria-labelledby="dashboardRecentTab" data-dashboard-tab-panel="recent">
+          <ol class="dashboard-popular" id="dashboardRecentCreatedList">
+            <li class="small">불러오는 중…</li>
+          </ol>
+        </div>
+        <div id="dashboardPopularPanel" role="tabpanel" aria-labelledby="dashboardPopularTab" data-dashboard-tab-panel="popular" hidden>
+          <ol class="dashboard-popular" id="dashboardPopularList">
+            <li class="small">불러오는 중…</li>
+          </ol>
+        </div>
       </article>
 
       <aside class="dashboard-side">

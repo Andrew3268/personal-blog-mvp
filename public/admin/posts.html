@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>작성된 글 전체 보기 | Wacky Wiki</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/favicon-192x192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png" />
+  <meta name="theme-color" content="#111111" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+</head>
+<body class="admin-posts-page">
+  <header class="topbar topbar--editorial">
+    <div class="topbar__inner topbar__inner--editorial">
+      <button class="topbar-hamburger" type="button" aria-expanded="false" aria-controls="mobileSiteMenu" aria-label="메뉴 열기">
+        <span></span><span></span><span></span>
+      </button>
+
+      <div class="topbar-left-slot"><div class="topbar-admin-status" data-admin-status hidden aria-live="polite">관리자 로그인 중</div></div>
+
+      <a class="brand brand--center" href="/" aria-label="Wacky Wiki 홈">
+        <span class="brand__text">Wacky Wiki</span>
+      </a>
+
+      <nav class="nav nav--utility nav--right" aria-label="오른쪽 메뉴">
+        <a href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
+      </nav>
+    </div>
+  </header>
+
+  <aside id="mobileSiteMenu" class="mobile-site-menu" hidden aria-hidden="true">
+    <div class="mobile-site-menu__panel">
+      <div class="mobile-site-menu__close-wrap">
+        <button class="mobile-site-menu__close-toggle topbar-hamburger is-open" type="button" aria-label="메뉴 닫기" data-mobile-menu-close>
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+      <nav class="mobile-site-menu__nav" aria-label="모바일 주요 메뉴"></nav>
+      <div class="mobile-site-menu__section mobile-site-menu__section--categories">
+        <div id="mobileSiteCategoryBar" class="topbar-categories__list topbar-categories__list--mobile"></div>
+      </div>
+      <div class="mobile-site-menu__section mobile-site-menu__section--admin" data-mobile-admin-section hidden>
+        <a class="mobile-site-menu__text-link" href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="container admin-post-manager">
+    <div class="admin-post-manager__head">
+      <div>
+        <a class="admin-post-manager__back" href="/admin/dashboard.html">대시보드로 돌아가기</a>
+        <h1>작성된 글 전체 보기</h1>
+        <p>최근 작성된 글부터 확인하고 바로 수정하거나 삭제할 수 있습니다.</p>
+      </div>
+      <a class="btn btn--brand" href="/add.html">새 글 작성</a>
+    </div>
+
+    <section class="admin-post-search" aria-labelledby="adminPostSearchTitle">
+      <div class="admin-post-search__head">
+        <div>
+          <h2 id="adminPostSearchTitle">글 검색</h2>
+          <p>제목을 입력하면 목록에서 실시간으로 검색됩니다.</p>
+        </div>
+        <span class="admin-post-search__count" id="adminPostResultCount">불러오는 중…</span>
+      </div>
+      <label class="admin-post-search__field" for="adminPostSearchInput">
+        <span class="sr-only">글 제목 검색</span>
+        <input class="input" id="adminPostSearchInput" type="search" placeholder="검색할 글 제목을 입력하세요" autocomplete="off" disabled />
+        <button class="admin-post-search__clear" id="adminPostSearchClear" type="button" hidden>지우기</button>
+      </label>
+    </section>
+
+    <section class="admin-post-list-section" aria-label="작성된 글 목록">
+      <ul class="admin-post-list" id="adminPostList">
+        <li class="admin-post-list__loading">글 목록을 불러오는 중입니다.</li>
+      </ul>
+      <div class="admin-post-list__empty" id="adminPostEmpty" hidden>검색 결과가 없습니다.</div>
+    </section>
+  </main>
+
+  <footer class="footer container">
+    <div class="footer__inner">
+      <div class="footer__copy"><div>© 2026 Wacky Wiki</div></div>
+      <nav class="footer__links" aria-label="하단 메뉴">
+        <a class="footer__link" href="/about/">Wacky-Wiki 소개</a>
+        <a class="footer__link" href="/privacy-policy/">개인정보 처리방침</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="/assets/js/admin-ui.js" defer></script>
+  <script src="/assets/js/nav.js" defer></script>
+  <script src="/assets/js/admin-posts.js" defer></script>
+</body>
+</html>

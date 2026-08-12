@@ -28,10 +28,19 @@ export async function onRequestGet({ env, request }) {
   const searchTitle = String(url.searchParams.get("search_title") || "1").trim() !== "0";
   const searchContent = String(url.searchParams.get("search_content") || "0").trim() === "1";
   const page = clampInt(url.searchParams.get("page"), 1, 1, 9999);
-  const perPage = clampInt(url.searchParams.get("per_page"), 8, 1, 24);
-  const offset = (page - 1) * perPage;
 
   const admin = await getAdminSession(env, request);
+  const perPage = clampInt(url.searchParams.get("per_page"), 8, 1, admin ? 100 : 24);
+  const offset = (page - 1) * perPage;
+  const requestedSort = String(url.searchParams.get("sort") || "updated").trim().toLowerCase();
+  const sort = admin && requestedSort === "created"
+    ? "created"
+    : (admin && requestedSort === "popular" ? "popular" : "updated");
+  const orderBySql = sort === "created"
+    ? "COALESCE(first_published_at, published_at) DESC, updated_at DESC"
+    : (sort === "popular"
+      ? "view_count DESC, COALESCE(first_published_at, published_at) DESC, updated_at DESC"
+      : "updated_at DESC, first_published_at DESC");
   const allowedStatuses = new Set(["published", "draft", "all"]);
   const requestedStatus = allowedStatuses.has(status) ? status : "published";
   const safeStatus = admin ? requestedStatus : "published";
@@ -104,12 +113,12 @@ export async function onRequestGet({ env, request }) {
         tags_json,
         status,
         view_count,
-        CASE WHEN status = 'published' THEN first_published_at ELSE published_at END AS published_at,
+        CASE WHEN status = 'published' THEN COALESCE(first_published_at, published_at) ELSE published_at END AS published_at,
         metadata_updated_at,
         updated_at
       FROM posts
       ${whereSql}
-      ORDER BY updated_at DESC, first_published_at DESC
+      ORDER BY ${orderBySql}
       LIMIT ? OFFSET ?
     `).bind(...baseBind, perPage, offset),
     env.BLOG_DB.prepare(`SELECT COUNT(*) AS total FROM posts ${whereSql}`).bind(...binds),
@@ -132,7 +141,7 @@ export async function onRequestGet({ env, request }) {
         title,
         view_count,
         updated_at,
-        CASE WHEN status = 'published' THEN first_published_at ELSE published_at END AS published_at
+        CASE WHEN status = 'published' THEN COALESCE(first_published_at, published_at) ELSE published_at END AS published_at
       FROM posts
       ${whereSql}
       ORDER BY view_count DESC, updated_at DESC, first_published_at DESC
@@ -204,7 +213,8 @@ export async function onRequestGet({ env, request }) {
       status: safeStatus,
       category,
       tag,
-      q: query
+      q: query,
+      sort
     },
     pagination: {
       page,
