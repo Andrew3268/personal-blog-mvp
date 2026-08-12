@@ -1,11 +1,11 @@
 import { escapeHtml, jsonld, okHtml, edgeCache } from "../_utils.js";
-import { renderMarkdown, renderMarkdownBlocks, buildTocItemsFromBlocks, renderTocHtml, parseInlineImages, stripInlineImageTokens } from "../../lib/posts/renderer.js";
+import { renderMarkdown, renderMarkdownBlocks, buildTocItemsFromBlocks, renderTocHtml, parseInlineImages, stripInlineImageTokens, parsePostLinkStyle } from "../../lib/posts/renderer.js";
 import { buildImageAttrs, absolutizeImageUrl } from "../../lib/image-utils.js";
 import { canonicalCategoryName, categoryPath } from "../_category-utils.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
 const ADSENSE_CLIENT = "ca-pub-7298667883751711";
-const POST_CACHE_VERSION = "6";
+const POST_CACHE_VERSION = "7";
 
 function safeDecodePathParam(value = "") {
   try {
@@ -117,6 +117,7 @@ export async function onRequestGet(context) {
       const shouldLoadAdsense = hasRenderableSidebarAd || hasRenderableInarticleAd;
       const inArticleAds = shouldShowInarticleAds ? buildInArticleAds(adConfig, 2) : [];
       const bodyHtml = buildArticleBodyHtml(row.content_md || "", inArticleAds, contentTextLength, env);
+      const contentLinkStyle = parsePostLinkStyle(row.content_md || "");
       const faqSectionHtml = renderFaqSection(faqItems);
       const categoryName = canonicalCategoryName(row.category);
       const categoryPopularPostsHtml = renderPopularPosts(
@@ -349,7 +350,7 @@ export async function onRequestGet(context) {
           </header>
 
           <section class="card post-body" aria-label="본문">
-            <div class="post-content" itemprop="articleBody">
+            <div class="post-content${contentLinkStyle === "external" ? " post-content--link-style-external" : ""}" itemprop="articleBody">
               ${bodyHtml}
             </div>
             ${faqSectionHtml}
@@ -734,6 +735,7 @@ function buildDescription(metaDescription, summary, markdown, title) {
 
 function stripMarkdown(md) {
   return String(md || "")
+    .replace(/^\s*\[\[POST_LINK_STYLE\s+value="(?:default|external)"\]\]\s*$/gim, " ")
     .replace(/```[\s\S]*?```/g, " ")
     .replace(/`[^`]*`/g, " ")
     .replace(/!\[[^\]]*\]\([^)]+\)/g, " ")

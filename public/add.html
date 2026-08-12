@@ -151,19 +151,16 @@
             <div class="card editor-option-card editor-link-style-card">
               <div class="editor-link-style-card__head">
                 <div class="h2">본문 링크 스타일</div>
-                <div class="small">본문의 &lt;a&gt; 태그 안에 커서를 두거나 태그를 선택한 뒤 스타일을 적용하세요.</div>
+                <div class="small">선택한 스타일은 이 글의 본문에 포함된 모든 일반 링크에 동일하게 적용됩니다.</div>
               </div>
-              <div class="editor-link-style-controls">
-                <label class="editor-link-style-select">
-                  <div class="small">버튼 스타일</div>
-                  <select class="input" id="contentLinkStyle">
-                    <option value="default" selected>기본 버튼</option>
-                    <option value="external">외부 페이지 이동 버튼</option>
-                  </select>
-                </label>
-                <button class="btn btn--brand editor-link-style-apply" id="applyContentLinkStyleBtn" type="button" disabled>선택한 a 태그에 적용</button>
-              </div>
-              <div class="small editor-link-style-status" id="contentLinkStyleStatus" role="status" aria-live="polite">본문의 &lt;a&gt; 태그를 선택하세요.</div>
+              <label class="editor-link-style-select">
+                <div class="small">버튼 스타일</div>
+                <select class="input" id="contentLinkStyle">
+                  <option value="default" selected>기본 버튼</option>
+                  <option value="external">외부 페이지 이동 버튼</option>
+                </select>
+              </label>
+              <div class="small editor-link-style-note">기본 버튼은 기존 링크 스타일을 유지하고, 외부 페이지 이동 버튼은 더 큰 배경과 글자로 강조됩니다.</div>
             </div>
 
             <label>

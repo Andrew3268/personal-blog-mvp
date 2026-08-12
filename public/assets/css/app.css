@@ -49,15 +49,10 @@ h1,h2,h3{word-break:keep-all;overflow-wrap:break-word}
 .summary-markdown-textarea{min-height:150px;resize:vertical}
 .editor-link-style-card{display:grid;gap:14px}
 .editor-link-style-card__head{display:grid;gap:6px}
-.editor-link-style-controls{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
-.editor-link-style-select{width:min(100%,280px)}
-.editor-link-style-apply{min-height:44px}
-.editor-link-style-status{min-height:1.5em;color:var(--muted)}
-.editor-link-style-status.is-active{color:#111}
+.editor-link-style-select{width:min(100%,320px)}
+.editor-link-style-note{max-width:720px;line-height:1.6}
 @media (max-width:767px){
-  .editor-link-style-controls{display:grid;grid-template-columns:1fr}
   .editor-link-style-select{width:100%}
-  .editor-link-style-apply{width:100%;justify-content:center}
 }
 .post-list-grid{display:grid;gap:16px}
 .post-list-grid--rows{grid-template-columns:1fr}
@@ -926,8 +921,8 @@ body.has-preview-open{overflow:hidden}
   font-weight:600;
 }
 
-.post-body .post-content a.post-link-style--external,
-.preview-body a.post-link-style--external {
+.post-body .post-content.post-content--link-style-external a.post-content-link,
+.preview-body.preview-body--link-style-external a.post-content-link {
   display:flex;
   align-items:center;
   justify-content:center;
@@ -949,15 +944,15 @@ body.has-preview-open{overflow:hidden}
   box-shadow:0 10px 24px rgba(0,0,0,.14);
   transition:transform .16s ease,background-color .16s ease,border-color .16s ease;
 }
-.post-body .post-content a.post-link-style--external::after,
-.preview-body a.post-link-style--external::after {
+.post-body .post-content.post-content--link-style-external a.post-content-link::after,
+.preview-body.preview-body--link-style-external a.post-content-link::after {
   content:"↗";
   flex:0 0 auto;
   font-size:1.05em;
   line-height:1;
 }
-.post-body .post-content a.post-link-style--external:hover,
-.preview-body a.post-link-style--external:hover {
+.post-body .post-content.post-content--link-style-external a.post-content-link:hover,
+.preview-body.preview-body--link-style-external a.post-content-link:hover {
   background:#2a2a2a;
   border-color:#2a2a2a;
   color:#fff;
@@ -965,8 +960,8 @@ body.has-preview-open{overflow:hidden}
   transform:translateY(-1px);
 }
 @media (max-width:767px){
-  .post-body .post-content a.post-link-style--external,
-  .preview-body a.post-link-style--external{width:100%;min-height:54px;padding:15px 18px;font-size:17px}
+  .post-body .post-content.post-content--link-style-external a.post-content-link,
+  .preview-body.preview-body--link-style-external a.post-content-link{width:100%;min-height:54px;padding:15px 18px;font-size:17px}
 }
 
 .post-page-body .post-body .post-toc a {
