@@ -70,10 +70,22 @@ export async function onRequestGet({ env }) {
 }
 
 function buildDescription(item) {
-  return String(item.summary || item.meta_description || "")
+  return stripSummaryMarkdown(item.summary || item.meta_description || "").slice(0, 300);
+}
+
+function stripSummaryMarkdown(value = "") {
+  return String(value || "")
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .replace(/^\s{0,3}>\s?/gm, "")
+    .replace(/^\s*[-*+]\s+/gm, "")
+    .replace(/^\s*\d+\.\s+/gm, "")
+    .replace(/[*_~>#|]/g, " ")
     .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 300);
+    .trim();
 }
 
 function buildCategories(item) {

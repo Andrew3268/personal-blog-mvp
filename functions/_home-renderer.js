@@ -17,6 +17,21 @@ function normalizeText(value = "") {
   return String(value || "").replace(/\s+/g, " ").trim();
 }
 
+function stripSummaryMarkdown(value = "") {
+  return String(value || "")
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .replace(/^\s{0,3}>\s?/gm, "")
+    .replace(/^\s*[-*+]\s+/gm, "")
+    .replace(/^\s*\d+\.\s+/gm, "")
+    .replace(/[*_~>#|]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function normalizeTagKey(value = "") {
   return normalizeText(value).replace(/^#+/, "").toLowerCase();
 }
@@ -408,7 +423,7 @@ function renderEditorialHero(item) {
     return `<section class="home-editorial-hero home-editorial-hero--empty" aria-label="최신 글"><p class="home-editorial-empty">아직 발행된 글이 없습니다.</p></section>`;
   }
   const title = normalizeText(item.title || "제목 없음");
-  const summary = normalizeText(item.summary || item.meta_description || "새롭게 발행된 글을 확인해 보세요.");
+  const summary = normalizeText(stripSummaryMarkdown(item.summary || item.meta_description || "새롭게 발행된 글을 확인해 보세요."));
   const category = canonicalCategoryName(item.category || "");
   const date = formatDate(item.first_published_at || item.published_at || item.updated_at);
   const href = postPath(item.slug);

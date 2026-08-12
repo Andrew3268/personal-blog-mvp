@@ -761,8 +761,9 @@ function updateCount(inputId, outputId) {
   const inputEl = $(inputId);
   const outputEl = $(outputId);
   if (!inputEl || !outputEl) return;
-  const includedValue = countText(inputEl.value);
-  const excludedValue = countTextWithoutSpaces(inputEl.value);
+  const countSource = inputId === "summary" ? stripMarkdown(inputEl.value) : inputEl.value;
+  const includedValue = countText(countSource);
+  const excludedValue = countTextWithoutSpaces(countSource);
   outputEl.textContent = `공백 포함 ${includedValue}자 / 제외 ${excludedValue}자`;
 
   if (outputId === "titleCount") setCountState(outputEl, excludedValue, 20, 60);
@@ -1154,9 +1155,10 @@ function evaluateSeo() {
   const coverImageAlt = $("cover_image_alt")?.value.trim() || "";
 
   const plainContent = stripMarkdown(contentMd);
+  const plainSummary = stripMarkdown(summary);
   const titleLen = countText(title);
   const metaLen = countText(metaDescription);
-  const summaryLen = countText(summary);
+  const summaryLen = countText(plainSummary);
   const contentLen = countText(plainContent);
   const bodyH1List = getHeadings(contentMd, 1);
   const h2List = getHeadings(contentMd, 2);
@@ -1168,7 +1170,7 @@ function evaluateSeo() {
   const firstParagraph = getFirstParagraph(contentMd);
   const keywordInTitle = focusKeyword ? containsKeyword(title, focusKeyword) : false;
   const keywordInMeta = focusKeyword ? containsKeyword(metaDescription, focusKeyword) : false;
-  const keywordInSummary = focusKeyword ? containsKeyword(summary, focusKeyword) : false;
+  const keywordInSummary = focusKeyword ? containsKeyword(plainSummary, focusKeyword) : false;
   const keywordInSlug = focusKeyword ? containsKeyword(slug, slugify(focusKeyword)) : false;
   const keywordInFirstParagraph = focusKeyword ? containsKeyword(firstParagraph, focusKeyword) : false;
   const h2KeywordCount = focusKeyword ? h2List.filter((h) => containsKeyword(h, focusKeyword)).length : 0;
@@ -1387,7 +1389,6 @@ function evaluateSeo() {
 
   return checks;
 }
-
 function getScoreSummary(checks) {
   const weights = { good: 10, warn: 6, bad: 0 };
   const total = checks.reduce((sum, item) => sum + (weights[item.status] || 0), 0);
@@ -1932,6 +1933,7 @@ function renderPreview() {
   const title = $("title").value.trim() || "제목을 입력해 주세요";
   const category = $("category").value.trim();
   const summary = $("summary").value.trim();
+  const plainSummary = stripMarkdown(summary);
   const metaDescription = $("meta_description").value.trim();
   const coverImage = sanitizeImageUrlValue($("cover_image").value);
   const coverImageAlt = $("cover_image_alt")?.value.trim() || "";
@@ -1953,7 +1955,7 @@ function renderPreview() {
         <div class="small preview-snippet__label">SEO 스니펫 미리보기</div>
         <div class="preview-snippet__title">${escapeHtml(title)}</div>
         <div class="preview-snippet__url">${escapeHtml(snippetUrl)}</div>
-        <div class="preview-snippet__desc">${escapeHtml(metaDescription || summary || '메타디스크립션을 입력하면 검색 결과 설명이 여기에 표시됩니다.')}</div>
+        <div class="preview-snippet__desc">${escapeHtml(metaDescription || plainSummary || '메타디스크립션을 입력하면 검색 결과 설명이 여기에 표시됩니다.')}</div>
       </section>
 
       <div class="preview-post-card">
@@ -1963,7 +1965,7 @@ function renderPreview() {
           <span class="small">${new Date().toISOString().slice(0, 10)}</span>
         </div>
         <h1 class="preview-title">${escapeHtml(title)}</h1>
-        ${summary ? `<p class="preview-summary">${escapeHtml(summary)}</p>` : ""}
+        ${summary ? `<div class="preview-summary">${markdownToHtml(summary)}</div>` : ""}
         ${tags.length ? `<div class="row">${tags.map((tag) => `<span class="tag-chip">#${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
       </header>
       ${coverImage ? `<img class="preview-cover" ${renderOptimizedImageAttrs(coverImage, { widths: [640, 960, 1200, 1600], sizes: "(max-width: 900px) 100vw, 960px", fallbackWidth: 960, fit: "cover", quality: 85 })} alt="${escapeHtml(coverImageAlt || `${title} 대표 이미지`)}" loading="lazy">` : ""}

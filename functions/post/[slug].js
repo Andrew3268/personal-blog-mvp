@@ -335,7 +335,7 @@ export async function onRequestGet(context) {
           <header class="card post-hero">
             <h1 class="h1 post-title" itemprop="headline">${escapeHtml(titleText)}</h1>
 
-            ${row.summary ? `<p class="p post-summary" itemprop="description">${escapeHtml(String(row.summary))}</p>` : ""}
+            ${row.summary ? `<div class="post-summary" itemprop="description">${renderMarkdown(String(row.summary), { origin: SITE_ORIGIN })}</div>` : ""}
 
             ${authorCardHtml}
 
@@ -723,7 +723,7 @@ function buildDescription(metaDescription, summary, markdown, title) {
   const cleanMetaDescription = String(metaDescription || "").trim();
   if (cleanMetaDescription) return truncateText(cleanMetaDescription, 155);
 
-  const cleanSummary = String(summary || "").trim();
+  const cleanSummary = stripMarkdown(summary || "");
   if (cleanSummary) return truncateText(cleanSummary, 155);
 
   const plain = stripMarkdown(markdown || "");
