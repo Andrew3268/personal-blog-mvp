@@ -53,6 +53,32 @@ function normalizeCategoryName(value) {
 let categoryItems = [];
 let subcategoryItems = [];
 
+function shouldUpdateModifiedDateOnSave() {
+  return Boolean($("updateModifiedDateToggle")?.checked);
+}
+
+function setUpdateModifiedDateControl({ checked = false, disabled = false } = {}) {
+  const toggle = $("updateModifiedDateToggle");
+  const help = $("updatedAtHelp");
+  if (toggle) {
+    toggle.checked = Boolean(checked);
+    toggle.disabled = Boolean(disabled);
+  }
+  if (help) {
+    help.textContent = checked
+      ? "다음 저장 시 수정일을 현재 시각으로 갱신합니다."
+      : "일반 저장 시 기존 수정일이 유지됩니다.";
+  }
+}
+
+function syncUpdateModifiedDateHelp() {
+  const help = $("updatedAtHelp");
+  if (!help) return;
+  help.textContent = shouldUpdateModifiedDateOnSave()
+    ? "다음 저장 시 수정일을 현재 시각으로 갱신합니다."
+    : "일반 저장 시 기존 수정일이 유지됩니다.";
+}
+
 function getCurrentCategoryValue() {
   return normalizeCategoryName($("category")?.value || "");
 }
