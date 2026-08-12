@@ -52,24 +52,31 @@ function normalizeCategoryName(value) {
 
 let categoryItems = [];
 let editingCategoryName = "";
-let updateModifiedDateOnSave = false;
 
-function setUpdateModifiedDateOnSave(enabled) {
-  updateModifiedDateOnSave = Boolean(enabled);
-  const button = $("updateModifiedDateBtn");
+function shouldUpdateModifiedDateOnSave() {
+  return Boolean($("updateModifiedDateToggle")?.checked);
+}
+
+function setUpdateModifiedDateControl({ checked = false, disabled = false } = {}) {
+  const toggle = $("updateModifiedDateToggle");
   const help = $("updatedAtHelp");
-  if (button) {
-    button.setAttribute("aria-pressed", updateModifiedDateOnSave ? "true" : "false");
-    button.classList.toggle("is-active", updateModifiedDateOnSave);
-    button.textContent = updateModifiedDateOnSave
-      ? "수정 날짜 업데이트 예정"
-      : "수정 날짜 업데이트";
+  if (toggle) {
+    toggle.checked = Boolean(checked);
+    toggle.disabled = Boolean(disabled);
   }
   if (help) {
-    help.textContent = updateModifiedDateOnSave
+    help.textContent = checked
       ? "다음 저장 시 수정일을 현재 시각으로 갱신합니다."
       : "일반 저장 시 기존 수정일이 유지됩니다.";
   }
+}
+
+function syncUpdateModifiedDateHelp() {
+  const help = $("updatedAtHelp");
+  if (!help) return;
+  help.textContent = shouldUpdateModifiedDateOnSave()
+    ? "다음 저장 시 수정일을 현재 시각으로 갱신합니다."
+    : "일반 저장 시 기존 수정일이 유지됩니다.";
 }
 
 function getCurrentCategoryValue() {
@@ -2141,6 +2148,7 @@ async function load() {
   }
 
   if (statusEl) statusEl.textContent = "불러오는 중…";
+  setUpdateModifiedDateControl({ checked: false, disabled: true });
 
   const postPromise = fetch(`/api/posts/${encodeURIComponent(slug)}`)
     .then(async (res) => ({ res, json: await res.json().catch(() => ({})) }));
@@ -2162,7 +2170,7 @@ async function load() {
   $("slug").value = item.slug || slug;
   $("published_at").value = item.published_at || "";
   $("updated_at").value = item.updated_at || "";
-  setUpdateModifiedDateOnSave(false);
+  setUpdateModifiedDateControl({ checked: false, disabled: false });
   $("title").value = item.title || "";
   const loadedCategory = item.category || "";
   $("meta_description").value = item.meta_description || "";
@@ -2207,6 +2215,7 @@ async function load() {
 
 async function save() {
   const statusEl = $("saveStatus");
+  const updateModifiedDateOnSave = shouldUpdateModifiedDateOnSave();
   statusEl.textContent = updateModifiedDateOnSave ? "저장 및 수정 날짜 업데이트 중…" : "저장 중…";
 
   const slug = $("slug").value.trim();
@@ -2285,11 +2294,7 @@ $("addAffiliateItemBtn")?.addEventListener("click", () => { addAffiliateItemCard
 document.querySelectorAll("[data-affiliate-remove]").forEach((button) => {
   button.addEventListener("click", () => { removeAffiliateItemCard(Number(button.dataset.affiliateRemove || "0")); handleRealtimeChange(); });
 });
-if ($("updateModifiedDateBtn")) {
-  $("updateModifiedDateBtn").addEventListener("click", () => {
-    setUpdateModifiedDateOnSave(!updateModifiedDateOnSave);
-  });
-}
+$("updateModifiedDateToggle")?.addEventListener("change", syncUpdateModifiedDateHelp);
 if ($("saveBtn")) $("saveBtn").addEventListener("click", save);
 bindCategoryManagerEvents();
 $("enableToc")?.addEventListener("change", applyTocControls);

@@ -112,13 +112,21 @@
               <div class="small">발행일</div>
               <input class="input" id="published_at" readonly />
             </label>
-            <div class="editor-date-field">
-              <div class="editor-date-field__head">
-                <div class="small">수정일</div>
-                <button class="btn btn--small editor-date-update-btn" id="updateModifiedDateBtn" type="button" aria-pressed="false">수정 날짜 업데이트</button>
-              </div>
+            <label>
+              <div class="small">수정일</div>
               <input class="input" id="updated_at" readonly />
-              <div class="small editor-date-field__help" id="updatedAtHelp">일반 저장 시 기존 수정일이 유지됩니다.</div>
+            </label>
+            <div class="editor-date-update-row">
+              <label class="editor-date-update-toggle" for="updateModifiedDateToggle">
+                <input class="editor-date-update-toggle__input" id="updateModifiedDateToggle" type="checkbox" disabled />
+                <span class="editor-date-update-toggle__indicator" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" focusable="false">
+                    <path d="M5 12.5 9.5 17 19 7.5"></path>
+                  </svg>
+                </span>
+                <span class="editor-date-update-toggle__label">수정 날짜 업데이트</span>
+              </label>
+              <div class="small editor-date-update-row__help" id="updatedAtHelp">일반 저장 시 기존 수정일이 유지됩니다.</div>
             </div>
           </div>
 

@@ -533,12 +533,19 @@ body.has-preview-open{overflow:hidden}
 .editor-category-field{width:100%}
 .editor-category-control{display:flex;gap:8px;align-items:center}
 .editor-category-control .input{flex:1}
-.editor-date-field{display:grid;gap:7px;min-width:0}
-.editor-date-field__head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:30px}
-.editor-date-update-btn{min-height:30px;padding:5px 9px;border-radius:8px;background:#fff;border-color:#d9d9d9;box-shadow:none;font-size:11px;font-weight:600;color:#333;white-space:nowrap}
-.editor-date-update-btn.is-active{background:#111;border-color:#111;color:#fff}
-.editor-date-field__help{line-height:1.4;color:#777}
-@media (max-width:767px){.editor-date-field__head{align-items:flex-start;flex-direction:column}.editor-date-update-btn{width:100%;justify-content:center}}
+.editor-date-update-row{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:-2px;padding:10px 0 2px;border-top:1px solid #ececec;min-width:0}
+.editor-date-update-toggle{display:inline-flex;align-items:center;gap:9px;min-height:32px;padding:0;cursor:pointer;user-select:none;color:#222}
+.editor-date-update-toggle__input{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.editor-date-update-toggle__indicator{display:grid;place-items:center;width:20px;height:20px;flex:0 0 20px;border:1px solid #cfcfcf;border-radius:5px;background:#fff;transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease}
+.editor-date-update-toggle__indicator svg{width:13px;height:13px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;opacity:0;transform:scale(.75);transition:opacity .15s ease,transform .15s ease}
+.editor-date-update-toggle__label{font-size:12px;line-height:1.4;font-weight:600;white-space:nowrap}
+.editor-date-update-toggle__input:checked + .editor-date-update-toggle__indicator{background:#111;border-color:#111}
+.editor-date-update-toggle__input:checked + .editor-date-update-toggle__indicator svg{opacity:1;transform:scale(1)}
+.editor-date-update-toggle__input:focus-visible + .editor-date-update-toggle__indicator{box-shadow:0 0 0 3px rgba(17,17,17,.12)}
+.editor-date-update-toggle__input:disabled + .editor-date-update-toggle__indicator{background:#f3f3f3;border-color:#ddd}
+.editor-date-update-toggle:has(.editor-date-update-toggle__input:disabled){cursor:not-allowed;color:#999}
+.editor-date-update-row__help{margin-left:auto;color:#777;line-height:1.5;text-align:right}
+@media (max-width:767px){.editor-date-update-row{align-items:flex-start;flex-direction:column;gap:5px;padding-top:12px}.editor-date-update-row__help{margin-left:29px;text-align:left}.editor-date-update-toggle__label{white-space:normal}}
 .seo-check__summary-list{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
 .seo-check__summary-list li{color:#334155;line-height:1.5}
 
