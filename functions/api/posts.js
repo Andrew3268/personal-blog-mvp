@@ -276,6 +276,7 @@ export async function onRequestPost(context) {
   const enableInarticleAds = body.enable_inarticle_ads === false ? 0 : 1;
   const requestedStatus = String(body.status || "published").trim().toLowerCase();
   const status = requestedStatus === "draft" ? "draft" : "published";
+  const updateModifiedAt = body.update_modified_at === true;
   const normalizedTags = normalizeTags(body.tags);
   const tags = normalizedTags.map((item) => item.tag);
 
@@ -288,7 +289,7 @@ export async function onRequestPost(context) {
 
   const now = new Date().toISOString();
   const current = await env.BLOG_DB.prepare(`
-    SELECT status, category, tags_json, published_at, first_published_at
+    SELECT status, category, tags_json, published_at, first_published_at, updated_at
     FROM posts
     WHERE slug = ?
   `).bind(slug).first();
@@ -297,6 +298,10 @@ export async function onRequestPost(context) {
   const firstPublishedAt = status === "published"
     ? (existingFirstPublishedAt || (current?.status === "published" ? legacyPublishedAt : now))
     : (existingFirstPublishedAt || null);
+  const existingUpdatedAt = normalizeIsoDate(current?.updated_at);
+  const updatedAt = current
+    ? (updateModifiedAt ? now : (existingUpdatedAt || firstPublishedAt || legacyPublishedAt || now))
+    : now;
 
   const upsertPostStatement = env.BLOG_DB.prepare(`
     INSERT INTO posts (
@@ -358,7 +363,7 @@ export async function onRequestPost(context) {
     legacyPublishedAt,
     firstPublishedAt,
     now,
-    now
+    updatedAt
   );
 
   await env.BLOG_DB.batch([

@@ -533,6 +533,12 @@ body.has-preview-open{overflow:hidden}
 .editor-category-field{width:100%}
 .editor-category-control{display:flex;gap:8px;align-items:center}
 .editor-category-control .input{flex:1}
+.editor-date-field{display:grid;gap:7px;min-width:0}
+.editor-date-field__head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:30px}
+.editor-date-update-btn{min-height:30px;padding:5px 9px;border-radius:8px;background:#fff;border-color:#d9d9d9;box-shadow:none;font-size:11px;font-weight:600;color:#333;white-space:nowrap}
+.editor-date-update-btn.is-active{background:#111;border-color:#111;color:#fff}
+.editor-date-field__help{line-height:1.4;color:#777}
+@media (max-width:767px){.editor-date-field__head{align-items:flex-start;flex-direction:column}.editor-date-update-btn{width:100%;justify-content:center}}
 .seo-check__summary-list{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
 .seo-check__summary-list li{color:#334155;line-height:1.5}
 

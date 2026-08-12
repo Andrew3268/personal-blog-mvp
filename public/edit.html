@@ -112,10 +112,14 @@
               <div class="small">발행일</div>
               <input class="input" id="published_at" readonly />
             </label>
-            <label>
-              <div class="small">수정일</div>
+            <div class="editor-date-field">
+              <div class="editor-date-field__head">
+                <div class="small">수정일</div>
+                <button class="btn btn--small editor-date-update-btn" id="updateModifiedDateBtn" type="button" aria-pressed="false">수정 날짜 업데이트</button>
+              </div>
               <input class="input" id="updated_at" readonly />
-            </label>
+              <div class="small editor-date-field__help" id="updatedAtHelp">일반 저장 시 기존 수정일이 유지됩니다.</div>
+            </div>
           </div>
 
             <label>

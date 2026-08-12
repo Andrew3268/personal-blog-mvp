@@ -2,6 +2,14 @@
 
 Cloudflare Pages + Pages Functions + D1 기반의 SSR 블로그입니다. 공개 글은 서버에서 완성된 HTML로 렌더링되며, 게시글·카테고리·사이트맵·RSS가 D1 데이터와 연동됩니다.
 
+
+## 글 수정일 관리
+
+- 편집 페이지의 일반 `저장`은 기존 `posts.updated_at` 값을 유지합니다.
+- 큰 수정으로 공개 수정일을 갱신해야 할 때만 `수정 날짜 업데이트` 버튼을 활성화한 뒤 저장합니다.
+- 서버 API도 `update_modified_at: true`가 명시된 경우에만 `updated_at`을 현재 시각으로 변경합니다.
+- `metadata_updated_at`은 내부 변경 추적을 위해 일반 저장에서도 갱신될 수 있습니다.
+
 ## 핵심 구조
 
 - 홈·카테고리 목록 SSR: `functions/index.js`, `functions/category/[category].js`

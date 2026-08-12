@@ -89,6 +89,7 @@ export async function onRequestPut(context) {
   const enableInarticleAds = body.enable_inarticle_ads === false ? 0 : 1;
   const requestedStatus = String(body.status || "published").trim().toLowerCase();
   const status = requestedStatus === "draft" ? "draft" : "published";
+  const updateModifiedAt = body.update_modified_at === true;
   const normalizedTags = normalizeTags(body.tags);
   const tags = normalizedTags.map((item) => item.tag);
 
@@ -100,7 +101,7 @@ export async function onRequestPut(context) {
   }
 
   const current = await env.BLOG_DB
-    .prepare(`SELECT status, category, tags_json, published_at, first_published_at FROM posts WHERE slug = ?`)
+    .prepare(`SELECT status, category, tags_json, published_at, first_published_at, metadata_updated_at, updated_at FROM posts WHERE slug = ?`)
     .bind(slug)
     .first();
 
@@ -114,6 +115,10 @@ export async function onRequestPut(context) {
   const firstPublishedAt = status === "published"
     ? (existingFirstPublishedAt || (current.status === "published" ? publishedAt : now))
     : (existingFirstPublishedAt || null);
+  const existingUpdatedAt = normalizeIsoDate(current.updated_at);
+  const updatedAt = updateModifiedAt
+    ? now
+    : (existingUpdatedAt || firstPublishedAt || publishedAt || now);
 
   const updatePostStatement = env.BLOG_DB.prepare(`
     UPDATE posts
@@ -155,7 +160,7 @@ export async function onRequestPut(context) {
     publishedAt,
     firstPublishedAt,
     now,
-    now,
+    updatedAt,
     slug
   );
 
@@ -172,7 +177,7 @@ export async function onRequestPut(context) {
     tags: [...previousTags, ...tags]
   });
 
-  return okJson({ ok: true, slug });
+  return okJson({ ok: true, slug, updated_at: updatedAt, modified_date_updated: updateModifiedAt });
 }
 
 export async function onRequestDelete(context) {

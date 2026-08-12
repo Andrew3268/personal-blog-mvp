@@ -52,6 +52,25 @@ function normalizeCategoryName(value) {
 
 let categoryItems = [];
 let editingCategoryName = "";
+let updateModifiedDateOnSave = false;
+
+function setUpdateModifiedDateOnSave(enabled) {
+  updateModifiedDateOnSave = Boolean(enabled);
+  const button = $("updateModifiedDateBtn");
+  const help = $("updatedAtHelp");
+  if (button) {
+    button.setAttribute("aria-pressed", updateModifiedDateOnSave ? "true" : "false");
+    button.classList.toggle("is-active", updateModifiedDateOnSave);
+    button.textContent = updateModifiedDateOnSave
+      ? "수정 날짜 업데이트 예정"
+      : "수정 날짜 업데이트";
+  }
+  if (help) {
+    help.textContent = updateModifiedDateOnSave
+      ? "다음 저장 시 수정일을 현재 시각으로 갱신합니다."
+      : "일반 저장 시 기존 수정일이 유지됩니다.";
+  }
+}
 
 function getCurrentCategoryValue() {
   return $("category")?.value?.trim() || "";
@@ -2143,6 +2162,7 @@ async function load() {
   $("slug").value = item.slug || slug;
   $("published_at").value = item.published_at || "";
   $("updated_at").value = item.updated_at || "";
+  setUpdateModifiedDateOnSave(false);
   $("title").value = item.title || "";
   const loadedCategory = item.category || "";
   $("meta_description").value = item.meta_description || "";
@@ -2187,7 +2207,7 @@ async function load() {
 
 async function save() {
   const statusEl = $("saveStatus");
-  statusEl.textContent = "저장 중…";
+  statusEl.textContent = updateModifiedDateOnSave ? "저장 및 수정 날짜 업데이트 중…" : "저장 중…";
 
   const slug = $("slug").value.trim();
   const title = $("title").value.trim();
@@ -2206,7 +2226,8 @@ async function save() {
     enable_inarticle_ads: Boolean($("enable_inarticle_ads")?.checked),
     tags: parseTags($("tags").value),
     content_md: buildContentWithMetaTokens($("content_md").value),
-    faq_md: $("faq_md") ? $("faq_md").value : ""
+    faq_md: $("faq_md") ? $("faq_md").value : "",
+    update_modified_at: updateModifiedDateOnSave
   };
 
   if (!slug || !title || !payload.content_md.trim()) {
@@ -2264,6 +2285,11 @@ $("addAffiliateItemBtn")?.addEventListener("click", () => { addAffiliateItemCard
 document.querySelectorAll("[data-affiliate-remove]").forEach((button) => {
   button.addEventListener("click", () => { removeAffiliateItemCard(Number(button.dataset.affiliateRemove || "0")); handleRealtimeChange(); });
 });
+if ($("updateModifiedDateBtn")) {
+  $("updateModifiedDateBtn").addEventListener("click", () => {
+    setUpdateModifiedDateOnSave(!updateModifiedDateOnSave);
+  });
+}
 if ($("saveBtn")) $("saveBtn").addEventListener("click", save);
 bindCategoryManagerEvents();
 $("enableToc")?.addEventListener("change", applyTocControls);
