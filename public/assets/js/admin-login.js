@@ -16,6 +16,8 @@ function getSafeNextPath() {
     '/admin/dashboard.html',
     '/admin/posts',
     '/admin/posts.html',
+    '/admin/categories',
+    '/admin/categories.html',
     '/add',
     '/add.html',
     '/edit',

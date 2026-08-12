@@ -96,19 +96,34 @@ export async function onRequestPut(context) {
   const affectedSlugs = (affectedRows.results || []).map((row) => String(row.slug || "")).filter(Boolean);
 
   const now = new Date().toISOString();
-  await env.BLOG_DB.prepare(`
-    UPDATE categories
-    SET name = ?, updated_at = ?
-    WHERE name = ?
-  `).bind(newName, now, currentName).run();
+  const renameStatements = [
+    env.BLOG_DB.prepare(`
+      UPDATE categories
+      SET name = ?, updated_at = ?
+      WHERE name = ?
+    `).bind(newName, now, currentName)
+  ];
 
   if (currentName !== newName) {
-    await env.BLOG_DB.prepare(`
-      UPDATE posts
-      SET category = ?, metadata_updated_at = ?
-      WHERE category = ?
-    `).bind(newName, now, currentName).run();
+    renameStatements.push(
+      env.BLOG_DB.prepare(`
+        UPDATE posts
+        SET category = ?, metadata_updated_at = ?
+        WHERE category = ?
+      `).bind(newName, now, currentName),
+      env.BLOG_DB.prepare(`
+        UPDATE subcategories
+        SET category_name = ?, updated_at = ?
+        WHERE category_name = ?
+      `).bind(newName, now, currentName),
+      env.BLOG_DB.prepare(`
+        UPDATE post_subcategories
+        SET category_name = ?, updated_at = ?
+        WHERE category_name = ?
+      `).bind(newName, now, currentName)
+    );
   }
+  await env.BLOG_DB.batch(renameStatements);
 
   scheduleContentCacheInvalidation({
     waitUntil: (promise) => context.waitUntil(promise),
@@ -132,13 +147,17 @@ export async function onRequestDelete(context) {
   const affectedRows = await env.BLOG_DB.prepare(`SELECT slug FROM posts WHERE category = ?`).bind(name).all();
   const affectedSlugs = (affectedRows.results || []).map((row) => String(row.slug || "")).filter(Boolean);
 
-  await env.BLOG_DB.prepare(`DELETE FROM categories WHERE name = ?`).bind(name).run();
   const now = new Date().toISOString();
-  await env.BLOG_DB.prepare(`
-    UPDATE posts
-    SET category = '', metadata_updated_at = ?
-    WHERE category = ?
-  `).bind(now, name).run();
+  await env.BLOG_DB.batch([
+    env.BLOG_DB.prepare(`DELETE FROM post_subcategories WHERE category_name = ?`).bind(name),
+    env.BLOG_DB.prepare(`DELETE FROM subcategories WHERE category_name = ?`).bind(name),
+    env.BLOG_DB.prepare(`DELETE FROM categories WHERE name = ?`).bind(name),
+    env.BLOG_DB.prepare(`
+      UPDATE posts
+      SET category = '', metadata_updated_at = ?
+      WHERE category = ?
+    `).bind(now, name)
+  ]);
 
   scheduleContentCacheInvalidation({
     waitUntil: (promise) => context.waitUntil(promise),

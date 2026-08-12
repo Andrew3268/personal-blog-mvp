@@ -56,6 +56,19 @@ npm run d1:migrate:performance-phase3:remote
 
 이 마이그레이션은 `CREATE TABLE IF NOT EXISTS`와 `INSERT OR IGNORE`를 사용하므로 기존 관리자, 카테고리, 사이트 설정 값을 덮어쓰지 않습니다. 운영 데이터를 유지하려면 **`db/seed.sql`을 다시 실행하지 마세요.**
 
+
+## 메인/서브 카테고리 마이그레이션 (2026-08-12)
+
+이번 버전부터 서브 카테고리는 `subcategories`, 글별 선택값은 `post_subcategories` 테이블에 저장합니다. 기존 `posts.category`와 공개 카테고리 URL 구조는 그대로 유지됩니다.
+
+운영 D1에는 **배포 전 또는 배포 직후 1회** 다음 명령을 실행하세요.
+
+```bash
+npm run d1:migrate:category-subcategories:remote
+```
+
+마이그레이션은 `CREATE TABLE IF NOT EXISTS` 기반이라 여러 번 실행해도 기존 글과 카테고리를 덮어쓰지 않습니다. 실행하지 않으면 `/admin/categories.html`의 서브 카테고리 관리와 add/edit의 서브 카테고리 저장 기능을 사용할 수 없습니다.
+
 ## 최초 관리자 계정 생성
 
 새 D1 데이터베이스에서 관리자 계정을 처음 만들 때 Cloudflare Pages 환경변수에 다음 값을 먼저 등록해야 합니다.

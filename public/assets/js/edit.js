@@ -51,36 +51,14 @@ function normalizeCategoryName(value) {
 }
 
 let categoryItems = [];
-let editingCategoryName = "";
-
-function shouldUpdateModifiedDateOnSave() {
-  return Boolean($("updateModifiedDateToggle")?.checked);
-}
-
-function setUpdateModifiedDateControl({ checked = false, disabled = false } = {}) {
-  const toggle = $("updateModifiedDateToggle");
-  const help = $("updatedAtHelp");
-  if (toggle) {
-    toggle.checked = Boolean(checked);
-    toggle.disabled = Boolean(disabled);
-  }
-  if (help) {
-    help.textContent = checked
-      ? "다음 저장 시 수정일을 현재 시각으로 갱신합니다."
-      : "일반 저장 시 기존 수정일이 유지됩니다.";
-  }
-}
-
-function syncUpdateModifiedDateHelp() {
-  const help = $("updatedAtHelp");
-  if (!help) return;
-  help.textContent = shouldUpdateModifiedDateOnSave()
-    ? "다음 저장 시 수정일을 현재 시각으로 갱신합니다."
-    : "일반 저장 시 기존 수정일이 유지됩니다.";
-}
+let subcategoryItems = [];
 
 function getCurrentCategoryValue() {
-  return $("category")?.value?.trim() || "";
+  return normalizeCategoryName($("category")?.value || "");
+}
+
+function getCurrentSubcategoryValue() {
+  return normalizeCategoryName($("subcategory")?.value || "");
 }
 
 function renderCategoryOptions(selectedValue = "") {
@@ -91,201 +69,90 @@ function renderCategoryOptions(selectedValue = "") {
   const uniqueNames = [...new Set(names)];
   if (currentValue && !uniqueNames.includes(currentValue)) uniqueNames.unshift(currentValue);
   selectEl.innerHTML = [
-    '<option value="">카테고리 선택</option>',
+    '<option value="">메인 카테고리 선택</option>',
     ...uniqueNames.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
   ].join("");
   selectEl.value = currentValue || "";
 }
 
-function setCategoryManagerStatus(message = "", isError = false) {
-  const statusEl = $("categoryManagerStatus");
-  if (!statusEl) return;
-  statusEl.textContent = message;
-  statusEl.style.color = isError ? "#b91c1c" : "";
-}
+function renderSubcategoryOptions(selectedCategory = "", selectedValue = null) {
+  const selectEl = $("subcategory");
+  if (!selectEl) return;
+  const categoryName = normalizeCategoryName(selectedCategory || getCurrentCategoryValue());
+  const currentValue = normalizeCategoryName(selectedValue === null ? getCurrentSubcategoryValue() : selectedValue);
 
-function renderCategoryManagerList() {
-  const listEl = $("categoryManagerList");
-  if (!listEl) return;
-  if (!categoryItems.length) {
-    listEl.innerHTML = '<div class="category-manager__empty small">등록된 카테고리가 없습니다. 위 입력창에서 새 카테고리를 추가해 주세요.</div>';
+  if (!categoryName) {
+    selectEl.innerHTML = '<option value="">메인 카테고리를 먼저 선택하세요</option>';
+    selectEl.value = "";
+    selectEl.disabled = true;
     return;
   }
 
-  listEl.innerHTML = categoryItems.map((item) => {
-    const name = normalizeCategoryName(item.name || item);
-    const isEditing = editingCategoryName === name;
-    return `
-      <div class="category-manager__item" data-category-item="${escapeHtml(name)}">
-        <div>
-          ${isEditing
-            ? `<input class="input" data-category-edit-input="${escapeHtml(name)}" value="${escapeHtml(name)}" />`
-            : `<div class="category-manager__name">${escapeHtml(name)}</div>`}
-        </div>
-        <div class="category-manager__actions">
-          ${isEditing
-            ? `
-              <button class="btn btn--brand" type="button" data-category-save="${escapeHtml(name)}">저장</button>
-              <button class="btn" type="button" data-category-cancel>취소</button>
-            `
-            : `
-              <button class="btn" type="button" data-category-edit="${escapeHtml(name)}">수정</button>
-              <button class="btn" type="button" data-category-delete="${escapeHtml(name)}">삭제</button>
-            `}
-        </div>
-      </div>
-    `;
-  }).join("");
+  const names = subcategoryItems
+    .filter((item) => normalizeCategoryName(item.category_name) === categoryName)
+    .map((item) => normalizeCategoryName(item.name))
+    .filter(Boolean);
+  const uniqueNames = [...new Set(names)];
+  if (currentValue && !uniqueNames.includes(currentValue)) uniqueNames.unshift(currentValue);
+
+  selectEl.innerHTML = [
+    '<option value="">서브 카테고리 없음</option>',
+    ...uniqueNames.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
+  ].join("");
+  selectEl.value = currentValue || "";
+  selectEl.disabled = false;
 }
 
-async function requestCategoryApi(method, payload = {}) {
+async function requestCategoryApi(method = "GET") {
   const res = await fetch('/api/categories', {
     method,
-    headers: { 'content-type': 'application/json' },
-    body: method === 'GET' ? undefined : JSON.stringify(payload)
+    headers: { Accept: 'application/json' },
+    credentials: 'same-origin',
+    cache: 'no-store'
   });
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json?.message || '카테고리 요청에 실패했습니다.');
+  if (!res.ok) throw new Error(json?.message || '카테고리를 불러오지 못했습니다.');
   return json;
 }
 
-async function loadCategories(selectedValue = "") {
-  try {
-    const json = await requestCategoryApi('GET');
-    categoryItems = Array.isArray(json.items) ? json.items : [];
-    renderCategoryOptions(selectedValue);
-    renderCategoryManagerList();
-  } catch (error) {
-    setCategoryManagerStatus(error.message || '카테고리를 불러오지 못했습니다.', true);
-  }
-}
-
-function openCategoryModal() {
-  const modal = $('categoryModal');
-  const backdrop = $('categoryModalBackdrop');
-  const openBtn = $('openCategoryModalBtn');
-  if (!modal || !backdrop || !openBtn) return;
-  backdrop.hidden = false;
-  modal.classList.add('is-open');
-  modal.setAttribute('aria-hidden', 'false');
-  openBtn.setAttribute('aria-expanded', 'true');
-  document.body.classList.add('has-preview-open');
-  setCategoryManagerStatus('');
-  $('newCategoryName')?.focus();
-}
-
-function closeCategoryModal() {
-  const modal = $('categoryModal');
-  const backdrop = $('categoryModalBackdrop');
-  const openBtn = $('openCategoryModalBtn');
-  if (!modal || !backdrop || !openBtn) return;
-  modal.classList.remove('is-open');
-  modal.setAttribute('aria-hidden', 'true');
-  backdrop.hidden = true;
-  openBtn.setAttribute('aria-expanded', 'false');
-  editingCategoryName = '';
-  renderCategoryManagerList();
-  document.body.classList.remove('has-preview-open');
-}
-
-async function addCategory() {
-  const inputEl = $('newCategoryName');
-  const name = normalizeCategoryName(inputEl?.value || '');
-  if (!name) {
-    setCategoryManagerStatus('카테고리 이름을 입력해 주세요.', true);
-    inputEl?.focus();
-    return;
-  }
-  try {
-    const json = await requestCategoryApi('POST', { name });
-    categoryItems = Array.isArray(json.items) ? json.items : categoryItems;
-    renderCategoryOptions(name);
-    renderCategoryManagerList();
-    if (inputEl) inputEl.value = '';
-    setCategoryManagerStatus('카테고리가 추가되었습니다.');
-    handleRealtimeChange();
-  } catch (error) {
-    setCategoryManagerStatus(error.message || '카테고리 추가에 실패했습니다.', true);
-  }
-}
-
-async function saveEditedCategory(currentName) {
-  const inputEl = document.querySelector(`[data-category-edit-input="${CSS.escape(currentName)}"]`);
-  const newName = normalizeCategoryName(inputEl?.value || '');
-  if (!newName) {
-    setCategoryManagerStatus('새 카테고리 이름을 입력해 주세요.', true);
-    inputEl?.focus();
-    return;
-  }
-  try {
-    const json = await requestCategoryApi('PUT', { current_name: currentName, new_name: newName });
-    const previousSelected = getCurrentCategoryValue();
-    categoryItems = Array.isArray(json.items) ? json.items : categoryItems;
-    editingCategoryName = '';
-    renderCategoryOptions(previousSelected === currentName ? newName : previousSelected);
-    renderCategoryManagerList();
-    setCategoryManagerStatus('카테고리가 수정되었습니다.');
-    handleRealtimeChange();
-  } catch (error) {
-    setCategoryManagerStatus(error.message || '카테고리 수정에 실패했습니다.', true);
-  }
-}
-
-async function deleteCategory(name) {
-  const ok = window.confirm(`'${name}' 카테고리를 삭제할까요?\n기존 글에 연결된 카테고리는 비워집니다.`);
-  if (!ok) return;
-  try {
-    const json = await requestCategoryApi('DELETE', { name });
-    const previousSelected = getCurrentCategoryValue();
-    categoryItems = Array.isArray(json.items) ? json.items : categoryItems;
-    editingCategoryName = '';
-    renderCategoryOptions(previousSelected === name ? '' : previousSelected);
-    renderCategoryManagerList();
-    setCategoryManagerStatus('카테고리가 삭제되었습니다.');
-    handleRealtimeChange();
-  } catch (error) {
-    setCategoryManagerStatus(error.message || '카테고리 삭제에 실패했습니다.', true);
-  }
-}
-
-function bindCategoryManagerEvents() {
-  $('openCategoryModalBtn')?.addEventListener('click', openCategoryModal);
-  $('closeCategoryModalBtn')?.addEventListener('click', closeCategoryModal);
-  $('categoryModalBackdrop')?.addEventListener('click', closeCategoryModal);
-  $('addCategoryBtn')?.addEventListener('click', addCategory);
-  $('newCategoryName')?.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      addCategory();
-    }
+async function requestSubcategoryApi() {
+  const res = await fetch('/api/subcategories', {
+    headers: { Accept: 'application/json' },
+    credentials: 'same-origin',
+    cache: 'no-store'
   });
-  $('categoryManagerList')?.addEventListener('click', (event) => {
-    const target = event.target.closest('button');
-    if (!target) return;
-    const editName = target.dataset.categoryEdit;
-    const saveName = target.dataset.categorySave;
-    const deleteName = target.dataset.categoryDelete;
-    if (editName) {
-      editingCategoryName = editName;
-      renderCategoryManagerList();
-      document.querySelector(`[data-category-edit-input="${CSS.escape(editName)}"]`)?.focus();
-      return;
-    }
-    if (saveName) {
-      saveEditedCategory(saveName);
-      return;
-    }
-    if (deleteName) {
-      deleteCategory(deleteName);
-      return;
-    }
-    if (target.hasAttribute('data-category-cancel')) {
-      editingCategoryName = '';
-      renderCategoryManagerList();
-    }
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json?.message || '서브 카테고리를 불러오지 못했습니다.');
+  return json;
+}
+
+async function loadTaxonomy(selectedCategory = "", selectedSubcategory = "") {
+  const [categoryResult, subcategoryResult] = await Promise.allSettled([
+    requestCategoryApi('GET'),
+    requestSubcategoryApi()
+  ]);
+
+  if (categoryResult.status === 'fulfilled') {
+    categoryItems = Array.isArray(categoryResult.value.items) ? categoryResult.value.items : [];
+  } else {
+    console.error(categoryResult.reason);
+  }
+  if (subcategoryResult.status === 'fulfilled') {
+    subcategoryItems = Array.isArray(subcategoryResult.value.items) ? subcategoryResult.value.items : [];
+  } else {
+    console.error(subcategoryResult.reason);
+  }
+
+  renderCategoryOptions(selectedCategory);
+  renderSubcategoryOptions(selectedCategory || getCurrentCategoryValue(), selectedSubcategory);
+}
+
+function bindTaxonomyEvents() {
+  $("category")?.addEventListener("change", () => {
+    renderSubcategoryOptions(getCurrentCategoryValue(), "");
+    handleRealtimeChange();
   });
 }
-
 
 const TOC_TOKEN_RE = /^\[\[TOC(?::(h2|h2,h3))?\]\]$/i;
 
@@ -2066,7 +1933,7 @@ function renderPreview() {
       <div class="preview-post-card">
       <header class="preview-article__head">
         <div class="row" style="justify-content:space-between;align-items:flex-start;gap:10px">
-          ${category ? `<span class="badge">${escapeHtml(category)}</span>` : '<span class="badge">미분류</span>'}
+          ${category ? `<span class="badge">${escapeHtml(category)}${getCurrentSubcategoryValue() ? ` / ${escapeHtml(getCurrentSubcategoryValue())}` : ''}</span>` : '<span class="badge">미분류</span>'}
           <span class="small">${new Date().toISOString().slice(0, 10)}</span>
         </div>
         <h1 class="preview-title">${escapeHtml(title)}</h1>
@@ -2152,8 +2019,8 @@ async function load() {
 
   const postPromise = fetch(`/api/posts/${encodeURIComponent(slug)}`)
     .then(async (res) => ({ res, json: await res.json().catch(() => ({})) }));
-  const categoryPromise = requestCategoryApi('GET');
-  const [postResult, categoryResult] = await Promise.allSettled([postPromise, categoryPromise]);
+  const taxonomyPromise = Promise.all([requestCategoryApi('GET'), requestSubcategoryApi()]);
+  const [postResult, taxonomyResult] = await Promise.allSettled([postPromise, taxonomyPromise]);
 
   if (postResult.status === 'rejected') {
     if (statusEl) statusEl.textContent = "글 정보를 불러오지 못했습니다.";
@@ -2173,6 +2040,7 @@ async function load() {
   setUpdateModifiedDateControl({ checked: false, disabled: false });
   $("title").value = item.title || "";
   const loadedCategory = item.category || "";
+  const loadedSubcategory = item.subcategory || "";
   $("meta_description").value = item.meta_description || "";
   $("summary").value = item.summary || "";
   $("cover_image").value = sanitizeImageUrlValue(item.cover_image || "");
@@ -2196,13 +2064,17 @@ async function load() {
   $("tags").value = Array.isArray(tags) ? tags.join(", ") : "";
   if ($("viewBtn")) $("viewBtn").href = `/post/${encodeURIComponent($("slug").value)}`;
 
-  if (categoryResult.status === 'fulfilled') {
-    categoryItems = Array.isArray(categoryResult.value.items) ? categoryResult.value.items : [];
+  if (taxonomyResult.status === 'fulfilled') {
+    const [categoryJson, subcategoryJson] = taxonomyResult.value;
+    categoryItems = Array.isArray(categoryJson.items) ? categoryJson.items : [];
+    subcategoryItems = Array.isArray(subcategoryJson.items) ? subcategoryJson.items : [];
     renderCategoryOptions(loadedCategory);
-    renderCategoryManagerList();
+    renderSubcategoryOptions(loadedCategory, loadedSubcategory);
   } else {
-    setCategoryManagerStatus(categoryResult.reason?.message || '카테고리를 불러오지 못했습니다.', true);
-    $("category").value = loadedCategory;
+    console.error(taxonomyResult.reason);
+    renderCategoryOptions(loadedCategory);
+    renderSubcategoryOptions(loadedCategory, loadedSubcategory);
+    if (statusEl) statusEl.textContent = '글은 불러왔지만 카테고리 목록을 불러오지 못했습니다.';
   }
   updateSlugPreview();
   syncTocControlsFromContent();
@@ -2224,6 +2096,7 @@ async function save() {
   const payload = {
     title,
     category: $("category").value.trim(),
+    subcategory: $("subcategory")?.value.trim() || "",
     meta_description: $("meta_description").value.trim(),
     summary: $("summary").value.trim(),
     cover_image: sanitizeImageUrlValue($("cover_image").value),
@@ -2279,7 +2152,7 @@ function handleRealtimeChange() {
   renderPreview();
 }
 
-["title", "meta_description", "summary", "content_md", "faq_md", "focusKeyword", "longtailKeywords", "lsiKeywords", "cover_image", "cover_image_alt", "tags", "category", "inlineImage1Id", "inlineImage1Alt", "inlineImage1Caption", "inlineImage1Position", "inlineImage2Id", "inlineImage2Alt", "inlineImage2Caption", "inlineImage2Position", "affiliateImageUrl1", "affiliateLinkUrl1", "affiliateProductName1", "affiliateCurrentPrice1", "affiliateSalePrice1", "affiliateDiscountRate1", "affiliateButtonText1", "affiliatePosition1", "affiliateImageUrl2", "affiliateLinkUrl2", "affiliateProductName2", "affiliateCurrentPrice2", "affiliateSalePrice2", "affiliateDiscountRate2", "affiliateButtonText2", "affiliatePosition2", "affiliateImageUrl3", "affiliateLinkUrl3", "affiliateProductName3", "affiliateCurrentPrice3", "affiliateSalePrice3", "affiliateDiscountRate3", "affiliateButtonText3", "affiliatePosition3", "affiliateImageUrl4", "affiliateLinkUrl4", "affiliateProductName4", "affiliateCurrentPrice4", "affiliateSalePrice4", "affiliateDiscountRate4", "affiliateButtonText4", "affiliatePosition4", "affiliateImageUrl5", "affiliateLinkUrl5", "affiliateProductName5", "affiliateCurrentPrice5", "affiliateSalePrice5", "affiliateDiscountRate5", "affiliateButtonText5", "affiliatePosition5"].forEach((id) => {
+["title", "meta_description", "summary", "content_md", "faq_md", "focusKeyword", "longtailKeywords", "lsiKeywords", "cover_image", "cover_image_alt", "tags", "subcategory", "inlineImage1Id", "inlineImage1Alt", "inlineImage1Caption", "inlineImage1Position", "inlineImage2Id", "inlineImage2Alt", "inlineImage2Caption", "inlineImage2Position", "affiliateImageUrl1", "affiliateLinkUrl1", "affiliateProductName1", "affiliateCurrentPrice1", "affiliateSalePrice1", "affiliateDiscountRate1", "affiliateButtonText1", "affiliatePosition1", "affiliateImageUrl2", "affiliateLinkUrl2", "affiliateProductName2", "affiliateCurrentPrice2", "affiliateSalePrice2", "affiliateDiscountRate2", "affiliateButtonText2", "affiliatePosition2", "affiliateImageUrl3", "affiliateLinkUrl3", "affiliateProductName3", "affiliateCurrentPrice3", "affiliateSalePrice3", "affiliateDiscountRate3", "affiliateButtonText3", "affiliatePosition3", "affiliateImageUrl4", "affiliateLinkUrl4", "affiliateProductName4", "affiliateCurrentPrice4", "affiliateSalePrice4", "affiliateDiscountRate4", "affiliateButtonText4", "affiliatePosition4", "affiliateImageUrl5", "affiliateLinkUrl5", "affiliateProductName5", "affiliateCurrentPrice5", "affiliateSalePrice5", "affiliateDiscountRate5", "affiliateButtonText5", "affiliatePosition5"].forEach((id) => {
   const el = $(id);
   if (el) el.addEventListener("input", handleRealtimeChange);
   if (el && el.tagName === "SELECT") el.addEventListener("change", handleRealtimeChange);
@@ -2296,7 +2169,7 @@ document.querySelectorAll("[data-affiliate-remove]").forEach((button) => {
 });
 $("updateModifiedDateToggle")?.addEventListener("change", syncUpdateModifiedDateHelp);
 if ($("saveBtn")) $("saveBtn").addEventListener("click", save);
-bindCategoryManagerEvents();
+bindTaxonomyEvents();
 $("enableToc")?.addEventListener("change", applyTocControls);
 $("includeTocH3")?.addEventListener("change", () => {
   if (!$("enableToc")?.checked) return;
@@ -2310,7 +2183,7 @@ document.querySelectorAll("[data-preview-width]").forEach((button) => {
 });
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") { closePreview(); closeCategoryModal(); }
+  if (event.key === "Escape") { closePreview(); }
 });
 
 if ($("title") && $("content_md")) {

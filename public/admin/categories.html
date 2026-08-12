@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>카테고리 관리 | Wacky Wiki</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+</head>
+<body>
+  <header class="topbar topbar--editorial">
+    <div class="topbar__inner topbar__inner--editorial">
+      <div class="topbar-left-slot"><div class="topbar-admin-status" data-admin-status hidden aria-live="polite">관리자 로그인 중</div></div>
+      <a class="brand brand--center" href="/" aria-label="Wacky Wiki 홈"><span class="brand__text">Wacky Wiki</span></a>
+      <nav class="nav nav--utility nav--right" aria-label="관리자 메뉴">
+        <a href="/admin/dashboard.html" data-admin-link hidden>대시보드</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container taxonomy-admin-shell">
+    <section class="taxonomy-admin-head">
+      <div>
+        <div class="small seo-eyebrow">Content Taxonomy</div>
+        <h1 class="h1">카테고리 관리</h1>
+        <p class="p">메인 카테고리와 그 아래 서브 카테고리를 한 곳에서 관리합니다.</p>
+      </div>
+      <div class="row taxonomy-admin-head__actions">
+        <a class="btn" href="/admin/dashboard.html">대시보드</a>
+        <a class="btn btn--brand" href="/add.html">새 글 작성</a>
+      </div>
+    </section>
+
+    <div class="taxonomy-admin-grid">
+      <section class="card taxonomy-panel" aria-labelledby="mainCategoryTitle">
+        <div class="taxonomy-panel__head">
+          <div>
+            <div class="small">메인 카테고리</div>
+            <h2 class="h2" id="mainCategoryTitle">항목 관리</h2>
+          </div>
+          <span class="small" id="mainCategoryCount">-</span>
+        </div>
+        <div class="taxonomy-create-row">
+          <input class="input" id="newMainCategoryName" placeholder="새 메인 카테고리" autocomplete="off" />
+          <button class="btn btn--brand" id="addMainCategoryBtn" type="button">추가</button>
+        </div>
+        <div class="small taxonomy-status" id="mainCategoryStatus" aria-live="polite"></div>
+        <div class="taxonomy-list" id="mainCategoryList"></div>
+      </section>
+
+      <section class="card taxonomy-panel" aria-labelledby="subCategoryTitle">
+        <div class="taxonomy-panel__head">
+          <div>
+            <div class="small">서브 카테고리</div>
+            <h2 class="h2" id="subCategoryTitle">메인 카테고리를 선택하세요</h2>
+          </div>
+          <span class="small" id="subCategoryCount">-</span>
+        </div>
+        <div class="taxonomy-create-row">
+          <input class="input" id="newSubcategoryName" placeholder="새 서브 카테고리" autocomplete="off" disabled />
+          <button class="btn btn--brand" id="addSubcategoryBtn" type="button" disabled>추가</button>
+        </div>
+        <div class="small taxonomy-status" id="subCategoryStatus" aria-live="polite"></div>
+        <div class="taxonomy-list" id="subCategoryList">
+          <div class="taxonomy-empty small">왼쪽에서 메인 카테고리를 선택하세요.</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer container">
+    <div class="footer__inner"><div class="footer__copy"><div>© 2026 Wacky Wiki</div></div></div>
+  </footer>
+  <script src="/assets/js/admin-ui.js" defer></script>
+  <script src="/assets/js/admin-categories.js" defer></script>
+</body>
+</html>

@@ -274,6 +274,7 @@ export async function onRequestPost(context) {
   const slug = String(body.slug || "").trim();
   const title = String(body.title || "").trim();
   const category = normalizeText(body.category);
+  const subcategory = category ? normalizeText(body.subcategory) : "";
   const metaDescription = String(body.meta_description || "").trim();
   const summary = String(body.summary || "").trim();
   const coverImage = String(body.cover_image || "").trim();
@@ -295,6 +296,15 @@ export async function onRequestPost(context) {
       { message: "slug, title, content_md는 필수입니다." },
       { status: 400 }
     );
+  }
+
+  if (subcategory) {
+    const validSubcategory = await env.BLOG_DB.prepare(`
+      SELECT name FROM subcategories WHERE category_name = ? AND name = ?
+    `).bind(category, subcategory).first();
+    if (!validSubcategory) {
+      return okJson({ message: "선택한 서브 카테고리가 메인 카테고리에 속하지 않습니다." }, { status: 400 });
+    }
   }
 
   const now = new Date().toISOString();
@@ -376,8 +386,20 @@ export async function onRequestPost(context) {
     updatedAt
   );
 
+  const subcategoryStatement = subcategory
+    ? env.BLOG_DB.prepare(`
+        INSERT INTO post_subcategories (post_slug, category_name, subcategory_name, updated_at)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(post_slug) DO UPDATE SET
+          category_name = excluded.category_name,
+          subcategory_name = excluded.subcategory_name,
+          updated_at = excluded.updated_at
+      `).bind(slug, category, subcategory, now)
+    : env.BLOG_DB.prepare(`DELETE FROM post_subcategories WHERE post_slug = ?`).bind(slug);
+
   await env.BLOG_DB.batch([
     upsertPostStatement,
+    subcategoryStatement,
     ...buildPostTagReplaceStatements(env.BLOG_DB, slug, normalizedTags, now)
   ]);
 

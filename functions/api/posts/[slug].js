@@ -34,6 +34,12 @@ export async function onRequestGet({ env, params, request }) {
       slug,
       title,
       category,
+      COALESCE((
+        SELECT ps.subcategory_name
+        FROM post_subcategories ps
+        WHERE ps.post_slug = posts.slug
+        LIMIT 1
+      ), '') AS subcategory,
       meta_description,
       summary,
       cover_image,
@@ -77,6 +83,7 @@ export async function onRequestPut(context) {
 
   const title = String(body.title || "").trim();
   const category = normalizeText(body.category);
+  const subcategory = category ? normalizeText(body.subcategory) : "";
   const metaDescription = String(body.meta_description || "").trim();
   const summary = String(body.summary || "").trim();
   const coverImage = String(body.cover_image || "").trim();
@@ -98,6 +105,15 @@ export async function onRequestPut(context) {
       { message: "title, content_md는 필수입니다." },
       { status: 400 }
     );
+  }
+
+  if (subcategory) {
+    const validSubcategory = await env.BLOG_DB.prepare(`
+      SELECT name FROM subcategories WHERE category_name = ? AND name = ?
+    `).bind(category, subcategory).first();
+    if (!validSubcategory) {
+      return okJson({ message: "선택한 서브 카테고리가 메인 카테고리에 속하지 않습니다." }, { status: 400 });
+    }
   }
 
   const current = await env.BLOG_DB
@@ -164,8 +180,20 @@ export async function onRequestPut(context) {
     slug
   );
 
+  const subcategoryStatement = subcategory
+    ? env.BLOG_DB.prepare(`
+        INSERT INTO post_subcategories (post_slug, category_name, subcategory_name, updated_at)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(post_slug) DO UPDATE SET
+          category_name = excluded.category_name,
+          subcategory_name = excluded.subcategory_name,
+          updated_at = excluded.updated_at
+      `).bind(slug, category, subcategory, now)
+    : env.BLOG_DB.prepare(`DELETE FROM post_subcategories WHERE post_slug = ?`).bind(slug);
+
   await env.BLOG_DB.batch([
     updatePostStatement,
+    subcategoryStatement,
     ...buildPostTagReplaceStatements(env.BLOG_DB, slug, normalizedTags, now)
   ]);
 
@@ -196,6 +224,7 @@ export async function onRequestDelete(context) {
 
   await env.BLOG_DB.batch([
     env.BLOG_DB.prepare(`DELETE FROM post_tags WHERE post_slug = ?`).bind(slug),
+    env.BLOG_DB.prepare(`DELETE FROM post_subcategories WHERE post_slug = ?`).bind(slug),
     env.BLOG_DB.prepare(`DELETE FROM post_view_accumulator WHERE post_slug = ?`).bind(slug),
     env.BLOG_DB.prepare(`DELETE FROM posts WHERE slug = ?`).bind(slug)
   ]);
