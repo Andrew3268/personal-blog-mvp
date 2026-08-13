@@ -6,7 +6,7 @@ import { canonicalCategoryName, categoryPath } from "../_category-utils.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
 const ADSENSE_CLIENT = "ca-pub-7298667883751711";
-const POST_CACHE_VERSION = "8";
+const POST_CACHE_VERSION = "9";
 
 function safeDecodePathParam(value = "") {
   try {

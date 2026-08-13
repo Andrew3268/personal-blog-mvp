@@ -290,14 +290,19 @@ function renderInlineImageFigure(data = {}, index = 1) {
 
 
 const CONTENT_LINK_STYLE_TOKEN_RE = /^\[\[POST_LINK_STYLE\s+value="(default|external)"\]\]$/i;
+const CONTENT_EXTERNAL_LINK_CLASS = "post-link-style--external";
 
 function parseContentLinkStyleToken(line = "") {
   const match = String(line || "").trim().match(CONTENT_LINK_STYLE_TOKEN_RE);
   return match ? String(match[1] || "default").toLowerCase() : "";
 }
 
+function hasExternalContentAnchorClass(md = "") {
+  return /<a\b[^>]*\bclass\s*=\s*(?:"[^"]*\bpost-link-style--external\b[^"]*"|'[^']*\bpost-link-style--external\b[^']*')[^>]*>/i.test(String(md || ""));
+}
+
 function parseContentLinkStyleFromMarkdown(md = "") {
-  let style = "default";
+  let style = hasExternalContentAnchorClass(md) ? "external" : "default";
   String(md || "").split("\n").forEach((line) => {
     const parsed = parseContentLinkStyleToken(line);
     if (parsed) style = parsed === "external" ? "external" : "default";
@@ -322,6 +327,50 @@ function getSelectedContentLinkStyle() {
   return $("contentLinkStyle")?.value === "external" ? "external" : "default";
 }
 
+function rewriteContentAnchorTagClass(tag = "", style = "default") {
+  const normalizedStyle = style === "external" ? "external" : "default";
+  return String(tag || "").replace(/^<a\b([\s\S]*?)>$/i, (fullTag, rawAttributes = "") => {
+    let attributes = String(rawAttributes || "");
+    const classMatch = attributes.match(/\sclass\s*=\s*("([^"]*)"|'([^']*)')/i);
+    let classes = classMatch
+      ? String(classMatch[2] ?? classMatch[3] ?? "").split(/\s+/).map((item) => item.trim()).filter(Boolean)
+      : [];
+
+    classes = classes.filter((item) => item !== CONTENT_EXTERNAL_LINK_CLASS);
+    if (normalizedStyle === "external") classes.push(CONTENT_EXTERNAL_LINK_CLASS);
+    classes = Array.from(new Set(classes));
+
+    if (classMatch) {
+      if (classes.length) {
+        const quote = classMatch[1].startsWith("'") ? "'" : '"';
+        attributes = attributes.replace(classMatch[0], ` class=${quote}${classes.join(" ")}${quote}`);
+      } else {
+        attributes = attributes.replace(classMatch[0], "");
+      }
+    } else if (classes.length) {
+      attributes = ` class="${classes.join(" ")}"${attributes}`;
+    }
+
+    return `<a${attributes}>`;
+  });
+}
+
+function updateContentAnchorStyleClasses(md = "", style = "default") {
+  return String(md || "").replace(/<a\b[^>]*>/gi, (tag) => rewriteContentAnchorTagClass(tag, style));
+}
+
+function syncContentAnchorClassesToSelectedStyle() {
+  const textarea = $("content_md");
+  if (!textarea) return;
+  const selectionStart = Number.isFinite(textarea.selectionStart) ? textarea.selectionStart : 0;
+  const selectionEnd = Number.isFinite(textarea.selectionEnd) ? textarea.selectionEnd : selectionStart;
+  const nextValue = updateContentAnchorStyleClasses(textarea.value || "", getSelectedContentLinkStyle());
+  if (nextValue === textarea.value) return;
+  textarea.value = nextValue;
+  const max = textarea.value.length;
+  textarea.setSelectionRange(Math.min(selectionStart, max), Math.min(selectionEnd, max));
+}
+
 function applyContentLinkStyleFromMarkdown(md = "", explicitStyle = "") {
   const select = $("contentLinkStyle");
   if (!select) return;
@@ -330,10 +379,11 @@ function applyContentLinkStyleFromMarkdown(md = "", explicitStyle = "") {
 }
 
 function applyContentLinkStyleToRenderedHtml(html = "", style = "default") {
-  if (style !== "external") return String(html || "");
+  const normalizedStyle = style === "external" ? "external" : "default";
   return String(html || "").replace(/class="([^"]*\bpost-content-link\b[^"]*)"/gi, (match, classes) => {
-    const items = String(classes || "").split(/\s+/).filter(Boolean);
-    if (!items.includes("post-link-style--external")) items.push("post-link-style--external");
+    let items = String(classes || "").split(/\s+/).filter(Boolean).filter((item) => item !== CONTENT_EXTERNAL_LINK_CLASS);
+    if (normalizedStyle === "external") items.push(CONTENT_EXTERNAL_LINK_CLASS);
+    items = Array.from(new Set(items));
     return `class="${items.join(" ")}"`;
   });
 }
@@ -365,7 +415,7 @@ function renderSafeContentAnchor(rawAnchor = "") {
   const classNames = getQuotedHtmlAttribute(rawAttributes, "class")
     .split(/\s+/)
     .map((item) => item.trim())
-    .filter((item) => /^[A-Za-z0-9_-]+$/.test(item) && item !== "post-link-style--external");
+    .filter((item) => /^[A-Za-z0-9_-]+$/.test(item));
   classNames.push("post-content-link");
   const uniqueClassNames = Array.from(new Set(classNames));
   const classAttr = ` class="${uniqueClassNames.map(escapeHtml).join(" ")}"`;
@@ -586,12 +636,16 @@ function applyLsiKeywordsFromMarkdown(md = "") {
 }
 
 function buildContentWithMetaTokens(md = "") {
-  const cleanMd = stripContentLinkStyleTokenLines(stripLsiKeywordsTokenLines(stripAffiliateTokenLines(stripInlineImageTokenLines(md))));
+  const selectedLinkStyle = getSelectedContentLinkStyle();
+  const cleanMd = updateContentAnchorStyleClasses(
+    stripContentLinkStyleTokenLines(stripLsiKeywordsTokenLines(stripAffiliateTokenLines(stripInlineImageTokenLines(md)))),
+    selectedLinkStyle
+  );
   const imageMeta = collectInlineImageFormData();
   const affiliateMeta = collectAffiliateFormData();
   const lsiKeywords = parseKeywords($("lsiKeywords")?.value || "");
   const lsiToken = buildLsiKeywordsToken(lsiKeywords);
-  const contentLinkStyleToken = buildContentLinkStyleToken(getSelectedContentLinkStyle());
+  const contentLinkStyleToken = buildContentLinkStyleToken(selectedLinkStyle);
   const imageTokens = [
     buildInlineImageToken("POST_IMAGE_1", imageMeta.image1),
     buildInlineImageToken("POST_IMAGE_2", imageMeta.image2)
@@ -2024,7 +2078,8 @@ function renderPreview() {
   const metaDescription = $("meta_description").value.trim();
   const coverImage = sanitizeImageUrlValue($("cover_image").value);
   const coverImageAlt = $("cover_image_alt")?.value.trim() || "";
-  const contentMd = stripLsiKeywordsTokenLines($("content_md").value || "");
+  const contentMd = stripContentLinkStyleTokenLines(stripLsiKeywordsTokenLines($("content_md").value || ""));
+  const contentLinkStyle = getSelectedContentLinkStyle();
   const inlineImages = collectInlineImageFormData();
   const affiliateMeta = collectAffiliateFormData();
   const contentLengthWithoutSpaces = countTextWithoutSpaces(contentMd);
@@ -2179,10 +2234,15 @@ function handleRealtimeChange() {
   renderPreview();
 }
 
-["title", "meta_description", "summary", "content_md", "contentLinkStyle", "faq_md", "focusKeyword", "longtailKeywords", "lsiKeywords", "cover_image", "cover_image_alt", "tags", "subcategory", "inlineImage1Id", "inlineImage1Alt", "inlineImage1Caption", "inlineImage1Position", "inlineImage2Id", "inlineImage2Alt", "inlineImage2Caption", "inlineImage2Position", "affiliateImageUrl1", "affiliateLinkUrl1", "affiliateProductName1", "affiliateCurrentPrice1", "affiliateSalePrice1", "affiliateDiscountRate1", "affiliateButtonText1", "affiliatePosition1", "affiliateImageUrl2", "affiliateLinkUrl2", "affiliateProductName2", "affiliateCurrentPrice2", "affiliateSalePrice2", "affiliateDiscountRate2", "affiliateButtonText2", "affiliatePosition2", "affiliateImageUrl3", "affiliateLinkUrl3", "affiliateProductName3", "affiliateCurrentPrice3", "affiliateSalePrice3", "affiliateDiscountRate3", "affiliateButtonText3", "affiliatePosition3", "affiliateImageUrl4", "affiliateLinkUrl4", "affiliateProductName4", "affiliateCurrentPrice4", "affiliateSalePrice4", "affiliateDiscountRate4", "affiliateButtonText4", "affiliatePosition4", "affiliateImageUrl5", "affiliateLinkUrl5", "affiliateProductName5", "affiliateCurrentPrice5", "affiliateSalePrice5", "affiliateDiscountRate5", "affiliateButtonText5", "affiliatePosition5"].forEach((id) => {
+["title", "meta_description", "summary", "content_md", "faq_md", "focusKeyword", "longtailKeywords", "lsiKeywords", "cover_image", "cover_image_alt", "tags", "subcategory", "inlineImage1Id", "inlineImage1Alt", "inlineImage1Caption", "inlineImage1Position", "inlineImage2Id", "inlineImage2Alt", "inlineImage2Caption", "inlineImage2Position", "affiliateImageUrl1", "affiliateLinkUrl1", "affiliateProductName1", "affiliateCurrentPrice1", "affiliateSalePrice1", "affiliateDiscountRate1", "affiliateButtonText1", "affiliatePosition1", "affiliateImageUrl2", "affiliateLinkUrl2", "affiliateProductName2", "affiliateCurrentPrice2", "affiliateSalePrice2", "affiliateDiscountRate2", "affiliateButtonText2", "affiliatePosition2", "affiliateImageUrl3", "affiliateLinkUrl3", "affiliateProductName3", "affiliateCurrentPrice3", "affiliateSalePrice3", "affiliateDiscountRate3", "affiliateButtonText3", "affiliatePosition3", "affiliateImageUrl4", "affiliateLinkUrl4", "affiliateProductName4", "affiliateCurrentPrice4", "affiliateSalePrice4", "affiliateDiscountRate4", "affiliateButtonText4", "affiliatePosition4", "affiliateImageUrl5", "affiliateLinkUrl5", "affiliateProductName5", "affiliateCurrentPrice5", "affiliateSalePrice5", "affiliateDiscountRate5", "affiliateButtonText5", "affiliatePosition5"].forEach((id) => {
   const el = $(id);
   if (el) el.addEventListener("input", handleRealtimeChange);
   if (el && el.tagName === "SELECT") el.addEventListener("change", handleRealtimeChange);
+});
+
+$("contentLinkStyle")?.addEventListener("change", () => {
+  syncContentAnchorClassesToSelectedStyle();
+  handleRealtimeChange();
 });
 
 $("enableInlineImage1")?.addEventListener("change", handleRealtimeChange);
