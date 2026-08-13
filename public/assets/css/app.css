@@ -550,7 +550,7 @@ body.has-preview-open{overflow:hidden}
 .post-author-card__avatar{width:36px;height:36px;border-radius:999px;display:block;object-fit:cover;flex-shrink:0;border:1px solid #e5e5e5;background:#fff}
 .post-author-card__body{min-width:0;display:grid;flex:1}
 .post-author-card__name{font-size:14px;font-weight:600;line-height:1.2;color:#222}
-.post-author-card__meta{font-size:12px;color:#888;line-height:1.5}
+.post-author-card__meta{font-size:12px;color:#666;line-height:1.5}
 .post-author-card__actions{margin-left:auto;display:inline-flex;align-items:center;justify-content:flex-end;gap:6px;flex-shrink:0}
 .post-author-card__btn{min-height:28px;padding:5px 9px;border-radius:999px;font-size:12px;line-height:1.15;white-space:nowrap}
 .breadcrumb--post{margin-top:8px;margin-bottom:8px}
