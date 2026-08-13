@@ -923,13 +923,36 @@ body.has-preview-open{overflow:hidden}
 
 .post-body .post-content a.post-link-style--external,
 .preview-body a.post-link-style--external {
-  width:100%;
-  background:#ccc;
-  padding:10px 30px;
   display:block;
+  width:100%;
+  box-sizing:border-box;
+  margin:24px 0;
+  padding:15px 24px;
+  border:1px solid #111;
+  border-radius:4px;
+  background:#111;
+  color:#fff;
   text-align:center;
   text-decoration:none;
-  font-size:20px;
+  font-size:18px;
+  font-weight:700;
+  line-height:1.5;
+  word-break:keep-all;
+  transition:background-color .16s ease,color .16s ease,border-color .16s ease;
+}
+
+.post-body .post-content a.post-link-style--external:hover,
+.preview-body a.post-link-style--external:hover {
+  background:#2a2a2a;
+  border-color:#2a2a2a;
+  color:#fff;
+  text-decoration:none;
+}
+
+.post-body .post-content a.post-link-style--external:focus-visible,
+.preview-body a.post-link-style--external:focus-visible {
+  outline:2px solid #111;
+  outline-offset:3px;
 }
 
 .post-page-body .post-body .post-toc a {
@@ -956,6 +979,13 @@ body.has-preview-open{overflow:hidden}
     max-width:100%;
     font-size:15.5px;
     line-height:1.85;
+  }
+  .post-body .post-content a.post-link-style--external,
+  .preview-body a.post-link-style--external {
+    margin:20px 0;
+    padding:14px 18px;
+    font-size:17px;
+    line-height:1.45;
   }
   .post-body .post-content h2,
   .preview-body h2 {
