@@ -38,7 +38,13 @@
   searchRoot.setAttribute('aria-hidden', 'true');
   searchRoot.innerHTML = `
     <div class="site-search__shell">
-      <div class="site-search__panel" role="dialog" aria-modal="false" aria-label="사이트 검색">
+      <div class="site-search__panel" role="dialog" aria-modal="true" aria-labelledby="siteSearchTitle">
+        <div class="site-search__head">
+          <h2 id="siteSearchTitle" class="site-search__title">검색</h2>
+          <button type="button" class="site-search__close" data-site-search-close aria-label="검색 닫기">
+            <span class="site-search__close-icon" aria-hidden="true">${createCloseIcon()}</span>
+          </button>
+        </div>
         <div class="site-search__top">
           <div class="site-search__input-wrap">
             <span class="site-search__input-icon" aria-hidden="true">
@@ -47,13 +53,10 @@
             <input id="siteSearchInput" class="site-search__input" type="search" placeholder="제목으로 검색" autocomplete="off" spellcheck="false" />
             <button type="button" class="site-search__clear" data-site-search-clear hidden>지우기</button>
           </div>
-          <button type="button" class="site-search__close" data-site-search-close aria-label="검색 닫기">
-            <span class="site-search__close-icon" aria-hidden="true">${createCloseIcon()}</span>
-          </button>
         </div>
         <div class="site-search__filters" role="group" aria-label="검색 범위 선택">
-          <button type="button" class="site-search__toggle is-on" data-search-mode="title" aria-pressed="true">제목 검색</button>
-          <button type="button" class="site-search__toggle" data-search-mode="content" aria-pressed="false">내용 검색</button>
+          <button type="button" class="site-search__toggle is-on" data-search-mode="title" aria-pressed="true">제목</button>
+          <button type="button" class="site-search__toggle" data-search-mode="content" aria-pressed="false">내용</button>
         </div>
         <div class="site-search__results" data-site-search-results hidden></div>
       </div>
@@ -175,12 +178,20 @@
     }
   }
 
+  function syncSearchOffset() {
+    const topbarBottom = Math.max(0, Math.round(topbar.getBoundingClientRect().bottom));
+    searchRoot.style.setProperty('--site-search-top', `${topbarBottom}px`);
+  }
+
   function openSearch() {
     if (isOpen) return;
     isOpen = true;
+    syncSearchOffset();
+    document.body.classList.add('search-open');
     searchRoot.hidden = false;
     searchRoot.setAttribute('aria-hidden', 'false');
     searchButton.setAttribute('aria-expanded', 'true');
+    searchButton.setAttribute('aria-label', '검색 닫기');
     searchButton.classList.add('is-active');
     requestAnimationFrame(() => {
       searchRoot.classList.add('is-open');
@@ -198,7 +209,9 @@
     searchRoot.classList.remove('is-open');
     searchRoot.setAttribute('aria-hidden', 'true');
     searchButton.setAttribute('aria-expanded', 'false');
+    searchButton.setAttribute('aria-label', '검색 열기');
     searchButton.classList.remove('is-active');
+    document.body.classList.remove('search-open');
     setTimeout(() => {
       if (!isOpen) searchRoot.hidden = true;
     }, 360);
@@ -247,13 +260,17 @@
     if (event.key === 'Escape' && isOpen) closeSearch();
   });
 
-  document.addEventListener('click', (event) => {
-    if (!isOpen) return;
-    const target = event.target;
-    if (!(target instanceof Element)) return;
-    if (target.closest('.site-search__panel') || target.closest('[data-site-search-toggle]')) return;
-    closeSearch();
+
+  window.addEventListener('resize', () => {
+    if (isOpen) syncSearchOffset();
   });
+
+  if ('ResizeObserver' in window) {
+    const searchTopbarObserver = new ResizeObserver(() => {
+      if (isOpen) syncSearchOffset();
+    });
+    searchTopbarObserver.observe(topbar);
+  }
 
   syncToggleUi();
 })();
