@@ -1,0 +1,309 @@
+/*
+  Search UI cache-safe bundle.
+  Loaded after components.css so search markup and search styles update atomically
+  on real mobile browsers even when an older shared stylesheet is cached.
+*/
+body.search-open{
+  overflow:hidden;
+}
+body.search-open::before{
+  display:none !important;
+}
+.site-search{
+  --site-search-top:0px;
+  --site-search-height:calc(100dvh - var(--site-search-top));
+  position:fixed;
+  z-index:49;
+  top:var(--site-search-top);
+  right:0;
+  bottom:auto;
+  left:0;
+  width:100%;
+  /* 100vh is a legacy fallback. JS replaces this with the live visualViewport height on real mobile devices. */
+  height:calc(100vh - var(--site-search-top));
+  height:var(--site-search-height);
+  min-height:0;
+  display:block;
+  background:#fff;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transform:translateY(-10px);
+  transition:opacity .22s ease, transform .3s cubic-bezier(.22,1,.36,1), visibility 0s linear .3s;
+  overflow:hidden;
+  overscroll-behavior:none;
+}
+.site-search.is-open{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+  transform:translateY(0);
+  transition:opacity .22s ease, transform .3s cubic-bezier(.22,1,.36,1), visibility 0s;
+}
+.site-search__shell{
+  width:min(1080px, calc(100vw - 64px));
+  height:100%;
+  min-height:0;
+  margin:0 auto;
+}
+.site-search__panel{
+  box-sizing:border-box;
+  width:min(900px, 100%);
+  height:100%;
+  min-height:0;
+  margin:0 auto;
+  padding:58px 0 88px;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+.site-search__head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:24px;
+  margin:0 0 46px;
+}
+.site-search__title{
+  margin:0;
+  color:#111;
+  font-size:14px;
+  line-height:1;
+  letter-spacing:.12em;
+  font-weight:600;
+}
+.site-search__top{
+  display:block;
+}
+.site-search__input-wrap{
+  display:grid;
+  grid-template-columns:32px minmax(0,1fr) auto;
+  align-items:center;
+  gap:14px;
+  min-width:0;
+  min-height:72px;
+  padding:0 2px;
+  background:#fff;
+  border:0;
+  border-bottom:2px solid #111;
+  border-radius:0;
+}
+.site-search__input-icon{
+  display:inline-flex;
+  align-items:center;
+  justify-content:flex-start;
+  color:#111;
+}
+.site-search__input-icon .nav__icon-svg--search{
+  width:25px;
+  height:25px;
+  stroke-width:1.65;
+}
+.site-search__input{
+  min-width:0;
+  width:100%;
+  height:70px;
+  border:0;
+  background:transparent;
+  color:#111;
+  font:inherit;
+  font-size:clamp(22px, 2.5vw, 30px);
+  line-height:1.2;
+  letter-spacing:-.035em;
+  font-weight:400;
+  outline:none;
+  padding:0;
+}
+.site-search__input::placeholder{
+  color:#aaa;
+}
+.site-search__clear,
+.site-search__close{
+  border:0;
+  background:transparent;
+  color:#111;
+  cursor:pointer;
+  font:inherit;
+}
+.site-search__clear{
+  min-width:max-content;
+  padding:10px 0 10px 16px;
+  font-size:12px;
+  line-height:1;
+  font-weight:500;
+  color:#666;
+}
+.site-search__close{
+  flex:0 0 auto;
+  width:40px;
+  height:40px;
+  padding:0;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.site-search__close:hover,
+.site-search__close:focus-visible,
+.site-search__clear:hover,
+.site-search__clear:focus-visible{
+  color:#000;
+  outline:none;
+}
+.site-search__close-icon,
+.site-search__close-icon .nav__icon-svg--close{
+  display:inline-flex;
+  width:22px;
+  height:22px;
+  stroke:currentColor;
+  stroke-width:1.7;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.site-search__filters{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:18px;
+}
+.site-search__toggle{
+  min-height:34px;
+  padding:0 13px;
+  border:1px solid #d9d9d9;
+  border-radius:0;
+  background:#fff;
+  color:#666;
+  font:inherit;
+  font-size:12px;
+  line-height:1;
+  font-weight:500;
+  cursor:pointer;
+  transition:background-color .16s ease, border-color .16s ease, color .16s ease;
+}
+.site-search__toggle:hover,
+.site-search__toggle:focus-visible{
+  border-color:#111;
+  color:#111;
+  outline:none;
+}
+.site-search__toggle.is-on{
+  border-color:#111;
+  background:#111;
+  color:#fff;
+}
+.site-search__results{
+  display:grid;
+  gap:0;
+  margin-top:42px;
+  border-top:1px solid #111;
+}
+.site-search__item{
+  display:block;
+  padding:20px 2px;
+  border:0;
+  border-bottom:1px solid #e5e5e5;
+  border-radius:0;
+  background:#fff;
+  text-decoration:none;
+  transition:padding-left .16s ease, color .16s ease;
+}
+.site-search__item:hover,
+.site-search__item:focus-visible{
+  padding-left:8px;
+  outline:none;
+  box-shadow:none;
+  transform:none;
+}
+.site-search__item-title{
+  display:block;
+  color:#222;
+  font-size:16px;
+  line-height:1.55;
+  letter-spacing:-.025em;
+  font-weight:400;
+  word-break:keep-all;
+}
+.site-search__item:hover .site-search__item-title,
+.site-search__item:focus-visible .site-search__item-title{
+  color:#000;
+}
+.site-search__empty{
+  padding:36px 2px;
+  border:0;
+  border-bottom:1px solid #e5e5e5;
+  border-radius:0;
+  background:#fff;
+  color:#777;
+  font-size:14px;
+  line-height:1.6;
+  text-align:left;
+}
+.site-search__loading{
+  display:grid;
+  gap:14px;
+  padding:24px 2px;
+  border-bottom:1px solid #e5e5e5;
+}
+.site-search__loading-line{
+  display:block;
+  width:100%;
+  height:16px;
+  border-radius:0;
+  background:linear-gradient(90deg, #f4f4f4 0%, #e9e9e9 50%, #f4f4f4 100%);
+  background-size:200% 100%;
+  animation:site-search-shimmer 1.1s linear infinite;
+}
+.site-search__loading-line--short{
+  width:72%;
+}
+@keyframes site-search-shimmer{
+  0%{background-position:200% 0}
+  100%{background-position:-200% 0}
+}
+@media (max-width:768px){
+  .site-search__shell{
+    width:calc(100vw - 36px);
+  }
+  .site-search__panel{
+    width:100%;
+    padding:30px 0 calc(60px + env(safe-area-inset-bottom, 0px));
+  }
+  .site-search__head{
+    margin-bottom:28px;
+  }
+  .site-search__input-wrap{
+    grid-template-columns:26px minmax(0,1fr) auto;
+    gap:10px;
+    min-height:62px;
+  }
+  .site-search__input-icon .nav__icon-svg--search{
+    width:21px;
+    height:21px;
+  }
+  .site-search__input{
+    height:60px;
+    font-size:21px;
+  }
+  .site-search__clear{
+    padding-left:10px;
+    font-size:11px;
+  }
+  .site-search__filters{
+    margin-top:14px;
+  }
+  .site-search__results{
+    margin-top:32px;
+  }
+  .site-search__item{
+    padding:18px 0;
+  }
+  .site-search__item:hover,
+  .site-search__item:focus-visible{
+    padding-left:0;
+  }
+  .site-search__item-title{
+    font-size:15px;
+  }
+}
+

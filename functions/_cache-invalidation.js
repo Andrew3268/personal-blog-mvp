@@ -1,7 +1,7 @@
 import { canonicalCategoryName, categoryPath } from "./_category-utils.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
-const ARCHIVE_CACHE_VERSION = "10";
+const ARCHIVE_CACHE_VERSION = "11";
 const POST_CACHE_VERSION = "9";
 
 function normalizeText(value = "") {

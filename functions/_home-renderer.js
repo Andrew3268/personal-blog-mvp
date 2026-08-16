@@ -5,7 +5,7 @@ import { canonicalCategoryName, categoryPath } from "./_category-utils.js";
 export const SITE_ORIGIN = "https://wacky-wiki.com";
 const SITE_NAME = "Wacky Wiki";
 const PER_PAGE = 10;
-const ARCHIVE_CACHE_VERSION = "10";
+const ARCHIVE_CACHE_VERSION = "11";
 
 function clampInt(value, fallback, min, max) {
   const num = Number.parseInt(String(value || ""), 10);
@@ -557,13 +557,14 @@ function renderArchiveNotFound({ title = "페이지를 찾을 수 없습니다",
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <title>${escapeHtml(title)} | ${escapeHtml(SITE_NAME)}</title>
   <meta name="description" content="${escapeHtml(description)}" />
   <meta name="robots" content="noindex,follow" />
   <link rel="stylesheet" href="/assets/css/app.css" />
   <link rel="stylesheet" href="/assets/css/components.css" />
+  <link rel="stylesheet" href="/assets/css/site-search-129e354bb4.css" />
 </head>
 <body>
   <main class="container">
@@ -785,7 +786,7 @@ export async function renderHomePage({ env, request, category = "" }) {
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <meta name="naver-site-verification" content="e49bca383d3b342f512aeaaf82017d3705a638b3" />
   ${homeAdsenseHeadScript}
@@ -821,6 +822,7 @@ export async function renderHomePage({ env, request, category = "" }) {
   <noscript><link rel="stylesheet" href="/assets/css/components.css" /></noscript>
   ${jsonld(websiteJsonLd)}
   ${jsonld(collectionJsonLd)}
+  <link rel="stylesheet" href="/assets/css/site-search-129e354bb4.css" />
 </head>
 <body class="page-home${activeCategory ? " page-category" : " page-archive"}">
   ${topbar(mobileCategoryHtml)}
@@ -875,7 +877,7 @@ export async function renderHomePage({ env, request, category = "" }) {
   ${footer()}
   ${isDefaultHome ? "" : `<script>window.__WACKY_INITIAL_POSTS__=${safeJson(data)};</script>`}
   <script src="/assets/js/nav.js" defer></script>
-  <script src="/assets/js/site-search.js" defer></script>
+  <script src="/assets/js/site-search-51cc95f6c2.js" defer></script>
   ${isDefaultHome ? '<script src="/assets/js/home.js" defer></script>' : '<script src="/assets/js/posts.js" defer></script><script src="/assets/js/post-layout.js" defer></script>'}
 </body>
 </html>`;
