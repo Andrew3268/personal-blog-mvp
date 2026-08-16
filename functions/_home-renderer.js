@@ -76,6 +76,7 @@ function mapPopularRows(rows = []) {
   return (rows || []).map((row) => ({
     slug: row.slug,
     title: row.title,
+    category: canonicalCategoryName(row.category || ""),
     view_count: Number(row.view_count || 0),
     updated_at: row.updated_at,
     published_at: row.published_at
@@ -162,6 +163,7 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
     SELECT
       slug,
       title,
+      category,
       view_count,
       updated_at,
       CASE WHEN status = 'published' THEN first_published_at ELSE published_at END AS published_at
@@ -508,21 +510,35 @@ function renderHomeLowerSection(sidebar = {}) {
         <div class="home-section-heading home-section-heading--popular">
           <h2 id="home-popular-title">인기글</h2>
         </div>
-        <ul id="postsPopular" class="home-popular-list">${renderPopularList(popular)}</ul>
+        <ul id="postsPopular" class="home-popular-list">${renderPopularList(popular, { showCategoryBadge: true })}</ul>
       </div>
     </section>`;
 }
 
-function renderPopularList(items = []) {
+function renderPopularList(items = [], { showCategoryBadge = false } = {}) {
   if (!items.length) return '<li class="small">인기글이 없습니다.</li>';
-  return items.map((item, index) => `
+  return items.map((item, index) => {
+    const titleHtml = escapeHtml(normalizeText(item.title || "제목 없음"));
+    let textHtml = titleHtml;
+
+    if (showCategoryBadge) {
+      const category = canonicalCategoryName(item.category || "");
+      const categoryKey = category.toLowerCase();
+      const badgeHtml = category
+        ? `<span class="home-popular-category-badge home-popular-category-badge--${escapeHtml(categoryKey)}">${escapeHtml(category)}</span>`
+        : "";
+      textHtml = `<span class="post-side__popular-title">${titleHtml}</span>${badgeHtml}`;
+    }
+
+    return `
     <li>
       <a class="post-side__popular-link" href="${escapeHtml(postPath(item.slug))}">
         <span class="post-side__popular-rank">${index + 1}</span>
-        <span class="post-side__popular-text">${escapeHtml(normalizeText(item.title || "제목 없음"))}</span>
+        <span class="post-side__popular-text">${textHtml}</span>
       </a>
     </li>
-  `).join("");
+  `;
+  }).join("");
 }
 
 function renderPagination({ path, page, totalPages, tag = "", status = "published", hasMore = false }) {

@@ -69,6 +69,17 @@
   let revealAt = 0;
   const inlineToc = article.querySelector('.post-toc');
 
+  function syncHorizontalPosition() {
+    const rect = article.getBoundingClientRect();
+    const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+    const buttonWidth = toggle.getBoundingClientRect().width || 52;
+    const safeRight = 16;
+    const contentGap = 12;
+    const preferredRight = viewportWidth - rect.right - buttonWidth - contentGap;
+    const right = Math.max(safeRight, Math.round(preferredRight));
+    root.style.setProperty('--post-floating-toc-right', `${right}px`);
+  }
+
   function calculateRevealAt() {
     const articleTop = article.getBoundingClientRect().top + window.scrollY;
     const baseRevealAt = articleTop + Math.max(900, window.innerHeight * 1.1);
@@ -136,16 +147,19 @@
 
   window.addEventListener('scroll', requestVisibilitySync, { passive: true });
   window.addEventListener('resize', () => {
+    syncHorizontalPosition();
     calculateRevealAt();
     requestVisibilitySync();
   }, { passive: true });
   window.addEventListener('load', () => {
+    syncHorizontalPosition();
     calculateRevealAt();
     requestVisibilitySync();
   }, { once: true });
 
   if ('ResizeObserver' in window) {
     const layoutObserver = new ResizeObserver(() => {
+      syncHorizontalPosition();
       calculateRevealAt();
       requestVisibilitySync();
     });
@@ -172,6 +186,7 @@
     headings.forEach((heading) => observer.observe(heading));
   }
 
+  syncHorizontalPosition();
   calculateRevealAt();
   setActive(tocEntries[0].id);
   syncVisibility();
