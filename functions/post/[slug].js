@@ -66,7 +66,7 @@ export async function onRequestGet(context) {
       const canonical = new URL(`/post/${encodeURIComponent(slug)}`, SITE_ORIGIN);
 
       const siteName = "Wacky Wiki";
-      const siteDescription = "실용적인 생활 정보와 정리된 가이드를 제공하는 블로그";
+      const siteDescription = "생활·기술·반려생활의 선택을 더 명확하게.";
       const authorName = "W. Archiver";
       const faqItems = parseFaqMarkdown(row.faq_md || "");
       const relatedStatement = row.category
@@ -884,8 +884,8 @@ function footer(siteName, siteDescription) {
   return `<footer class="footer container">
     <div class="footer__inner">
       <div class="footer__copy">
-        <div>© 2026 ${escapeHtml(siteName)}</div>
-        <div>${escapeHtml(siteDescription)}</div>
+        <div class="footer__tagline">${escapeHtml(siteDescription)}</div>
+        <div class="footer__copyright">© 2026 ${escapeHtml(siteName)}. All rights reserved.</div>
       </div>
       <nav class="footer__links" aria-label="하단 메뉴">
         <a class="footer__link" href="/about/">Wacky-Wiki 소개</a>
