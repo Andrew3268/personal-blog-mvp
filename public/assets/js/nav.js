@@ -68,3 +68,64 @@
     });
   }
 })();
+
+/* Mobile / tablet portrait preference
+   - Installed/standalone or fullscreen contexts: request a real portrait lock when supported.
+   - Normal browser tabs: keep the site's responsive layout in portrait mode while the device is landscape.
+*/
+(function () {
+  const root = document.documentElement;
+  const coarsePointer = window.matchMedia('(pointer: coarse)');
+  const landscape = window.matchMedia('(orientation: landscape)');
+  const standalone = window.matchMedia('(display-mode: standalone)');
+
+  function isMobileOrTablet() {
+    const hasTouch = coarsePointer.matches || Number(navigator.maxTouchPoints || 0) > 0;
+    const screenWidth = Number(window.screen && window.screen.width) || 0;
+    const screenHeight = Number(window.screen && window.screen.height) || 0;
+    const largestSide = Math.max(screenWidth, screenHeight, window.innerWidth, window.innerHeight);
+    return hasTouch && largestSide <= 1366;
+  }
+
+  function syncPortraitLayout() {
+    const usePortraitLayout = isMobileOrTablet() && landscape.matches;
+    root.classList.toggle('is-portrait-layout-locked', usePortraitLayout);
+  }
+
+  async function requestPortraitLock() {
+    if (!isMobileOrTablet()) return;
+    const orientation = window.screen && window.screen.orientation;
+    if (!orientation || typeof orientation.lock !== 'function') return;
+
+    const canRequestLock = standalone.matches || navigator.standalone === true || Boolean(document.fullscreenElement);
+    if (!canRequestLock) return;
+
+    try {
+      await orientation.lock('portrait-primary');
+    } catch (_) {
+      try {
+        await orientation.lock('portrait');
+      } catch (_) {
+        // Browser/platform policy can reject orientation locking. The CSS portrait-layout fallback remains active.
+      }
+    }
+  }
+
+  function sync() {
+    syncPortraitLayout();
+    requestPortraitLock();
+  }
+
+  sync();
+  window.addEventListener('resize', syncPortraitLayout, { passive: true });
+  window.addEventListener('orientationchange', sync, { passive: true });
+  document.addEventListener('fullscreenchange', requestPortraitLock);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) sync();
+  });
+
+  if (typeof landscape.addEventListener === 'function') {
+    landscape.addEventListener('change', sync);
+    standalone.addEventListener('change', requestPortraitLock);
+  }
+})();

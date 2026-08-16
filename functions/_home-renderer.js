@@ -558,6 +558,7 @@ function renderArchiveNotFound({ title = "페이지를 찾을 수 없습니다",
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="manifest" href="/manifest.webmanifest" />
   <title>${escapeHtml(title)} | ${escapeHtml(SITE_NAME)}</title>
   <meta name="description" content="${escapeHtml(description)}" />
   <meta name="robots" content="noindex,follow" />
@@ -785,6 +786,7 @@ export async function renderHomePage({ env, request, category = "" }) {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="manifest" href="/manifest.webmanifest" />
   <meta name="naver-site-verification" content="e49bca383d3b342f512aeaaf82017d3705a638b3" />
   ${homeAdsenseHeadScript}
   <title>${escapeHtml(title)}</title>

@@ -2109,3 +2109,110 @@ body.has-preview-open{overflow:hidden}
     padding:0;
   }
 }
+
+/* =========================================================
+   Mobile / tablet portrait-layout lock fallback
+   일반 브라우저 탭에서 OS 회전을 강제로 잠글 수 없는 경우에도
+   가로 회전 시 데스크톱 레이아웃으로 전환되지 않도록 세로형 UI를 유지합니다.
+========================================================= */
+html.is-portrait-layout-locked body{
+  font-size:16px;
+}
+html.is-portrait-layout-locked h1{font-size:1.9rem;}
+html.is-portrait-layout-locked h2{font-size:1.4rem;}
+html.is-portrait-layout-locked h3{font-size:1.125rem;}
+html.is-portrait-layout-locked .container,
+html.is-portrait-layout-locked .home-editorial-container,
+html.is-portrait-layout-locked .posts-page,
+html.is-portrait-layout-locked .ww-container{
+  width:min(calc(100% - 32px),760px);
+  max-width:760px;
+  margin-left:auto;
+  margin-right:auto;
+}
+html.is-portrait-layout-locked .topbar__inner--editorial{
+  width:min(100%,760px);
+  max-width:760px;
+  grid-template-columns:44px minmax(0,1fr) 44px;
+  column-gap:12px;
+  padding:14px 16px;
+}
+html.is-portrait-layout-locked .topbar-left-slot,
+html.is-portrait-layout-locked .nav--utility{
+  display:none !important;
+}
+html.is-portrait-layout-locked .topbar-hamburger{
+  display:inline-flex;
+  grid-column:1;
+  justify-self:start;
+}
+html.is-portrait-layout-locked .brand--center{
+  grid-column:2;
+  justify-self:center;
+  margin:0 auto;
+}
+html.is-portrait-layout-locked .topbar-mobile-spacer{
+  display:block;
+  grid-column:3;
+  justify-self:end;
+  width:44px;
+  height:44px;
+}
+html.is-portrait-layout-locked .home-editorial-container{
+  padding-top:22px;
+}
+html.is-portrait-layout-locked .home-editorial-hero{
+  grid-template-columns:1fr;
+  gap:22px;
+}
+html.is-portrait-layout-locked .home-editorial-hero__content{
+  padding:0;
+}
+html.is-portrait-layout-locked .home-category-grid,
+html.is-portrait-layout-locked .home-life-grid{
+  display:flex;
+  gap:24px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:14px 0 8px;
+  scroll-snap-type:x proximity;
+  overscroll-behavior-inline:contain;
+  -webkit-overflow-scrolling:touch;
+}
+html.is-portrait-layout-locked .home-category-card,
+html.is-portrait-layout-locked .home-life-card{
+  flex:0 0 calc((100% - 24px) / 2);
+  min-width:0;
+  scroll-snap-align:start;
+}
+html.is-portrait-layout-locked .home-category-card::before,
+html.is-portrait-layout-locked .home-life-card::before{
+  display:none;
+}
+html.is-portrait-layout-locked .home-lower-section--with-ad,
+html.is-portrait-layout-locked .posts-layout,
+html.is-portrait-layout-locked .page-category .posts-layout,
+html.is-portrait-layout-locked .ww-split-grid,
+html.is-portrait-layout-locked .ww-method-layout,
+html.is-portrait-layout-locked .editor-layout{
+  grid-template-columns:1fr !important;
+}
+html.is-portrait-layout-locked .posts-sidebar,
+html.is-portrait-layout-locked .page-category .posts-sidebar,
+html.is-portrait-layout-locked .editor-sidebar{
+  position:static;
+  top:auto;
+}
+html.is-portrait-layout-locked .ww-value-grid{
+  grid-template-columns:1fr;
+}
+html.is-portrait-layout-locked .ww-section-heading{
+  display:block;
+}
+html.is-portrait-layout-locked .ww-topic-row{
+  grid-template-columns:42px 1fr 24px;
+  gap:16px;
+}
+html.is-portrait-layout-locked .ww-topic-row>div{grid-column:2;}
+html.is-portrait-layout-locked .ww-topic-desc{grid-column:2/4;}
+html.is-portrait-layout-locked .ww-topic-arrow{grid-column:3;grid-row:1/2;}
