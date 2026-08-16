@@ -5,7 +5,7 @@ import { canonicalCategoryName, categoryPath } from "./_category-utils.js";
 export const SITE_ORIGIN = "https://wacky-wiki.com";
 const SITE_NAME = "Wacky Wiki";
 const PER_PAGE = 10;
-const ARCHIVE_CACHE_VERSION = "9";
+const ARCHIVE_CACHE_VERSION = "10";
 
 function clampInt(value, fallback, min, max) {
   const num = Number.parseInt(String(value || ""), 10);
@@ -217,24 +217,26 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
     ORDER BY COALESCE(first_published_at, published_at, updated_at) DESC, updated_at DESC
     LIMIT 1
   `) : null;
-  const lifeStatement = editorialHome ? db.prepare(`
-    SELECT
-      slug,
-      title,
-      category,
-      meta_description,
-      summary,
-      cover_image,
-      cover_image_alt,
-      view_count,
-      first_published_at,
-      published_at,
-      updated_at
-    FROM posts
-    WHERE status = 'published' AND category = 'Life'
-    ORDER BY COALESCE(first_published_at, published_at, updated_at) DESC, updated_at DESC
-    LIMIT 5
-  `) : null;
+  const editorialCategoryStatements = editorialHome
+    ? ["Life", "Tech", "Pet"].map((categoryName) => db.prepare(`
+        SELECT
+          slug,
+          title,
+          category,
+          meta_description,
+          summary,
+          cover_image,
+          cover_image_alt,
+          view_count,
+          first_published_at,
+          published_at,
+          updated_at
+        FROM posts
+        WHERE status = 'published' AND category = ?
+        ORDER BY COALESCE(first_published_at, published_at, updated_at) DESC, updated_at DESC
+        LIMIT 5
+      `).bind(categoryName))
+    : [];
 
   const statements = [
     itemsStatement,
@@ -246,7 +248,7 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
     overallPopularStatement
   ];
   if (editorialHome) {
-    statements.push(featuredStatement, lifeStatement);
+    statements.push(featuredStatement, ...editorialCategoryStatements);
   }
   if (admin) {
     statements.push(db.prepare(`
@@ -261,12 +263,26 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
   const [itemsRows, countRows, categoryRows, popularRows, settingsRows, categoryPopularRows, overallPopularRows] = batchResults;
   let resultIndex = 7;
   const featuredRows = editorialHome ? batchResults[resultIndex++] : null;
-  const lifeRows = editorialHome ? batchResults[resultIndex++] : null;
+  const editorialCategoryRows = editorialHome
+    ? {
+        Life: batchResults[resultIndex++],
+        Tech: batchResults[resultIndex++],
+        Pet: batchResults[resultIndex++]
+      }
+    : {};
   const statusRows = admin ? batchResults[resultIndex] : null;
   const featured = featuredRows?.results?.[0] || null;
-  // Hero에 노출된 글은 같은 카테고리 섹션에서 다시 노출하지 않습니다.
-  // 이후 Tech/Pet 섹션을 추가할 때도 동일 helper를 사용하면 같은 규칙이 적용됩니다.
-  const lifeItems = excludeFeaturedFromSection(lifeRows?.results || [], featured, 4);
+
+  const buildEditorialCategoryItems = (categoryName) => {
+    const rows = editorialCategoryRows[categoryName]?.results || [];
+    const items = excludeFeaturedFromSection(rows, featured, 4);
+    // 해당 카테고리에 첫 글 1개만 있고 그 글이 Hero에 노출된 경우에도
+    // 카테고리 섹션이 즉시 생성되도록 마지막 수단으로 해당 글을 카드에 유지합니다.
+    return items.length ? items : rows.slice(0, 1);
+  };
+  const lifeItems = buildEditorialCategoryItems("Life");
+  const techItems = buildEditorialCategoryItems("Tech");
+  const petItems = buildEditorialCategoryItems("Pet");
   const countRow = countRows?.results?.[0] || null;
   const total = Number(countRow?.total || 0);
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
@@ -302,7 +318,9 @@ async function fetchHomeData({ db, request, category = "", tag = "", page = 1, s
     editorial_home: {
       enabled: editorialHome,
       featured,
-      life: lifeItems
+      life: lifeItems,
+      tech: techItems,
+      pet: petItems
     },
     sidebar: {
       settings: {
@@ -444,34 +462,38 @@ function renderEditorialHero(item) {
     </section>`;
 }
 
-function renderLifeCard(item) {
+function renderEditorialCategoryCard(item, categoryName) {
   const title = normalizeText(item?.title || "제목 없음");
   const date = formatDate(item?.first_published_at || item?.published_at || item?.updated_at);
   const href = postPath(item?.slug || "");
   return `
-    <article class="home-life-card">
-      <a class="home-life-card__media home-loading-media" href="${escapeHtml(href)}" aria-label="${escapeHtml(title)} 글 보기">
+    <article class="home-category-card home-life-card">
+      <a class="home-category-card__media home-life-card__media home-loading-media" href="${escapeHtml(href)}" aria-label="${escapeHtml(title)} 글 보기">
         ${renderHomeImage(item)}
       </a>
-      <div class="home-life-card__body">
-        <h3 class="home-life-card__title"><a href="${escapeHtml(href)}">${escapeHtml(title)}</a></h3>
-        <div class="home-life-card__meta">
+      <div class="home-category-card__body home-life-card__body">
+        <h3 class="home-category-card__title home-life-card__title"><a href="${escapeHtml(href)}">${escapeHtml(title)}</a></h3>
+        <div class="home-category-card__meta home-life-card__meta">
           ${date ? `<span>${escapeHtml(date)}</span>` : ""}
-          <span>Life</span>
+          <span>${escapeHtml(categoryName)}</span>
         </div>
       </div>
     </article>`;
 }
 
-function renderLifeSection(items = []) {
-  const cards = items.slice(0, 4).map(renderLifeCard).join("");
+function renderEditorialCategorySection(categoryName, items = [], { alwaysRender = false } = {}) {
+  const safeCategory = canonicalCategoryName(categoryName);
+  if (!safeCategory || (!alwaysRender && !items.length)) return "";
+
+  const idKey = safeCategory.toLowerCase();
+  const cards = items.slice(0, 4).map((item) => renderEditorialCategoryCard(item, safeCategory)).join("");
   return `
-    <section class="home-life-section" aria-labelledby="home-life-title">
+    <section class="home-category-section home-${idKey}-section" aria-labelledby="home-${idKey}-title">
       <div class="home-section-heading">
-        <h2 id="home-life-title">Life</h2>
-        <a class="home-section-more" href="${escapeHtml(categoryPath("Life"))}">더보기</a>
+        <h2 id="home-${idKey}-title">${escapeHtml(safeCategory)}</h2>
+        <a class="home-section-more" href="${escapeHtml(categoryPath(safeCategory))}">더보기</a>
       </div>
-      ${cards ? `<div class="home-life-grid">${cards}</div>` : '<p class="home-editorial-empty">Life 카테고리에 발행된 글이 없습니다.</p>'}
+      ${cards ? `<div class="home-category-grid home-life-grid">${cards}</div>` : `<p class="home-editorial-empty">${escapeHtml(safeCategory)} 카테고리에 발행된 글이 없습니다.</p>`}
     </section>`;
 }
 
@@ -708,7 +730,12 @@ export async function renderHomePage({ env, request, category = "" }) {
   };
 
   const structuredItems = isDefaultHome
-    ? [data.editorial_home?.featured, ...(data.editorial_home?.life || [])]
+    ? [
+        data.editorial_home?.featured,
+        ...(data.editorial_home?.life || []),
+        ...(data.editorial_home?.tech || []),
+        ...(data.editorial_home?.pet || [])
+      ]
         .filter(Boolean)
         .filter((item, index, items) => items.findIndex((candidate) => String(candidate.slug || "") === String(item.slug || "")) === index)
     : data.items;
@@ -783,7 +810,9 @@ export async function renderHomePage({ env, request, category = "" }) {
   <main class="home-editorial-main">
     <div class="home-editorial-container">
       ${renderEditorialHero(data.editorial_home?.featured)}
-      ${renderLifeSection(data.editorial_home?.life || [])}
+      ${renderEditorialCategorySection("Life", data.editorial_home?.life || [], { alwaysRender: true })}
+      ${renderEditorialCategorySection("Tech", data.editorial_home?.tech || [])}
+      ${renderEditorialCategorySection("Pet", data.editorial_home?.pet || [])}
       ${renderHomeLowerSection(data.sidebar)}
     </div>
   </main>` : `

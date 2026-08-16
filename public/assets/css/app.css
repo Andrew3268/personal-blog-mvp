@@ -2014,3 +2014,74 @@ body.has-preview-open{overflow:hidden}
 .taxonomy-empty{padding:22px 0;color:#7b8492}
 @media (max-width:900px){.taxonomy-admin-grid{grid-template-columns:1fr}.taxonomy-admin-head{align-items:flex-start;flex-direction:column}.taxonomy-admin-head__actions{justify-content:flex-start}}
 @media (max-width:620px){.taxonomy-admin-shell{padding-top:18px}.taxonomy-panel{padding:16px}.taxonomy-create-row,.taxonomy-item{grid-template-columns:1fr}.taxonomy-item__actions{justify-content:flex-start}.editor-top-controls{grid-template-columns:1fr}}
+
+/* 2026-08-16: home category sections (Life / Tech / Pet) */
+.home-category-section{
+  padding:22px 0 42px;
+  border-bottom:1px solid #cfcfcb;
+}
+.home-category-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  column-gap:24px;
+  row-gap:0;
+  padding-top:12px;
+}
+.home-category-card{
+  position:relative;
+  min-width:0;
+  padding:0 0 4px;
+  display:flex;
+  flex-direction:column;
+}
+.home-category-card + .home-category-card::before{
+  content:"";
+  position:absolute;
+  top:0;
+  bottom:0;
+  left:-12px;
+  width:1px;
+  background:#d9d9d5;
+}
+
+@media (max-width:900px){
+  .home-category-grid,
+  .home-life-grid{
+    display:flex;
+    gap:24px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    padding:14px 0 8px;
+    scroll-snap-type:x proximity;
+    overscroll-behavior-inline:contain;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+  }
+  .home-category-card,
+  .home-life-card{
+    flex:0 0 calc((100% - 24px) / 2);
+    min-width:0;
+    scroll-snap-align:start;
+  }
+  .home-category-card::before,
+  .home-life-card::before{
+    display:none;
+  }
+}
+
+@media (max-width:560px){
+  .home-category-section,
+  .home-life-section{
+    padding:20px 0 34px;
+  }
+  .home-category-grid,
+  .home-life-grid{
+    gap:16px;
+    padding-top:14px;
+  }
+  .home-category-card,
+  .home-life-card{
+    flex:0 0 84%;
+    padding:0;
+  }
+}
