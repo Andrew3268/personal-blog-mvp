@@ -178,16 +178,36 @@
     }
   }
 
-  function syncSearchOffset() {
+  let viewportSyncFrame = 0;
+
+  function syncSearchViewport() {
+    if (!isOpen) return;
+
     const topbarBottom = Math.max(0, Math.round(topbar.getBoundingClientRect().bottom));
+    const visualViewport = window.visualViewport;
+    const visibleViewportHeight = Math.max(
+      0,
+      Math.round(visualViewport ? visualViewport.height : window.innerHeight)
+    );
+    const availableHeight = Math.max(0, visibleViewportHeight - topbarBottom);
+
     searchRoot.style.setProperty('--site-search-top', `${topbarBottom}px`);
+    searchRoot.style.setProperty('--site-search-height', `${availableHeight}px`);
+  }
+
+  function requestSearchViewportSync() {
+    if (!isOpen || viewportSyncFrame) return;
+    viewportSyncFrame = window.requestAnimationFrame(() => {
+      viewportSyncFrame = 0;
+      syncSearchViewport();
+    });
   }
 
   function openSearch() {
     if (isOpen) return;
     isOpen = true;
-    syncSearchOffset();
     document.body.classList.add('search-open');
+    syncSearchViewport();
     searchRoot.hidden = false;
     searchRoot.setAttribute('aria-hidden', 'false');
     searchButton.setAttribute('aria-expanded', 'true');
@@ -197,8 +217,12 @@
       searchRoot.classList.add('is-open');
       window.setTimeout(() => {
         if (!isOpen) return;
-        input?.focus();
+        input?.focus({ preventScroll: true });
         input?.select();
+        /* Mobile keyboards animate in after focus; resync during and after that transition. */
+        requestSearchViewportSync();
+        window.setTimeout(requestSearchViewportSync, 180);
+        window.setTimeout(requestSearchViewportSync, 420);
       }, 90);
     });
   }
@@ -261,14 +285,27 @@
   });
 
 
-  window.addEventListener('resize', () => {
-    if (isOpen) syncSearchOffset();
+  window.addEventListener('resize', requestSearchViewportSync, { passive: true });
+  window.addEventListener('orientationchange', requestSearchViewportSync, { passive: true });
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', requestSearchViewportSync, { passive: true });
+    window.visualViewport.addEventListener('scroll', requestSearchViewportSync, { passive: true });
+  }
+
+  input?.addEventListener('focus', () => {
+    requestSearchViewportSync();
+    window.setTimeout(requestSearchViewportSync, 180);
+    window.setTimeout(requestSearchViewportSync, 420);
+  });
+
+  input?.addEventListener('blur', () => {
+    requestSearchViewportSync();
+    window.setTimeout(requestSearchViewportSync, 180);
   });
 
   if ('ResizeObserver' in window) {
-    const searchTopbarObserver = new ResizeObserver(() => {
-      if (isOpen) syncSearchOffset();
-    });
+    const searchTopbarObserver = new ResizeObserver(requestSearchViewportSync);
     searchTopbarObserver.observe(topbar);
   }
 

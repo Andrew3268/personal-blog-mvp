@@ -1074,12 +1074,18 @@ body.search-open::before{
 }
 .site-search{
   --site-search-top:0px;
+  --site-search-height:calc(100dvh - var(--site-search-top));
   position:fixed;
   z-index:49;
   top:var(--site-search-top);
   right:0;
-  bottom:0;
+  bottom:auto;
   left:0;
+  width:100%;
+  /* 100vh is a legacy fallback. JS replaces this with the live visualViewport height on real mobile devices. */
+  height:calc(100vh - var(--site-search-top));
+  height:var(--site-search-height);
+  min-height:0;
   display:block;
   background:#fff;
   opacity:0;
@@ -1087,8 +1093,10 @@ body.search-open::before{
   pointer-events:none;
   transform:translateY(-10px);
   transition:opacity .22s ease, transform .3s cubic-bezier(.22,1,.36,1), visibility 0s linear .3s;
+  overflow-x:hidden;
   overflow-y:auto;
   overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
 }
 .site-search.is-open{
   opacity:1;
@@ -1316,7 +1324,7 @@ body.search-open::before{
   }
   .site-search__panel{
     width:100%;
-    padding:30px 0 60px;
+    padding:30px 0 calc(60px + env(safe-area-inset-bottom, 0px));
   }
   .site-search__head{
     margin-bottom:28px;
