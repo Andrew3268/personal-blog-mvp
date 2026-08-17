@@ -6,7 +6,18 @@ import { canonicalCategoryName, categoryPath } from "../_category-utils.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
 const ADSENSE_CLIENT = "ca-pub-7298667883751711";
-const POST_CACHE_VERSION = "9";
+const POST_CACHE_VERSION = "10";
+
+const AUTHOR_PROFILES = Object.freeze({
+  life: { name: "Life.Archiver", href: "/about/#life-archiver" },
+  tech: { name: "Tech.Archiver", href: "/about/#tech-archiver" },
+  pet: { name: "Pet.Archiver", href: "/about/#pet-archiver" }
+});
+
+function getAuthorProfile(category = "") {
+  const canonical = canonicalCategoryName(category).toLowerCase();
+  return AUTHOR_PROFILES[canonical] || { name: "W. Archiver", href: "/about/" };
+}
 
 function safeDecodePathParam(value = "") {
   try {
@@ -67,7 +78,9 @@ export async function onRequestGet(context) {
 
       const siteName = "Wacky Wiki";
       const siteDescription = "생활·기술·반려생활의 선택을 더 명확하게.";
-      const authorName = "W. Archiver";
+      const authorProfile = getAuthorProfile(row.category);
+      const authorName = authorProfile.name;
+      const authorHref = authorProfile.href;
       const faqItems = parseFaqMarkdown(row.faq_md || "");
       const relatedStatement = row.category
         ? env.BLOG_DB.prepare(`
@@ -153,7 +166,7 @@ export async function onRequestGet(context) {
         <div class="post-author-card" aria-label="작성자 정보">
           <img class="post-author-card__avatar" src="/assets/images/favicon-32x32.png" alt="" width="40" height="40" loading="lazy" decoding="async" />
           <div class="post-author-card__body">
-            <div class="post-author-card__name">${escapeHtml(authorName)}</div>
+            <a class="post-author-card__name" href="${escapeHtml(authorHref)}" aria-label="${escapeHtml(authorName)} 작성자 소개 보기">${escapeHtml(authorName)}</a>
             <div class="post-author-card__meta">
               <time datetime="${escapeHtml(publishedIso || "")}">발행 ${escapeHtml(publishedDate)}</time>
               <span aria-hidden="true"> · </span>
@@ -203,7 +216,8 @@ export async function onRequestGet(context) {
         image: [ogImage],
         author: {
           "@type": "Person",
-          name: authorName
+          name: authorName,
+          url: `${origin}${authorHref}`
         },
         publisher: {
           "@type": "Organization",
