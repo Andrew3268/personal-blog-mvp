@@ -55,6 +55,20 @@ function normalizeCategoryName(value) {
 let categoryItems = [];
 let subcategoryItems = [];
 
+function defaultAuthorKeyForCategory(category = "") {
+  const normalized = normalizeCategoryName(category).toLowerCase();
+  if (normalized === "life") return "life-archiver";
+  if (normalized === "tech") return "tech-archiver";
+  if (normalized === "pet") return "pet-archiver";
+  return "wacky-wiki";
+}
+
+function syncAuthorWithCategory() {
+  const authorEl = $("author_key");
+  if (!authorEl) return;
+  authorEl.value = defaultAuthorKeyForCategory(getCurrentCategoryValue());
+}
+
 function getCurrentCategoryValue() {
   return normalizeCategoryName($("category")?.value || "");
 }
@@ -147,11 +161,13 @@ async function loadTaxonomy(selectedCategory = "", selectedSubcategory = "") {
 
   renderCategoryOptions(selectedCategory);
   renderSubcategoryOptions(selectedCategory || getCurrentCategoryValue(), selectedSubcategory);
+  syncAuthorWithCategory();
 }
 
 function bindTaxonomyEvents() {
   $("category")?.addEventListener("change", () => {
     renderSubcategoryOptions(getCurrentCategoryValue(), "");
+    syncAuthorWithCategory();
     handleRealtimeChange();
   });
 }
@@ -1375,8 +1391,8 @@ function evaluateSeo() {
       label: "FAQ 입력 여부",
       status: faqItems.length >= 4 ? "good" : faqItems.length >= 1 ? "warn" : "warn",
       detail: faqItems.length
-        ? `FAQ ${faqItems.length}개 인식됨 · 입력된 FAQ만 공개 페이지와 FAQPage JSON-LD에 반영됩니다.`
-        : "FAQ를 입력하지 않으면 FAQ 섹션과 FAQPage JSON-LD가 생성되지 않습니다."
+        ? `FAQ ${faqItems.length}개 인식됨 · 입력된 FAQ만 공개 페이지의 FAQ 섹션에 반영됩니다.`
+        : "FAQ를 입력하지 않으면 공개 페이지에 FAQ 섹션이 생성되지 않습니다."
     },
     {
       key: "imageAlt",
@@ -2178,6 +2194,7 @@ async function save() {
     slug,
     title,
     category: $("category").value.trim(),
+    author_key: $("author_key")?.value.trim() || "",
     subcategory: $("subcategory")?.value.trim() || "",
     meta_description: $("meta_description").value.trim(),
     summary: $("summary").value.trim(),
@@ -2234,7 +2251,7 @@ function handleRealtimeChange() {
   renderPreview();
 }
 
-["title", "meta_description", "summary", "content_md", "faq_md", "focusKeyword", "longtailKeywords", "lsiKeywords", "cover_image", "cover_image_alt", "tags", "subcategory", "inlineImage1Id", "inlineImage1Alt", "inlineImage1Caption", "inlineImage1Position", "inlineImage2Id", "inlineImage2Alt", "inlineImage2Caption", "inlineImage2Position", "affiliateImageUrl1", "affiliateLinkUrl1", "affiliateProductName1", "affiliateCurrentPrice1", "affiliateSalePrice1", "affiliateDiscountRate1", "affiliateButtonText1", "affiliatePosition1", "affiliateImageUrl2", "affiliateLinkUrl2", "affiliateProductName2", "affiliateCurrentPrice2", "affiliateSalePrice2", "affiliateDiscountRate2", "affiliateButtonText2", "affiliatePosition2", "affiliateImageUrl3", "affiliateLinkUrl3", "affiliateProductName3", "affiliateCurrentPrice3", "affiliateSalePrice3", "affiliateDiscountRate3", "affiliateButtonText3", "affiliatePosition3", "affiliateImageUrl4", "affiliateLinkUrl4", "affiliateProductName4", "affiliateCurrentPrice4", "affiliateSalePrice4", "affiliateDiscountRate4", "affiliateButtonText4", "affiliatePosition4", "affiliateImageUrl5", "affiliateLinkUrl5", "affiliateProductName5", "affiliateCurrentPrice5", "affiliateSalePrice5", "affiliateDiscountRate5", "affiliateButtonText5", "affiliatePosition5"].forEach((id) => {
+["title", "meta_description", "summary", "content_md", "faq_md", "focusKeyword", "longtailKeywords", "lsiKeywords", "cover_image", "cover_image_alt", "tags", "subcategory", "author_key", "inlineImage1Id", "inlineImage1Alt", "inlineImage1Caption", "inlineImage1Position", "inlineImage2Id", "inlineImage2Alt", "inlineImage2Caption", "inlineImage2Position", "affiliateImageUrl1", "affiliateLinkUrl1", "affiliateProductName1", "affiliateCurrentPrice1", "affiliateSalePrice1", "affiliateDiscountRate1", "affiliateButtonText1", "affiliatePosition1", "affiliateImageUrl2", "affiliateLinkUrl2", "affiliateProductName2", "affiliateCurrentPrice2", "affiliateSalePrice2", "affiliateDiscountRate2", "affiliateButtonText2", "affiliatePosition2", "affiliateImageUrl3", "affiliateLinkUrl3", "affiliateProductName3", "affiliateCurrentPrice3", "affiliateSalePrice3", "affiliateDiscountRate3", "affiliateButtonText3", "affiliatePosition3", "affiliateImageUrl4", "affiliateLinkUrl4", "affiliateProductName4", "affiliateCurrentPrice4", "affiliateSalePrice4", "affiliateDiscountRate4", "affiliateButtonText4", "affiliatePosition4", "affiliateImageUrl5", "affiliateLinkUrl5", "affiliateProductName5", "affiliateCurrentPrice5", "affiliateSalePrice5", "affiliateDiscountRate5", "affiliateButtonText5", "affiliatePosition5"].forEach((id) => {
   const el = $(id);
   if (el) el.addEventListener("input", handleRealtimeChange);
   if (el && el.tagName === "SELECT") el.addEventListener("change", handleRealtimeChange);

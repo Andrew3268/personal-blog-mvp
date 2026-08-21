@@ -1,9 +1,10 @@
 INSERT OR REPLACE INTO posts (
-  slug, title, category, summary, cover_image, template_name, tags_json, content_md, status, published_at, first_published_at, metadata_updated_at, updated_at
+  slug, title, category, author_key, summary, cover_image, template_name, tags_json, content_md, status, published_at, first_published_at, metadata_updated_at, updated_at
 ) VALUES (
   'expired-shampoo-bottle-reuse',
   '유통기한 지난 샴푸통, 버리면 손해입니다',
-  '생활 꿀팁',
+  'Life',
+  'life-archiver',
   '남은 샴푸와 물만으로 욕실 청소 보조템처럼 활용하는 흐름을 정리한 샘플 글입니다.',
   'https://images.unsplash.com/photo-1585238342024-78d387f4a707?auto=format&fit=crop&w=1200&q=80',
   'tip',
@@ -43,15 +44,6 @@ INSERT OR REPLACE INTO posts (
 
 
 INSERT OR IGNORE INTO categories (name, sort_order, created_at, updated_at) VALUES
-  ('생활 꿀팁', 1, '2026-03-25T09:00:00.000Z', '2026-03-25T09:00:00.000Z'),
-  ('살림 노하우', 2, '2026-03-25T09:00:00.000Z', '2026-03-25T09:00:00.000Z'),
-  ('청소', 3, '2026-03-25T09:00:00.000Z', '2026-03-25T09:00:00.000Z'),
-  ('주방', 4, '2026-03-25T09:00:00.000Z', '2026-03-25T09:00:00.000Z'),
-  ('욕실', 5, '2026-03-25T09:00:00.000Z', '2026-03-25T09:00:00.000Z'),
-  ('세탁', 6, '2026-03-25T09:00:00.000Z', '2026-03-25T09:00:00.000Z'),
-  ('정리수납', 7, '2026-03-25T09:00:00.000Z', '2026-03-25T09:00:00.000Z'),
-  ('리뷰', 8, '2026-03-25T09:00:00.000Z', '2026-03-25T09:00:00.000Z'),
-  ('쇼핑', 9, '2026-03-25T09:00:00.000Z', '2026-03-25T09:00:00.000Z'),
-  ('반려동물', 10, '2026-03-25T09:00:00.000Z', '2026-03-25T09:00:00.000Z'),
-  ('건강', 11, '2026-03-25T09:00:00.000Z', '2026-03-25T09:00:00.000Z'),
-  ('디지털', 12, '2026-03-25T09:00:00.000Z', '2026-03-25T09:00:00.000Z');
+  ('Life', 1, '2026-03-25T09:00:00.000Z', '2026-03-25T09:00:00.000Z'),
+  ('Tech', 2, '2026-03-25T09:00:00.000Z', '2026-03-25T09:00:00.000Z'),
+  ('Pet', 3, '2026-03-25T09:00:00.000Z', '2026-03-25T09:00:00.000Z');

@@ -132,6 +132,11 @@ export async function onRequest(context) {
     return Response.redirect(redirectUrl.toString(), 301);
   }
 
+  if (url.pathname.startsWith("/author/") && url.pathname.length > "/author/".length && !url.pathname.endsWith("/")) {
+    const redirectUrl = new URL(`${url.pathname}/${url.search}`, url.origin);
+    return Response.redirect(redirectUrl.toString(), 301);
+  }
+
   if (url.pathname.startsWith("/post/") && url.pathname.length > "/post/".length && url.pathname.endsWith("/")) {
     const redirectUrl = new URL(`${url.pathname.replace(/\/+$/, "")}${url.search}`, url.origin);
     return Response.redirect(redirectUrl.toString(), 301);

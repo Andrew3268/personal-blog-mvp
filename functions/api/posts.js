@@ -2,6 +2,8 @@ import { okJson, getAdminSession, requireAdmin } from "../_utils.js";
 import { normalizeTags, buildPostTagReplaceStatements, parseStoredTags } from "../_post-tags.js";
 import { scheduleContentCacheInvalidation } from "../_cache-invalidation.js";
 import { normalizePostLinkStyle, parsePostLinkStyle, setPostLinkStyleToken } from "../../lib/posts/link-style.js";
+import { defaultAuthorKeyForCategory, normalizeAuthorKey } from "../_authors.js";
+import { hasEditorialChanges } from "../_post-editorial.js";
 
 function normalizeText(value = "") {
   return String(value || "").replace(/\s+/g, " ").trim();
@@ -275,6 +277,11 @@ export async function onRequestPost(context) {
   const slug = String(body.slug || "").trim();
   const title = String(body.title || "").trim();
   const category = normalizeText(body.category);
+  const requestedAuthorKey = String(body.author_key || "").trim();
+  const normalizedAuthorKey = normalizeAuthorKey(requestedAuthorKey);
+  if (requestedAuthorKey && !normalizedAuthorKey) {
+    return okJson({ message: "유효하지 않은 작성자입니다." }, { status: 400 });
+  }
   const subcategory = category ? normalizeText(body.subcategory) : "";
   const metaDescription = String(body.meta_description || "").trim();
   const summary = String(body.summary || "").trim();
@@ -294,7 +301,6 @@ export async function onRequestPost(context) {
   const enableInarticleAds = body.enable_inarticle_ads === false ? 0 : 1;
   const requestedStatus = String(body.status || "published").trim().toLowerCase();
   const status = requestedStatus === "draft" ? "draft" : "published";
-  const updateModifiedAt = body.update_modified_at === true;
   const normalizedTags = normalizeTags(body.tags);
   const tags = normalizedTags.map((item) => item.tag);
 
@@ -316,18 +322,45 @@ export async function onRequestPost(context) {
 
   const now = new Date().toISOString();
   const current = await env.BLOG_DB.prepare(`
-    SELECT status, category, tags_json, published_at, first_published_at, updated_at
+    SELECT
+      status,
+      category,
+      author_key,
+      title,
+      summary,
+      cover_image,
+      cover_image_alt,
+      content_md,
+      faq_md,
+      tags_json,
+      published_at,
+      first_published_at,
+      updated_at
     FROM posts
     WHERE slug = ?
   `).bind(slug).first();
+  const authorKey = normalizedAuthorKey
+    || normalizeAuthorKey(current?.author_key)
+    || defaultAuthorKeyForCategory(category);
   const legacyPublishedAt = normalizeIsoDate(current?.published_at, now);
   const existingFirstPublishedAt = normalizeIsoDate(current?.first_published_at);
   const firstPublishedAt = status === "published"
     ? (existingFirstPublishedAt || (current?.status === "published" ? legacyPublishedAt : now))
     : (existingFirstPublishedAt || null);
+  const editorialChanged = hasEditorialChanges(current, {
+    title,
+    category,
+    author_key: authorKey,
+    summary,
+    cover_image: coverImage,
+    cover_image_alt: coverImageAlt,
+    content_md: contentMd,
+    faq_md: faqMd
+  });
+  const becamePublished = Boolean(current && current.status !== "published" && status === "published");
   const existingUpdatedAt = normalizeIsoDate(current?.updated_at);
   const updatedAt = current
-    ? (updateModifiedAt ? now : (existingUpdatedAt || firstPublishedAt || legacyPublishedAt || now))
+    ? ((editorialChanged || becamePublished) ? now : (existingUpdatedAt || firstPublishedAt || legacyPublishedAt || now))
     : now;
 
   const upsertPostStatement = env.BLOG_DB.prepare(`
@@ -335,6 +368,7 @@ export async function onRequestPost(context) {
       slug,
       title,
       category,
+      author_key,
       meta_description,
       summary,
       cover_image,
@@ -351,10 +385,11 @@ export async function onRequestPost(context) {
       first_published_at,
       metadata_updated_at,
       updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(slug) DO UPDATE SET
       title = excluded.title,
       category = excluded.category,
+      author_key = excluded.author_key,
       meta_description = excluded.meta_description,
       summary = excluded.summary,
       cover_image = excluded.cover_image,
@@ -375,6 +410,7 @@ export async function onRequestPost(context) {
     slug,
     title,
     category,
+    authorKey,
     metaDescription,
     summary,
     coverImage,
@@ -418,5 +454,11 @@ export async function onRequestPost(context) {
     tags: [...previousTags, ...tags]
   });
 
-  return okJson({ ok: true, slug, content_link_style: requestedContentLinkStyle });
+  return okJson({
+    ok: true,
+    slug,
+    updated_at: updatedAt,
+    modified_date_updated: !current || editorialChanged || becamePublished,
+    content_link_style: requestedContentLinkStyle
+  });
 }

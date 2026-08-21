@@ -46,6 +46,9 @@ export async function onRequestGet({ env }) {
   const staticUrls = [
     renderUrl(`${origin}/`),
     renderUrl(`${origin}/about/`),
+    renderUrl(`${origin}/author/life-archiver/`),
+    renderUrl(`${origin}/author/tech-archiver/`),
+    renderUrl(`${origin}/author/pet-archiver/`),
     renderUrl(`${origin}/privacy-policy/`)
   ];
 

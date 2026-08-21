@@ -101,6 +101,15 @@
                   <option value="">메인 카테고리를 먼저 선택하세요</option>
                 </select>
               </label>
+              <label class="editor-author-field">
+                <div class="small">작성자</div>
+                <select class="input" id="author_key">
+                  <option value="wacky-wiki">Wacky Wiki 편집부</option>
+                  <option value="life-archiver">Life.Archiver</option>
+                  <option value="tech-archiver">Tech.Archiver</option>
+                  <option value="pet-archiver">Pet.Archiver</option>
+                </select>
+              </label>
             </div>
 
 <div class="grid grid--3">
@@ -116,18 +125,6 @@
               <div class="small">수정일</div>
               <input class="input" id="updated_at" readonly />
             </label>
-            <div class="editor-date-update-row">
-              <label class="editor-date-update-toggle" for="updateModifiedDateToggle">
-                <input class="editor-date-update-toggle__input" id="updateModifiedDateToggle" type="checkbox" disabled />
-                <span class="editor-date-update-toggle__indicator" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" focusable="false">
-                    <path d="M5 12.5 9.5 17 19 7.5"></path>
-                  </svg>
-                </span>
-                <span class="editor-date-update-toggle__label">수정 날짜 업데이트</span>
-              </label>
-              <div class="small editor-date-update-row__help" id="updatedAtHelp">일반 저장 시 기존 수정일이 유지됩니다.</div>
-            </div>
           </div>
 
             <label>

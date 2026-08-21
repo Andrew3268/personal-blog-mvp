@@ -3,21 +3,11 @@ import { renderMarkdown, renderMarkdownBlocks, buildTocItemsFromBlocks, renderTo
 import { applyPostLinkStyleToHtml } from "../../lib/posts/link-style.js";
 import { buildImageAttrs, absolutizeImageUrl } from "../../lib/image-utils.js";
 import { canonicalCategoryName, categoryPath } from "../_category-utils.js";
+import { getAuthorProfile, getAuthorEntityId } from "../_authors.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
 const ADSENSE_CLIENT = "ca-pub-7298667883751711";
-const POST_CACHE_VERSION = "10";
-
-const AUTHOR_PROFILES = Object.freeze({
-  life: { name: "Life.Archiver", href: "/about/#life-archiver" },
-  tech: { name: "Tech.Archiver", href: "/about/#tech-archiver" },
-  pet: { name: "Pet.Archiver", href: "/about/#pet-archiver" }
-});
-
-function getAuthorProfile(category = "") {
-  const canonical = canonicalCategoryName(category).toLowerCase();
-  return AUTHOR_PROFILES[canonical] || { name: "W. Archiver", href: "/about/" };
-}
+const POST_CACHE_VERSION = "11";
 
 function safeDecodePathParam(value = "") {
   try {
@@ -25,6 +15,36 @@ function safeDecodePathParam(value = "") {
   } catch {
     return "";
   }
+}
+
+function normalizeIndexableImageUrl(src = "", origin = SITE_ORIGIN) {
+  const absolute = absolutizeImageUrl(src, origin);
+  if (!absolute || /^(data|blob):/i.test(absolute)) return "";
+  return absolute;
+}
+
+function extractFirstArticleImage(contentMd = "", origin = SITE_ORIGIN) {
+  const inlineImages = parseInlineImages(contentMd);
+  const inlineCandidate = [inlineImages?.image1, inlineImages?.image2]
+    .find((item) => item?.enabled && String(item.url || "").trim());
+  if (inlineCandidate) {
+    const absolute = normalizeIndexableImageUrl(inlineCandidate.url, origin);
+    if (absolute) return absolute;
+  }
+
+  const markdownMatch = String(contentMd || "").match(/!\[[^\]]*\]\(\s*<?([^\s)>]+)>?(?:\s+["'][^"']*["'])?\s*\)/);
+  if (markdownMatch?.[1]) {
+    const absolute = normalizeIndexableImageUrl(markdownMatch[1], origin);
+    if (absolute) return absolute;
+  }
+
+  const htmlMatch = String(contentMd || "").match(/<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["'][^>]*>/i);
+  if (htmlMatch?.[1]) {
+    const absolute = normalizeIndexableImageUrl(htmlMatch[1], origin);
+    if (absolute) return absolute;
+  }
+
+  return "";
 }
 
 export async function onRequestGet(context) {
@@ -47,6 +67,7 @@ export async function onRequestGet(context) {
           slug,
           title,
           category,
+          author_key,
           meta_description,
           summary,
           cover_image,
@@ -78,7 +99,7 @@ export async function onRequestGet(context) {
 
       const siteName = "Wacky Wiki";
       const siteDescription = "생활·기술·반려생활의 선택을 더 명확하게.";
-      const authorProfile = getAuthorProfile(row.category);
+      const authorProfile = getAuthorProfile(row.author_key, row.category);
       const authorName = authorProfile.name;
       const authorHref = authorProfile.href;
       const faqItems = parseFaqMarkdown(row.faq_md || "");
@@ -155,8 +176,11 @@ export async function onRequestGet(context) {
         titleText
       );
       const pageTitle = `${titleText} | ${siteName}`;
-      const ogImage = absolutizeImageUrl(row.cover_image || `${origin}/assets/images/logo.png`, origin);
+      const articleImage = normalizeIndexableImageUrl(row.cover_image, origin)
+        || extractFirstArticleImage(row.content_md || "", origin);
+      const socialImage = articleImage || `${origin}/assets/images/logo.png`;
       const coverImageAltText = String(row.cover_image_alt || `${titleText} 대표 이미지`).trim();
+      const socialImageAltText = articleImage ? coverImageAltText : `${siteName} 로고`;
 
       const publishedDate = formatDate(row.published_at);
       const updatedDate = formatDate(row.updated_at);
@@ -193,9 +217,52 @@ export async function onRequestGet(context) {
       });
 
       const breadcrumbHtml = renderBreadcrumbs(breadcrumbItems);
-      const breadcrumbJsonLd = {
-        "@context": "https://schema.org",
+      const organizationId = `${origin}/#organization`;
+      const websiteId = `${origin}/#website`;
+      const webPageId = `${canonical.toString()}#webpage`;
+      const articleId = `${canonical.toString()}#article`;
+      const breadcrumbId = `${canonical.toString()}#breadcrumb`;
+      const authorId = getAuthorEntityId(authorProfile, origin);
+      const authorUrl = `${origin}${authorHref}`;
+
+      const organizationNode = {
+        "@type": "Organization",
+        "@id": organizationId,
+        name: siteName,
+        url: `${origin}/`,
+        logo: {
+          "@type": "ImageObject",
+          "@id": `${origin}/#logo`,
+          url: `${origin}/assets/images/logo.png`,
+          contentUrl: `${origin}/assets/images/logo.png`,
+          width: 520,
+          height: 520
+        }
+      };
+
+      const authorNode = authorProfile.key === "wacky-wiki"
+        ? null
+        : {
+            "@type": authorProfile.type || "Organization",
+            "@id": authorId,
+            name: authorName,
+            url: authorUrl,
+            description: authorProfile.description,
+            parentOrganization: { "@id": organizationId }
+          };
+
+      const websiteNode = {
+        "@type": "WebSite",
+        "@id": websiteId,
+        name: siteName,
+        url: `${origin}/`,
+        inLanguage: "ko-KR",
+        publisher: { "@id": organizationId }
+      };
+
+      const breadcrumbNode = {
         "@type": "BreadcrumbList",
+        "@id": breadcrumbId,
         itemListElement: breadcrumbItems.map((item, index) => ({
           "@type": "ListItem",
           position: index + 1,
@@ -204,68 +271,47 @@ export async function onRequestGet(context) {
         }))
       };
 
-      const blogPostingJsonLd = {
-        "@context": "https://schema.org",
-        "@type": "BlogPosting",
-        mainEntityOfPage: {
-          "@type": "WebPage",
-          "@id": canonical.toString()
-        },
-        headline: titleText,
-        description: descriptionText,
-        image: [ogImage],
-        author: {
-          "@type": "Person",
-          name: authorName,
-          url: `${origin}${authorHref}`
-        },
-        publisher: {
-          "@type": "Organization",
-          name: siteName,
-          logo: {
-            "@type": "ImageObject",
-            url: `${origin}/assets/images/logo.png`,
-            width: 520,
-            height: 520
-          }
-        },
-        datePublished: publishedIso || row.published_at || "",
-        dateModified: updatedIso || row.updated_at || "",
-        url: canonical.toString(),
-        inLanguage: "ko-KR",
-        articleSection: canonicalCategoryName(row.category) || "블로그",
-        wordCount: stripMarkdown(row.content_md || "").split(/\s+/).filter(Boolean).length
-      };
-
-      const webPageJsonLd = {
-        "@context": "https://schema.org",
+      const webPageNode = {
         "@type": "WebPage",
+        "@id": webPageId,
         name: pageTitle,
         url: canonical.toString(),
         description: descriptionText,
         inLanguage: "ko-KR",
-        isPartOf: {
-          "@type": "WebSite",
-          name: siteName,
-          url: `${origin}/`
-        }
+        isPartOf: { "@id": websiteId },
+        breadcrumb: { "@id": breadcrumbId },
+        mainEntity: { "@id": articleId },
+        ...(articleImage ? { primaryImageOfPage: { "@type": "ImageObject", url: articleImage } } : {})
       };
 
-      const faqJsonLd = faqItems.length
-        ? {
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            inLanguage: "ko-KR",
-            mainEntity: faqItems.map((item) => ({
-              "@type": "Question",
-              name: item.question,
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: stripMarkdown(item.answerMd || "")
-              }
-            }))
-          }
-        : null;
+      const blogPostingNode = {
+        "@type": "BlogPosting",
+        "@id": articleId,
+        mainEntityOfPage: { "@id": webPageId },
+        isPartOf: { "@id": websiteId },
+        headline: titleText,
+        description: descriptionText,
+        ...(articleImage ? { image: [articleImage] } : {}),
+        author: { "@id": authorId },
+        publisher: { "@id": organizationId },
+        datePublished: publishedIso || row.published_at || "",
+        dateModified: updatedIso || row.updated_at || "",
+        url: canonical.toString(),
+        inLanguage: "ko-KR",
+        articleSection: canonicalCategoryName(row.category) || "블로그"
+      };
+
+      const structuredData = {
+        "@context": "https://schema.org",
+        "@graph": [
+          organizationNode,
+          ...(authorNode ? [authorNode] : []),
+          websiteNode,
+          webPageNode,
+          blogPostingNode,
+          breadcrumbNode
+        ]
+      };
 
       const coverImage = row.cover_image
         ? buildImageAttrs(row.cover_image, {
@@ -326,21 +372,18 @@ export async function onRequestGet(context) {
   <meta property="og:url" content="${escapeHtml(canonical.toString())}" />
   <meta property="og:title" content="${escapeHtml(pageTitle)}" />
   <meta property="og:description" content="${escapeHtml(descriptionText)}" />
-  <meta property="og:image" content="${escapeHtml(ogImage)}" />
-  <meta property="og:image:alt" content="${escapeHtml(coverImageAltText)}" />
+  <meta property="og:image" content="${escapeHtml(socialImage)}" />
+  <meta property="og:image:alt" content="${escapeHtml(socialImageAltText)}" />
 
-  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:card" content="${articleImage ? "summary_large_image" : "summary"}" />
   <meta name="twitter:title" content="${escapeHtml(pageTitle)}" />
   <meta name="twitter:description" content="${escapeHtml(descriptionText)}" />
-  <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
+  <meta name="twitter:image" content="${escapeHtml(socialImage)}" />
 
   <link rel="stylesheet" href="/assets/css/app.css" />
   <link rel="stylesheet" href="/assets/css/components.css" />
 
-  ${jsonld(blogPostingJsonLd)}
-  ${jsonld(breadcrumbJsonLd)}
-  ${jsonld(webPageJsonLd)}
-  ${faqJsonLd ? jsonld(faqJsonLd) : ""}
+  ${jsonld(structuredData)}
 </head>
 <body class="post-page-body">
 
@@ -349,27 +392,21 @@ export async function onRequestGet(context) {
   <main id="main-content" class="container">
     ${breadcrumbHtml}
 
-    <article class="post-shell" itemscope itemtype="https://schema.org/BlogPosting">
+    <article class="post-shell">
       <div class="post-grid">
         <div class="post-main">
           <header class="card post-hero">
-            <h1 class="h1 post-title" itemprop="headline">${escapeHtml(titleText)}</h1>
+            <h1 class="h1 post-title">${escapeHtml(titleText)}</h1>
 
-            ${row.summary ? `<div class="post-summary" itemprop="description">${renderMarkdown(String(row.summary), { origin: SITE_ORIGIN })}</div>` : ""}
+            ${row.summary ? `<div class="post-summary">${renderMarkdown(String(row.summary), { origin: SITE_ORIGIN })}</div>` : ""}
 
             ${authorCardHtml}
 
             ${coverImageHtml}
-
-            <meta itemprop="author" content="${escapeHtml(authorName)}" />
-            <meta itemprop="datePublished" content="${escapeHtml(publishedIso || "")}" />
-            <meta itemprop="dateModified" content="${escapeHtml(updatedIso || "")}" />
-            <meta itemprop="mainEntityOfPage" content="${escapeHtml(canonical.toString())}" />
-            <meta itemprop="image" content="${escapeHtml(ogImage)}" />
           </header>
 
           <section class="card post-body" aria-label="본문">
-            <div class="post-content" itemprop="articleBody">
+            <div class="post-content">
               ${bodyHtml}
             </div>
             ${faqSectionHtml}

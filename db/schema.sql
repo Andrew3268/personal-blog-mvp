@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS posts (
   slug TEXT PRIMARY KEY,
   title TEXT NOT NULL,
   category TEXT NOT NULL DEFAULT '',
+  author_key TEXT NOT NULL DEFAULT 'wacky-wiki',
   meta_description TEXT DEFAULT '',
   summary TEXT DEFAULT '',
   cover_image TEXT DEFAULT '',

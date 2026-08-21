@@ -55,30 +55,12 @@ function normalizeCategoryName(value) {
 let categoryItems = [];
 let subcategoryItems = [];
 
-function shouldUpdateModifiedDateOnSave() {
-  return Boolean($("updateModifiedDateToggle")?.checked);
-}
-
-function setUpdateModifiedDateControl({ checked = false, disabled = false } = {}) {
-  const toggle = $("updateModifiedDateToggle");
-  const help = $("updatedAtHelp");
-  if (toggle) {
-    toggle.checked = Boolean(checked);
-    toggle.disabled = Boolean(disabled);
-  }
-  if (help) {
-    help.textContent = checked
-      ? "다음 저장 시 수정일을 현재 시각으로 갱신합니다."
-      : "일반 저장 시 기존 수정일이 유지됩니다.";
-  }
-}
-
-function syncUpdateModifiedDateHelp() {
-  const help = $("updatedAtHelp");
-  if (!help) return;
-  help.textContent = shouldUpdateModifiedDateOnSave()
-    ? "다음 저장 시 수정일을 현재 시각으로 갱신합니다."
-    : "일반 저장 시 기존 수정일이 유지됩니다.";
+function defaultAuthorKeyForCategory(category = "") {
+  const normalized = normalizeCategoryName(category).toLowerCase();
+  if (normalized === "life") return "life-archiver";
+  if (normalized === "tech") return "tech-archiver";
+  if (normalized === "pet") return "pet-archiver";
+  return "wacky-wiki";
 }
 
 function getCurrentCategoryValue() {
@@ -1407,8 +1389,8 @@ function evaluateSeo() {
       label: "FAQ 입력 여부",
       status: faqItems.length >= 4 ? "good" : faqItems.length >= 1 ? "warn" : "warn",
       detail: faqItems.length
-        ? `FAQ ${faqItems.length}개 인식됨 · 입력된 FAQ만 공개 페이지와 FAQPage JSON-LD에 반영됩니다.`
-        : "FAQ를 입력하지 않으면 FAQ 섹션과 FAQPage JSON-LD가 생성되지 않습니다."
+        ? `FAQ ${faqItems.length}개 인식됨 · 입력된 FAQ만 공개 페이지의 FAQ 섹션에 반영됩니다.`
+        : "FAQ를 입력하지 않으면 공개 페이지에 FAQ 섹션이 생성되지 않습니다."
     },
     {
       key: "imageAlt",
@@ -2217,8 +2199,6 @@ async function load() {
   }
 
   if (statusEl) statusEl.textContent = "불러오는 중…";
-  setUpdateModifiedDateControl({ checked: false, disabled: true });
-
   const postPromise = fetch(`/api/posts/${encodeURIComponent(slug)}`, { cache: "no-store" })
     .then(async (res) => ({ res, json: await res.json().catch(() => ({})) }));
   const taxonomyPromise = Promise.all([requestCategoryApi('GET'), requestSubcategoryApi()]);
@@ -2239,9 +2219,11 @@ async function load() {
   $("slug").value = item.slug || slug;
   $("published_at").value = item.published_at || "";
   $("updated_at").value = item.updated_at || "";
-  setUpdateModifiedDateControl({ checked: false, disabled: false });
   $("title").value = item.title || "";
   const loadedCategory = item.category || "";
+  if ($("author_key")) {
+    $("author_key").value = item.author_key || defaultAuthorKeyForCategory(loadedCategory);
+  }
   const loadedSubcategory = item.subcategory || "";
   $("meta_description").value = item.meta_description || "";
   $("summary").value = item.summary || "";
@@ -2291,8 +2273,7 @@ async function load() {
 
 async function save() {
   const statusEl = $("saveStatus");
-  const updateModifiedDateOnSave = shouldUpdateModifiedDateOnSave();
-  statusEl.textContent = updateModifiedDateOnSave ? "저장 및 수정 날짜 업데이트 중…" : "저장 중…";
+  statusEl.textContent = "저장 중…";
 
   const slug = $("slug").value.trim();
   const title = $("title").value.trim();
@@ -2300,6 +2281,7 @@ async function save() {
   const payload = {
     title,
     category: $("category").value.trim(),
+    author_key: $("author_key")?.value.trim() || "",
     subcategory: $("subcategory")?.value.trim() || "",
     meta_description: $("meta_description").value.trim(),
     summary: $("summary").value.trim(),
@@ -2313,8 +2295,7 @@ async function save() {
     tags: parseTags($("tags").value),
     content_md: buildContentWithMetaTokens($("content_md").value),
     content_link_style: getSelectedContentLinkStyle(),
-    faq_md: $("faq_md") ? $("faq_md").value : "",
-    update_modified_at: updateModifiedDateOnSave
+    faq_md: $("faq_md") ? $("faq_md").value : ""
   };
 
   if (!slug || !title || !payload.content_md.trim()) {
@@ -2357,7 +2338,7 @@ function handleRealtimeChange() {
   renderPreview();
 }
 
-["title", "meta_description", "summary", "content_md", "faq_md", "focusKeyword", "longtailKeywords", "lsiKeywords", "cover_image", "cover_image_alt", "tags", "subcategory", "inlineImage1Id", "inlineImage1Alt", "inlineImage1Caption", "inlineImage1Position", "inlineImage2Id", "inlineImage2Alt", "inlineImage2Caption", "inlineImage2Position", "affiliateImageUrl1", "affiliateLinkUrl1", "affiliateProductName1", "affiliateCurrentPrice1", "affiliateSalePrice1", "affiliateDiscountRate1", "affiliateButtonText1", "affiliatePosition1", "affiliateImageUrl2", "affiliateLinkUrl2", "affiliateProductName2", "affiliateCurrentPrice2", "affiliateSalePrice2", "affiliateDiscountRate2", "affiliateButtonText2", "affiliatePosition2", "affiliateImageUrl3", "affiliateLinkUrl3", "affiliateProductName3", "affiliateCurrentPrice3", "affiliateSalePrice3", "affiliateDiscountRate3", "affiliateButtonText3", "affiliatePosition3", "affiliateImageUrl4", "affiliateLinkUrl4", "affiliateProductName4", "affiliateCurrentPrice4", "affiliateSalePrice4", "affiliateDiscountRate4", "affiliateButtonText4", "affiliatePosition4", "affiliateImageUrl5", "affiliateLinkUrl5", "affiliateProductName5", "affiliateCurrentPrice5", "affiliateSalePrice5", "affiliateDiscountRate5", "affiliateButtonText5", "affiliatePosition5"].forEach((id) => {
+["title", "meta_description", "summary", "content_md", "faq_md", "focusKeyword", "longtailKeywords", "lsiKeywords", "cover_image", "cover_image_alt", "tags", "subcategory", "author_key", "inlineImage1Id", "inlineImage1Alt", "inlineImage1Caption", "inlineImage1Position", "inlineImage2Id", "inlineImage2Alt", "inlineImage2Caption", "inlineImage2Position", "affiliateImageUrl1", "affiliateLinkUrl1", "affiliateProductName1", "affiliateCurrentPrice1", "affiliateSalePrice1", "affiliateDiscountRate1", "affiliateButtonText1", "affiliatePosition1", "affiliateImageUrl2", "affiliateLinkUrl2", "affiliateProductName2", "affiliateCurrentPrice2", "affiliateSalePrice2", "affiliateDiscountRate2", "affiliateButtonText2", "affiliatePosition2", "affiliateImageUrl3", "affiliateLinkUrl3", "affiliateProductName3", "affiliateCurrentPrice3", "affiliateSalePrice3", "affiliateDiscountRate3", "affiliateButtonText3", "affiliatePosition3", "affiliateImageUrl4", "affiliateLinkUrl4", "affiliateProductName4", "affiliateCurrentPrice4", "affiliateSalePrice4", "affiliateDiscountRate4", "affiliateButtonText4", "affiliatePosition4", "affiliateImageUrl5", "affiliateLinkUrl5", "affiliateProductName5", "affiliateCurrentPrice5", "affiliateSalePrice5", "affiliateDiscountRate5", "affiliateButtonText5", "affiliatePosition5"].forEach((id) => {
   const el = $(id);
   if (el) el.addEventListener("input", handleRealtimeChange);
   if (el && el.tagName === "SELECT") el.addEventListener("change", handleRealtimeChange);
@@ -2377,7 +2358,6 @@ $("addAffiliateItemBtn")?.addEventListener("click", () => { addAffiliateItemCard
 document.querySelectorAll("[data-affiliate-remove]").forEach((button) => {
   button.addEventListener("click", () => { removeAffiliateItemCard(Number(button.dataset.affiliateRemove || "0")); handleRealtimeChange(); });
 });
-$("updateModifiedDateToggle")?.addEventListener("change", syncUpdateModifiedDateHelp);
 if ($("saveBtn")) $("saveBtn").addEventListener("click", save);
 bindTaxonomyEvents();
 $("enableToc")?.addEventListener("change", applyTocControls);

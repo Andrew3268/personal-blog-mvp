@@ -17,7 +17,9 @@
     "build": "npm run verify:assets",
     "predeploy": "npm run verify:assets",
     "d1:migrate:category-subcategories:local": "wrangler d1 execute personal-blog-db --local --file=./db/migrations/2026-08-12-category-subcategories.sql",
-    "d1:migrate:category-subcategories:remote": "wrangler d1 execute personal-blog-db --remote --file=./db/migrations/2026-08-12-category-subcategories.sql"
+    "d1:migrate:category-subcategories:remote": "wrangler d1 execute personal-blog-db --remote --file=./db/migrations/2026-08-12-category-subcategories.sql",
+    "d1:migrate:post-author:local": "wrangler d1 execute personal-blog-db --local --file=./db/migrations/2026-08-22-add-post-author-key.sql",
+    "d1:migrate:post-author:remote": "wrangler d1 execute personal-blog-db --remote --file=./db/migrations/2026-08-22-add-post-author-key.sql"
   },
   "devDependencies": {
     "wrangler": "^4.77.0"

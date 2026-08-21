@@ -740,12 +740,30 @@ export async function renderHomePage({ env, request, category = "" }) {
     ? `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${escapeHtml(homeAdsenseClient)}" crossorigin="anonymous"></script>`
     : "";
 
+  const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": `${SITE_ORIGIN}/#organization`,
+    name: SITE_NAME,
+    url: `${SITE_ORIGIN}/`,
+    logo: {
+      "@type": "ImageObject",
+      "@id": `${SITE_ORIGIN}/#logo`,
+      url: `${SITE_ORIGIN}/assets/images/logo.png`,
+      contentUrl: `${SITE_ORIGIN}/assets/images/logo.png`,
+      width: 520,
+      height: 520
+    }
+  };
+
   const websiteJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
+    "@id": `${SITE_ORIGIN}/#website`,
     name: SITE_NAME,
     url: `${SITE_ORIGIN}/`,
-    inLanguage: "ko-KR"
+    inLanguage: "ko-KR",
+    publisher: { "@id": `${SITE_ORIGIN}/#organization` }
   };
 
   const structuredItems = isDefaultHome
@@ -766,11 +784,7 @@ export async function renderHomePage({ env, request, category = "" }) {
     url: canonicalUrl,
     description,
     inLanguage: "ko-KR",
-    isPartOf: {
-      "@type": "WebSite",
-      name: SITE_NAME,
-      url: `${SITE_ORIGIN}/`
-    },
+    isPartOf: { "@id": `${SITE_ORIGIN}/#website` },
     mainEntity: {
       "@type": "ItemList",
       itemListElement: structuredItems.map((item, index) => ({
@@ -820,6 +834,7 @@ export async function renderHomePage({ env, request, category = "" }) {
   <link rel="stylesheet" href="/assets/css/app.css" />
   <link rel="preload" href="/assets/css/components.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
   <noscript><link rel="stylesheet" href="/assets/css/components.css" /></noscript>
+  ${jsonld(organizationJsonLd)}
   ${jsonld(websiteJsonLd)}
   ${jsonld(collectionJsonLd)}
   <link rel="stylesheet" href="/assets/css/site-search-129e354bb4.css" />

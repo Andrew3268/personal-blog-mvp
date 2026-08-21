@@ -5,10 +5,11 @@ Cloudflare Pages + Pages Functions + D1 기반의 SSR 블로그입니다. 공개
 
 ## 글 수정일 관리
 
-- 편집 페이지의 일반 `저장`은 기존 `posts.updated_at` 값을 유지합니다.
-- 큰 수정으로 공개 수정일을 갱신해야 할 때만 `수정 날짜 업데이트` 버튼을 활성화한 뒤 저장합니다.
-- 서버 API도 `update_modified_at: true`가 명시된 경우에만 `updated_at`을 현재 시각으로 변경합니다.
-- `metadata_updated_at`은 내부 변경 추적을 위해 일반 저장에서도 갱신될 수 있습니다.
+- `posts.updated_at`은 관리자가 체크박스로 지정하지 않고 서버가 실제 공개 콘텐츠 변경 여부를 비교해 자동 관리합니다.
+- 제목, 작성자, 요약, 대표 이미지, 본문, FAQ처럼 독자에게 보이는 내용이 바뀌면 `updated_at`이 현재 시각으로 갱신됩니다.
+- 메타 설명, SEO 키워드, 태그, 광고 설정처럼 공개 본문의 실질 내용이 바뀌지 않은 저장은 기존 `updated_at`을 유지합니다.
+- 초안을 처음 발행하는 경우에도 발행 시각에 맞춰 수정일이 갱신됩니다.
+- `metadata_updated_at`은 관리자 저장 이력을 추적하기 위해 저장할 때 갱신됩니다.
 
 ## 핵심 구조
 
@@ -26,9 +27,11 @@ Cloudflare Pages + Pages Functions + D1 기반의 SSR 블로그입니다. 공개
 - 페이지 2 이후도 Google이 발견할 수 있는 실제 `a[href]` 페이지네이션
 - 존재하지 않는 카테고리와 초과 페이지 번호의 실제 404 응답
 - 빈 카테고리와 태그 필터 URL의 `noindex,follow`
-- 게시글 `BlogPosting`, `BreadcrumbList`, FAQ 구조화 데이터
+- 게시글 `BlogPosting`, `WebPage`, `BreadcrumbList`, `WebSite`, `Organization`을 `@graph`로 연결한 JSON-LD 구조화 데이터
+- Life/Tech/Pet 작성자 전용 `ProfilePage`와 게시글 `author` 엔터티 연결
 - 발행 글과 공개 글이 있는 카테고리만 사이트맵에 포함
-- 최초 공개일과 실제 본문 수정일을 분리하여 `datePublished`, `dateModified`, `lastmod`에 반영
+- 최초 공개일과 실제 공개 콘텐츠 수정일을 분리하여 `datePublished`, `dateModified`, `lastmod`에 반영
+- 대표 이미지가 없을 때 사이트 로고를 기사 이미지로 강제 사용하지 않고, 본문 첫 이미지가 있을 때만 BlogPosting `image`로 사용
 - API·관리자 페이지의 `X-Robots-Tag: noindex, nofollow`
 - `www`, `pages.dev`, `index.html`, 비표준 슬래시·페이지 번호 URL의 301 정규화
 
@@ -43,6 +46,7 @@ Cloudflare Pages + Pages Functions + D1 기반의 SSR 블로그입니다. 공개
 - `2026-08-02-runtime-schema-initialization.sql`: 관리자·카테고리·사이트 설정 테이블과 기본값
 - `2026-08-02-query-normalization-and-indexes.sql`: 게시글 데이터 정규화와 조회 패턴별 복합 인덱스
 - `2026-08-02-cache-tags-view-aggregation.sql`: 관계형 태그 테이블과 조회수 누적 테이블
+- `2026-08-22-add-post-author-key.sql`: 게시글 작성자 키 분리 및 Life/Tech/Pet 기존 글 작성자 백필
 
 각 단계가 아직 적용되지 않은 DB라면 다음 순서대로 실행합니다.
 
@@ -50,11 +54,13 @@ Cloudflare Pages + Pages Functions + D1 기반의 SSR 블로그입니다. 공개
 npm run d1:migrate:runtime-init:remote
 npm run d1:migrate:query-optimization:remote
 npm run d1:migrate:performance-phase3:remote
+npm run d1:migrate:category-subcategories:remote
+npm run d1:migrate:post-author:remote
 ```
 
-1차와 2차 마이그레이션을 이미 적용했다면 이번 배포에서는 `d1:migrate:performance-phase3:remote`만 실행합니다.
+기존 마이그레이션이 이미 적용된 운영 DB라면 이번 변경에서는 `d1:migrate:post-author:remote`를 새로 1회 실행하면 됩니다.
 
-이 마이그레이션은 `CREATE TABLE IF NOT EXISTS`와 `INSERT OR IGNORE`를 사용하므로 기존 관리자, 카테고리, 사이트 설정 값을 덮어쓰지 않습니다. 운영 데이터를 유지하려면 **`db/seed.sql`을 다시 실행하지 마세요.**
+운영 데이터를 유지하려면 **`db/seed.sql`을 다시 실행하지 마세요.** `2026-08-22-add-post-author-key.sql`은 `ALTER TABLE`을 포함하므로 운영 DB에서 1회만 실행합니다.
 
 
 ## 메인/서브 카테고리 마이그레이션 (2026-08-12)
@@ -68,6 +74,17 @@ npm run d1:migrate:category-subcategories:remote
 ```
 
 마이그레이션은 `CREATE TABLE IF NOT EXISTS` 기반이라 여러 번 실행해도 기존 글과 카테고리를 덮어쓰지 않습니다. 실행하지 않으면 `/admin/categories.html`의 서브 카테고리 관리와 add/edit의 서브 카테고리 저장 기능을 사용할 수 없습니다.
+
+
+## 게시글 작성자 마이그레이션 (2026-08-22)
+
+이번 버전부터 게시글 작성자는 카테고리명에서 추론하지 않고 `posts.author_key`에 별도로 저장합니다. 운영 D1에는 **새 코드를 배포하기 전에 1회** 다음 명령을 실행하세요.
+
+```bash
+npm run d1:migrate:post-author:remote
+```
+
+마이그레이션은 기존 `Life`, `Tech`, `Pet` 글을 각각 `Life.Archiver`, `Tech.Archiver`, `Pet.Archiver`로 연결합니다. 그 외 기존 카테고리 글은 작성자를 임의 추정하지 않고 Wacky Wiki 조직 작성자로 처리하며, 이후 편집 화면에서 작성자를 직접 선택할 수 있습니다. 운영 데이터를 유지하려면 `db/seed.sql`은 다시 실행하지 마세요.
 
 ## 최초 관리자 계정 생성
 

@@ -2,6 +2,8 @@ import { okJson, requireAdmin } from "../../_utils.js";
 import { normalizeTags, buildPostTagReplaceStatements, parseStoredTags } from "../../_post-tags.js";
 import { scheduleContentCacheInvalidation } from "../../_cache-invalidation.js";
 import { normalizePostLinkStyle, parsePostLinkStyle, setPostLinkStyleToken } from "../../../lib/posts/link-style.js";
+import { defaultAuthorKeyForCategory, normalizeAuthorKey } from "../../_authors.js";
+import { hasEditorialChanges } from "../../_post-editorial.js";
 
 function normalizeText(value = "") {
   return String(value || "").replace(/\s+/g, " ").trim();
@@ -35,6 +37,7 @@ export async function onRequestGet({ env, params, request }) {
       slug,
       title,
       category,
+      author_key,
       COALESCE((
         SELECT ps.subcategory_name
         FROM post_subcategories ps
@@ -91,6 +94,11 @@ export async function onRequestPut(context) {
 
   const title = String(body.title || "").trim();
   const category = normalizeText(body.category);
+  const requestedAuthorKey = String(body.author_key || "").trim();
+  const normalizedAuthorKey = normalizeAuthorKey(requestedAuthorKey);
+  if (requestedAuthorKey && !normalizedAuthorKey) {
+    return okJson({ message: "유효하지 않은 작성자입니다." }, { status: 400 });
+  }
   const subcategory = category ? normalizeText(body.subcategory) : "";
   const metaDescription = String(body.meta_description || "").trim();
   const summary = String(body.summary || "").trim();
@@ -110,7 +118,6 @@ export async function onRequestPut(context) {
   const enableInarticleAds = body.enable_inarticle_ads === false ? 0 : 1;
   const requestedStatus = String(body.status || "published").trim().toLowerCase();
   const status = requestedStatus === "draft" ? "draft" : "published";
-  const updateModifiedAt = body.update_modified_at === true;
   const normalizedTags = normalizeTags(body.tags);
   const tags = normalizedTags.map((item) => item.tag);
 
@@ -131,7 +138,13 @@ export async function onRequestPut(context) {
   }
 
   const current = await env.BLOG_DB
-    .prepare(`SELECT status, category, tags_json, published_at, first_published_at, metadata_updated_at, updated_at FROM posts WHERE slug = ?`)
+    .prepare(`
+      SELECT
+        status, category, author_key, title, summary, cover_image, cover_image_alt,
+        content_md, faq_md, tags_json, published_at, first_published_at, metadata_updated_at, updated_at
+      FROM posts
+      WHERE slug = ?
+    `)
     .bind(slug)
     .first();
 
@@ -140,13 +153,27 @@ export async function onRequestPut(context) {
   }
 
   const now = new Date().toISOString();
+  const authorKey = normalizedAuthorKey
+    || normalizeAuthorKey(current.author_key)
+    || defaultAuthorKeyForCategory(category);
   const publishedAt = normalizeIsoDate(current.published_at, now);
   const existingFirstPublishedAt = normalizeIsoDate(current.first_published_at);
   const firstPublishedAt = status === "published"
     ? (existingFirstPublishedAt || (current.status === "published" ? publishedAt : now))
     : (existingFirstPublishedAt || null);
+  const editorialChanged = hasEditorialChanges(current, {
+    title,
+    category,
+    author_key: authorKey,
+    summary,
+    cover_image: coverImage,
+    cover_image_alt: coverImageAlt,
+    content_md: contentMd,
+    faq_md: faqMd
+  });
+  const becamePublished = current.status !== "published" && status === "published";
   const existingUpdatedAt = normalizeIsoDate(current.updated_at);
-  const updatedAt = updateModifiedAt
+  const updatedAt = (editorialChanged || becamePublished)
     ? now
     : (existingUpdatedAt || firstPublishedAt || publishedAt || now);
 
@@ -155,6 +182,7 @@ export async function onRequestPut(context) {
     SET
       title = ?,
       category = ?,
+      author_key = ?,
       meta_description = ?,
       summary = ?,
       cover_image = ?,
@@ -175,6 +203,7 @@ export async function onRequestPut(context) {
   `).bind(
     title,
     category,
+    authorKey,
     metaDescription,
     summary,
     coverImage,
@@ -219,7 +248,13 @@ export async function onRequestPut(context) {
     tags: [...previousTags, ...tags]
   });
 
-  return okJson({ ok: true, slug, updated_at: updatedAt, modified_date_updated: updateModifiedAt, content_link_style: requestedContentLinkStyle });
+  return okJson({
+    ok: true,
+    slug,
+    updated_at: updatedAt,
+    modified_date_updated: editorialChanged || becamePublished,
+    content_link_style: requestedContentLinkStyle
+  });
 }
 
 export async function onRequestDelete(context) {
