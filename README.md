@@ -151,3 +151,11 @@ npm run verify:assets
 - 관리자: `/admin/`
 - 사이트맵: `/sitemap.xml`
 - RSS: `/rss.xml`
+
+
+## 2026-08-22 최종 SEO 보완
+
+- 공개 게시글 조회는 운영 D1에 `author_key` 마이그레이션이 아직 적용되지 않았더라도 카테고리 기반 작성자 fallback으로 렌더링되어 전체 `/post/...`가 500이 되지 않습니다. 단, 관리자에서 작성자를 명시 저장하려면 운영 D1 마이그레이션은 여전히 1회 적용해야 합니다.
+- 카테고리 목록의 `더 보기`는 실제 `href`가 있는 링크로 출력되며, JavaScript가 있으면 기존 AJAX 추가 로드 방식으로 동작합니다.
+- `/about`, `/privacy-policy`, `/author/*/index.html` 비정규 URL은 canonical URL로 301 정규화됩니다.
+- `/about/`에는 `AboutPage`, `Organization`, `WebSite`를 `@id`로 연결한 JSON-LD가 추가되었습니다.

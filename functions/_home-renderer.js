@@ -547,7 +547,7 @@ function renderPagination({ path, page, totalPages, tag = "", status = "publishe
 
   return `
     <nav id="postsLoadMoreWrap" class="posts-pagination" aria-label="글 목록 더 보기">
-      <button id="postsLoadMoreBtn" class="btn btn--brand posts-load-more__btn" type="button" data-next-url="${escapeHtml(nextUrl)}">더 보기</button>
+      <a id="postsLoadMoreBtn" class="btn btn--brand posts-load-more__btn" href="${escapeHtml(nextUrl)}" data-next-url="${escapeHtml(nextUrl)}">더 보기</a>
     </nav>
   `;
 }

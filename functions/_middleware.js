@@ -16,7 +16,9 @@ const PROTECTED_ADMIN_PATHS = new Set([
 ]);
 const CANONICAL_STATIC_PATHS = new Map([
   ["/index.html", "/"],
+  ["/about", "/about/"],
   ["/about/index.html", "/about/"],
+  ["/privacy-policy", "/privacy-policy/"],
   ["/privacy-policy/index.html", "/privacy-policy/"],
   ["/admin/index.html", "/admin/"],
 ]);
@@ -113,6 +115,12 @@ export async function onRequest(context) {
   const canonicalStaticPath = CANONICAL_STATIC_PATHS.get(url.pathname);
   if (canonicalStaticPath) {
     const redirectUrl = new URL(canonicalStaticPath + url.search, url.origin);
+    return Response.redirect(redirectUrl.toString(), 301);
+  }
+
+  const authorIndexMatch = url.pathname.match(/^\/author\/([^/]+)\/index\.html$/i);
+  if (authorIndexMatch) {
+    const redirectUrl = new URL(`/author/${authorIndexMatch[1]}/${url.search}`, url.origin);
     return Response.redirect(redirectUrl.toString(), 301);
   }
 

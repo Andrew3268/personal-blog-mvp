@@ -588,9 +588,13 @@ function buildPostsHeroNav(categories = []) {
     show(loadMoreWrap, hasMore);
     if (loadMoreBtn) {
       show(loadMoreBtn, hasMore);
-      loadMoreBtn.disabled = !hasMore || isLoading;
+      loadMoreBtn.setAttribute('aria-disabled', (!hasMore || isLoading) ? 'true' : 'false');
       loadMoreBtn.textContent = isLoading ? '불러오는 중…' : '더 보기';
-      if (pagination.next_page) loadMoreBtn.dataset.nextUrl = buildPostsPageUrl(Number(pagination.next_page));
+      if (pagination.next_page) {
+        const nextUrl = buildPostsPageUrl(Number(pagination.next_page));
+        loadMoreBtn.dataset.nextUrl = nextUrl;
+        loadMoreBtn.setAttribute('href', nextUrl);
+      }
     }
   }
 
@@ -690,8 +694,15 @@ function buildPostsHeroNav(categories = []) {
     if (event.key === 'Escape') closeCategoriesMenu();
   });
 
-  loadMoreBtn?.addEventListener('click', () => {
-    if (!hasMore || isLoading) return;
+  loadMoreBtn?.addEventListener('click', (event) => {
+    // Progressive enhancement: without JavaScript this remains a normal
+    // crawlable link to the next archive page. With JavaScript enabled we
+    // intercept the click and append the next page in place.
+    if (!hasMore || isLoading) {
+      event.preventDefault();
+      return;
+    }
+    event.preventDefault();
     fetchPage(currentPage + 1, { append: true });
   });
 

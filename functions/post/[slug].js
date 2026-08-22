@@ -7,7 +7,7 @@ import { getAuthorProfile, getAuthorEntityId } from "../_authors.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
 const ADSENSE_CLIENT = "ca-pub-7298667883751711";
-const POST_CACHE_VERSION = "11";
+const POST_CACHE_VERSION = "12";
 
 function safeDecodePathParam(value = "") {
   try {
@@ -21,6 +21,74 @@ function normalizeIndexableImageUrl(src = "", origin = SITE_ORIGIN) {
   const absolute = absolutizeImageUrl(src, origin);
   if (!absolute || /^(data|blob):/i.test(absolute)) return "";
   return absolute;
+}
+
+
+function isMissingAuthorKeyColumnError(error) {
+  const message = String(error?.message || error || "").toLowerCase();
+  return message.includes("author_key") && (
+    message.includes("no such column")
+    || message.includes("has no column named")
+  );
+}
+
+async function loadPublishedPost(db, slug) {
+  const modernQuery = `
+    SELECT
+      slug,
+      title,
+      category,
+      author_key,
+      meta_description,
+      summary,
+      cover_image,
+      cover_image_alt,
+      tags_json,
+      content_md,
+      faq_md,
+      view_count,
+      enable_sidebar_ad,
+      enable_inarticle_ads,
+      status,
+      first_published_at AS published_at,
+      metadata_updated_at,
+      updated_at
+    FROM posts
+    WHERE slug = ? AND status = 'published'
+  `;
+
+  try {
+    return await db.prepare(modernQuery).bind(slug).first();
+  } catch (error) {
+    if (!isMissingAuthorKeyColumnError(error)) throw error;
+
+    // Deployment safety: an older production D1 schema must not turn every
+    // public article into HTTP 500 while the author_key migration is pending.
+    // The author is temporarily inferred from the canonical category.
+    return db.prepare(`
+      SELECT
+        slug,
+        title,
+        category,
+        '' AS author_key,
+        meta_description,
+        summary,
+        cover_image,
+        cover_image_alt,
+        tags_json,
+        content_md,
+        faq_md,
+        view_count,
+        enable_sidebar_ad,
+        enable_inarticle_ads,
+        status,
+        first_published_at AS published_at,
+        metadata_updated_at,
+        updated_at
+      FROM posts
+      WHERE slug = ? AND status = 'published'
+    `).bind(slug).first();
+  }
 }
 
 function extractFirstArticleImage(contentMd = "", origin = SITE_ORIGIN) {
@@ -62,29 +130,7 @@ export async function onRequestGet(context) {
     ttlSeconds: 600,
     waitUntil: (promise) => context.waitUntil(promise),
     buildResponse: async () => {
-      const row = await env.BLOG_DB.prepare(`
-        SELECT
-          slug,
-          title,
-          category,
-          author_key,
-          meta_description,
-          summary,
-          cover_image,
-          cover_image_alt,
-          tags_json,
-          content_md,
-          faq_md,
-          view_count,
-          enable_sidebar_ad,
-          enable_inarticle_ads,
-          status,
-          first_published_at AS published_at,
-          metadata_updated_at,
-          updated_at
-        FROM posts
-        WHERE slug = ? AND status = 'published'
-      `).bind(slug).first();
+      const row = await loadPublishedPost(env.BLOG_DB, slug);
 
       if (!row) {
         return okHtml(renderNotFound(slug), {
