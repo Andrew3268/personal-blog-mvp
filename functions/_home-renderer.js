@@ -5,7 +5,7 @@ import { canonicalCategoryName, categoryPath } from "./_category-utils.js";
 export const SITE_ORIGIN = "https://wacky-wiki.com";
 const SITE_NAME = "Wacky Wiki";
 const PER_PAGE = 10;
-const ARCHIVE_CACHE_VERSION = "11";
+const ARCHIVE_CACHE_VERSION = "12";
 
 function clampInt(value, fallback, min, max) {
   const num = Number.parseInt(String(value || ""), 10);
@@ -863,7 +863,7 @@ export async function renderHomePage({ env, request, category = "" }) {
       <section class="posts-main" aria-label="글 목록 영역">
         <div id="postsLoading" class="small posts-loading-text" aria-hidden="true"></div>
         <div id="postsError" class="small posts-error" hidden></div>
-        <div id="postsEmpty" class="small"${data.items.length ? " hidden" : ""}>${escapeHtml(emptyText)}</div>
+        <div id="postsEmpty" class="small"${data.items.length ? " hidden" : ""}>${data.items.length ? "" : escapeHtml(emptyText)}</div>
         <div id="postsList" class="grid post-list-grid post-list-grid--rows">${postsHtml}</div>
         ${paginationHtml}
       </section>
