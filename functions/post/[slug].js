@@ -4,10 +4,10 @@ import { applyPostLinkStyleToHtml } from "../../lib/posts/link-style.js";
 import { buildImageAttrs, absolutizeImageUrl } from "../../lib/image-utils.js";
 import { canonicalCategoryName, categoryPath } from "../_category-utils.js";
 import { getAuthorProfile, getAuthorEntityId } from "../_authors.js";
+import { POST_CACHE_VERSION } from "../_cache-config.js";
 
 const SITE_ORIGIN = "https://wacky-wiki.com";
 const ADSENSE_CLIENT = "ca-pub-7298667883751711";
-const POST_CACHE_VERSION = "12";
 
 function safeDecodePathParam(value = "") {
   try {

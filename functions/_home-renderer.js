@@ -1,11 +1,11 @@
 import { escapeHtml, jsonld, okHtml, edgeCache, getAdminSession, hasAdminSessionCookie } from "./_utils.js";
 import { buildImageAttrs } from "../lib/image-utils.js";
 import { canonicalCategoryName, categoryPath } from "./_category-utils.js";
+import { ARCHIVE_CACHE_VERSION } from "./_cache-config.js";
 
 export const SITE_ORIGIN = "https://wacky-wiki.com";
 const SITE_NAME = "Wacky Wiki";
 const PER_PAGE = 10;
-const ARCHIVE_CACHE_VERSION = "12";
 
 function clampInt(value, fallback, min, max) {
   const num = Number.parseInt(String(value || ""), 10);

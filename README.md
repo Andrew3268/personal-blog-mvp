@@ -159,3 +159,11 @@ npm run verify:assets
 - 카테고리 목록의 `더 보기`는 실제 `href`가 있는 링크로 출력되며, JavaScript가 있으면 기존 AJAX 추가 로드 방식으로 동작합니다.
 - `/about`, `/privacy-policy`, `/author/*/index.html` 비정규 URL은 canonical URL로 301 정규화됩니다.
 - `/about/`에는 `AboutPage`, `Organization`, `WebSite`를 `@id`로 연결한 JSON-LD가 추가되었습니다.
+
+## 2026-08-22 동적 HTML 캐시 일관성 보완
+
+- 동적 아카이브/카테고리 HTML 캐시 버전과 게시글 HTML 캐시 버전은 `functions/_cache-config.js` 한 곳에서만 관리합니다.
+- 현재 배포 캐시 버전은 archive `13`, post `13`이며, 기존 v12/v10~12 캐시를 새 배포에서 재사용하지 않습니다.
+- `functions/_home-renderer.js`, `functions/post/[slug].js`, `functions/_cache-invalidation.js`가 동일한 공통 상수를 import하므로 캐시 생성 키와 삭제 키가 서로 어긋나지 않습니다.
+- `npm run build`에는 `npm run verify:cache`가 포함되어 있어 다른 파일에 캐시 버전을 다시 직접 선언하면 빌드가 실패합니다.
+- 글이 존재하는 카테고리의 SSR HTML에는 `카테고리 글이 없습니다.` 문구를 출력하지 않습니다. `#postsEmpty` 컨테이너는 클라이언트 JS 호환성을 위해 빈 상태로만 유지됩니다.
