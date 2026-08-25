@@ -10,6 +10,7 @@
   --radius:18px;
   --radius2:24px;
   --container:1200px;
+  --article-content-width:820px;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -111,6 +112,7 @@ h1,h2,h3{word-break:keep-all;overflow-wrap:break-word}
 .post-body blockquote p{margin:0}
 .post-body code{background:#f4f4f4;padding:3px 6px;border-radius:2px;font-size:.92em}
 .post-side{height:max-content;position:sticky;--post-side-gap:26px;--post-side-sticky-top:93px;top:var(--post-side-sticky-top);display:flex;flex-direction:column;gap:28px;min-height:0;padding:42px 0 0;background:#fff;transition:top .18s ease-out}
+.post-page-body .card.post-side{width:100%;max-width:var(--article-content-width);margin-left:auto;margin-right:auto}
 .posts-page{padding-top:20px}
 .posts-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;align-items:start}
 .posts-main{min-width:0}
@@ -759,7 +761,7 @@ body.has-preview-open{overflow:hidden}
 ========================================================= */
 .post-body .post-content,
 .preview-body {
-  max-width: 820px;
+  max-width: var(--article-content-width);
   margin: 0 auto;
   font-size: 16.5px;
   line-height: 1.9;

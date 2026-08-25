@@ -756,16 +756,18 @@ function parseFaqMarkdown(raw) {
   for (const rawLine of lines) {
     const line = rawLine.trimEnd();
     const trimmed = line.trim();
-    const questionMatch = trimmed.match(/^(?:#{1,6}\s*)?(?:Q|질문)\s*[.:：]?\s*(.+)$/i);
+    const explicitQuestionMatch = trimmed.match(/^(?:#{1,6}\s*)?(?:Q|질문)\s*[.:：]?\s*(.+)$/i);
+    const h3QuestionMatch = explicitQuestionMatch ? null : trimmed.match(/^###\s+(.+)$/);
+    const questionText = explicitQuestionMatch?.[1] || h3QuestionMatch?.[1] || "";
 
-    if (questionMatch) {
+    if (questionText) {
       if (current && current.question && current.answerLines.some((entry) => entry.trim())) {
         items.push({
           question: current.question.trim(),
           answerMd: current.answerLines.join("\n").trim()
         });
       }
-      current = { question: questionMatch[1].trim(), answerLines: [] };
+      current = { question: questionText.trim(), answerLines: [] };
       continue;
     }
 
