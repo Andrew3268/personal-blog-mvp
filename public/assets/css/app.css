@@ -112,6 +112,7 @@ h1,h2,h3{word-break:keep-all;overflow-wrap:break-word}
 .post-body blockquote p{margin:0}
 .post-body code{background:#f4f4f4;padding:3px 6px;border-radius:2px;font-size:.92em}
 .post-side{height:max-content;position:sticky;--post-side-gap:26px;--post-side-sticky-top:93px;top:var(--post-side-sticky-top);display:flex;flex-direction:column;gap:28px;min-height:0;padding:42px 0 0;background:#fff;transition:top .18s ease-out}
+.post-page-body .card.post-hero{width:100%;max-width:var(--article-content-width);margin-left:auto;margin-right:auto}
 .post-page-body .card.post-side{width:100%;max-width:var(--article-content-width);margin-left:auto;margin-right:auto}
 .post-page-body .footer.container{width:100%;max-width:var(--article-content-width);margin-left:auto;margin-right:auto;padding-left:0;padding-right:0}
 .posts-page{padding-top:20px}
