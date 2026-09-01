@@ -1,4 +1,4 @@
-import { escapeHtml, jsonld, okHtml, edgeCache, getAdminSession, hasAdminSessionCookie } from "./_utils.js";
+import { escapeHtml, jsonld, okHtml, edgeCache, getAdminSession, hasAdminSessionCookie, googleAnalyticsTag } from "./_utils.js";
 import { buildImageAttrs } from "../lib/image-utils.js";
 import { canonicalCategoryName, categoryPath } from "./_category-utils.js";
 import { ARCHIVE_CACHE_VERSION } from "./_cache-config.js";
@@ -556,6 +556,7 @@ function renderArchiveNotFound({ title = "페이지를 찾을 수 없습니다",
   return `<!doctype html>
 <html lang="ko">
 <head>
+  ${googleAnalyticsTag()}
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -799,6 +800,7 @@ export async function renderHomePage({ env, request, category = "" }) {
   const html = `<!doctype html>
 <html lang="ko">
 <head>
+  ${googleAnalyticsTag()}
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
   <link rel="manifest" href="/manifest.webmanifest" />

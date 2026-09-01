@@ -1,4 +1,4 @@
-import { escapeHtml, jsonld, okHtml, edgeCache } from "../_utils.js";
+import { escapeHtml, jsonld, okHtml, edgeCache, googleAnalyticsTag } from "../_utils.js";
 import { renderMarkdown, renderMarkdownBlocks, buildTocItemsFromBlocks, renderTocHtml, parseInlineImages, stripInlineImageTokens, parsePostLinkStyle } from "../../lib/posts/renderer.js";
 import { applyPostLinkStyleToHtml } from "../../lib/posts/link-style.js";
 import { buildImageAttrs, absolutizeImageUrl } from "../../lib/image-utils.js";
@@ -394,6 +394,7 @@ export async function onRequestGet(context) {
       const html = `<!doctype html>
 <html lang="ko">
 <head>
+  ${googleAnalyticsTag()}
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -894,6 +895,7 @@ function renderNotFound(slug) {
   return `<!doctype html>
 <html lang="ko">
 <head>
+  ${googleAnalyticsTag()}
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
   <link rel="manifest" href="/manifest.webmanifest" />

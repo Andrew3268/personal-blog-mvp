@@ -167,3 +167,10 @@ npm run verify:assets
 - `functions/_home-renderer.js`, `functions/post/[slug].js`, `functions/_cache-invalidation.js`가 동일한 공통 상수를 import하므로 캐시 생성 키와 삭제 키가 서로 어긋나지 않습니다.
 - `npm run build`에는 `npm run verify:cache`가 포함되어 있어 다른 파일에 캐시 버전을 다시 직접 선언하면 빌드가 실패합니다.
 - 글이 존재하는 카테고리의 SSR HTML에는 `카테고리 글이 없습니다.` 문구를 출력하지 않습니다. `#postsEmpty` 컨테이너는 클라이언트 JS 호환성을 위해 빈 상태로만 유지됩니다.
+
+## Google Analytics
+
+- GA4 measurement ID: `G-5K45FBBVD0`
+- The Google tag is inserted immediately after `<head>` on public pages only.
+- Admin/editor pages are intentionally excluded from analytics collection.
+- Dynamic archive/post cache versions are bumped when the tag changes so cached HTML does not retain an old tag.

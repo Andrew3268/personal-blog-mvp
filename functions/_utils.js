@@ -1,3 +1,17 @@
+export const GOOGLE_ANALYTICS_MEASUREMENT_ID = "G-5K45FBBVD0";
+
+export function googleAnalyticsTag() {
+  return `<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ANALYTICS_MEASUREMENT_ID}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', '${GOOGLE_ANALYTICS_MEASUREMENT_ID}');
+</script>`;
+}
+
 export function escapeHtml(s = "") {
   return String(s)
     .replace(/&/g, "&amp;")
