@@ -1,4 +1,4 @@
-import { escapeHtml, jsonld, okHtml, edgeCache } from "../_utils.js";
+import { escapeHtml, jsonld, okHtml, edgeCache, googleAnalyticsTag } from "../_utils.js";
 import { renderMarkdown, renderMarkdownBlocks, buildTocItemsFromBlocks, renderTocHtml, parseInlineImages, stripInlineImageTokens, parsePostLinkStyle } from "../../lib/posts/renderer.js";
 import { applyPostLinkStyleToHtml } from "../../lib/posts/link-style.js";
 import { buildImageAttrs, absolutizeImageUrl } from "../../lib/image-utils.js";
@@ -398,6 +398,7 @@ export async function onRequestGet(context) {
   <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <meta name="naver-site-verification" content="e49bca383d3b342f512aeaaf82017d3705a638b3" />
+  ${googleAnalyticsTag()}
   <title>${escapeHtml(pageTitle)}</title>
   <meta name="description" content="${escapeHtml(descriptionText)}" />
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
@@ -898,6 +899,7 @@ function renderNotFound(slug) {
   <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <meta name="naver-site-verification" content="e49bca383d3b342f512aeaaf82017d3705a638b3" />
+  ${googleAnalyticsTag()}
   <title>글을 찾을 수 없습니다</title>
   <link rel="alternate" type="application/rss+xml" title="Wacky Wiki RSS" href="https://wacky-wiki.com/rss.xml" />
   <meta name="robots" content="noindex,nofollow" />

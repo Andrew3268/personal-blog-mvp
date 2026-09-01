@@ -7,6 +7,19 @@ export function escapeHtml(s = "") {
     .replace(/'/g, "&#39;");
 }
 
+
+export function googleAnalyticsTag() {
+  return `<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5Q2QJT68Y4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5Q2QJT68Y4');
+</script>`;
+}
+
 export function jsonld(obj) {
   const safeJson = JSON.stringify(obj)
     .replace(/</g, "\\u003c")

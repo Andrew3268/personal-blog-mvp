@@ -14,13 +14,14 @@
     "d1:migrate:performance-phase3:local": "wrangler d1 execute personal-blog-db --local --file=./db/migrations/2026-08-02-cache-tags-view-aggregation.sql",
     "d1:migrate:performance-phase3:remote": "wrangler d1 execute personal-blog-db --remote --file=./db/migrations/2026-08-02-cache-tags-view-aggregation.sql",
     "verify:assets": "node ./scripts/verify-asset-cache.mjs",
-    "build": "npm run verify:assets && npm run verify:cache",
+    "build": "npm run verify:assets && npm run verify:cache && npm run verify:analytics",
     "predeploy": "npm run build",
     "d1:migrate:category-subcategories:local": "wrangler d1 execute personal-blog-db --local --file=./db/migrations/2026-08-12-category-subcategories.sql",
     "d1:migrate:category-subcategories:remote": "wrangler d1 execute personal-blog-db --remote --file=./db/migrations/2026-08-12-category-subcategories.sql",
     "d1:migrate:post-author:local": "wrangler d1 execute personal-blog-db --local --file=./db/migrations/2026-08-22-add-post-author-key.sql",
     "d1:migrate:post-author:remote": "wrangler d1 execute personal-blog-db --remote --file=./db/migrations/2026-08-22-add-post-author-key.sql",
-    "verify:cache": "node ./scripts/verify-cache-config.mjs"
+    "verify:cache": "node ./scripts/verify-cache-config.mjs",
+    "verify:analytics": "node ./scripts/verify-analytics.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.77.0"
