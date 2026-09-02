@@ -1147,7 +1147,7 @@ body.has-preview-open{overflow:hidden}
   width:100%;
   border-bottom:1px solid #a9a9a4;
   color:#171717;
-  font-size:40px;
+  font-size:30px;
   line-height:1.3;
   font-weight:400;
   letter-spacing:-.052em;
@@ -1506,6 +1506,9 @@ body.has-preview-open{overflow:hidden}
 }
 
 @media (max-width:900px){
+  .home-editorial-hero__title{
+    font-size:27px;
+  }
   .home-editorial-container{
     width:min(100% - 32px,760px);
     padding-top:22px;
@@ -1561,7 +1564,7 @@ body.has-preview-open{overflow:hidden}
   }
   .home-editorial-hero__title{
     padding-bottom:12px;
-    font-size:25px;
+    font-size:22px;
   }
   .home-editorial-hero__summary{
     margin-top:12px;
